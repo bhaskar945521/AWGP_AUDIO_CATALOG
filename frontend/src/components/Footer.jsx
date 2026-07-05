@@ -23,6 +23,9 @@ export default function Footer() {
           <a href="#" className="footer-link">Contact</a>
         </div>
       </div>
+      <div style={{ textAlign: 'center', padding: '8px 0 4px', fontSize: '0.75rem', color: 'var(--text-light)', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+        Developed by <span style={{ color: 'var(--primary)', fontWeight: '600' }}>Bhaskar</span>
+      </div>
     </footer>
   );
 }
