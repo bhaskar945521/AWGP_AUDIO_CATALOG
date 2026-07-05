@@ -156,12 +156,14 @@ const User = require('./models/User');
 mongoose.connect(process.env.MONGODB_URI)
   .then(async () => {
     console.log('[DB] Connected to MongoDB');
-    const adminExists = await User.findOne({ username: 'shantikunjadmin' });
+    const adminUsername = process.env.ADMIN_USERNAME || 'shantikunjadmin';
+    const adminPassword = process.env.ADMIN_PASSWORD || 'Shantikunj2026';
+    const adminExists = await User.findOne({ username: adminUsername });
     if (!adminExists) {
-      const admin = new User({ username: 'shantikunjadmin', role: 'admin' });
-      await admin.setPassword('Shantikunj2026');
+      const admin = new User({ username: adminUsername, role: 'admin' });
+      await admin.setPassword(adminPassword);
       await admin.save();
-      console.log('[DB] Default admin created');
+      console.log('[DB] Default admin created:', adminUsername);
     }
   })
   .catch(err => {
