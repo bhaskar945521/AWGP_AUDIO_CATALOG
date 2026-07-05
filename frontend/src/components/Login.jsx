@@ -124,7 +124,13 @@ export default function Login() {
                 </>
               )}
             </button>
-          </form>
+            </form>
+            <button
+              type="button"
+              className="back-home-btn"
+              onClick={() => navigate('/')}>
+              Back to Home
+            </button>
 
           {/* Footer */}
           <div className="login-footer">

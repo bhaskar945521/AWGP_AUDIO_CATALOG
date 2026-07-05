@@ -53,3 +53,6 @@ desktop.ini
 # ---- Package Manager Caches ----
 .npm
 .yarn
+
+# ---- Local README (do not track) ----
+README.md

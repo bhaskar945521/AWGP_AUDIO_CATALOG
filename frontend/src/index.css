@@ -855,6 +855,7 @@ a { text-decoration: none; color: inherit; }
   line-height: 1.1;
   margin-top: -20px;
   margin-bottom: 30px;
+
   position: relative;
   z-index: 1;
   max-width: 100%;
@@ -882,9 +883,13 @@ a { text-decoration: none; color: inherit; }
     flex-wrap: nowrap;
     justify-content: center;
     gap: 0.5rem;
+    white-space: nowrap;
   }
   .hero-title-line {
     display: inline;
+  }
+  .hero-eyebrow {
+    margin-top: -8px;
   }
 }
 
@@ -965,6 +970,7 @@ a { text-decoration: none; color: inherit; }
   letter-spacing: 0.06em;
   text-transform: uppercase;
   margin-bottom: 24px;
+  margin-top: -8px;
   position: relative;
   z-index: 1;
 }
@@ -2645,6 +2651,31 @@ a { text-decoration: none; color: inherit; }
 .login-footer {
   margin-top: 24px;
 }
+
+/* Back to Home button */
+.back-home-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 20px;
+  margin-top: 8px;
+  background: var(--saffron);
+  color: var(--white);
+  border: none;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  box-shadow: 0 3px 12px rgba(247,168,77,0.3);
+}
+.back-home-btn:hover {
+  background: #d48a2a;
+  transform: translateY(-1px);
+}
+
 
 .login-footer-line {
   height: 1px;
