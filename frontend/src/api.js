@@ -1,10 +1,26 @@
 import axios from 'axios';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+let resolvedBaseUrl = import.meta.env.VITE_API_BASE_URL;
+if (!resolvedBaseUrl) {
+  const hostname = window.location.hostname;
+  if (hostname && hostname !== 'localhost') {
+    resolvedBaseUrl = `http://${hostname}:5000`;
+  }
+}
+const BASE_URL = resolvedBaseUrl || '';
+
 const api = axios.create({
   baseURL: BASE_URL ? `${BASE_URL}/api` : '/api',
-  timeout: 300000, // 5 minutes upload timeout
+  timeout: 300000,
 });
+
+api.interceptors.request.use(
+  config => {
+    console.log('API request:', config.baseURL + config.url);
+    return config;
+  },
+  error => Promise.reject(error)
+);
 
 function resolveUrl(url) {
   if (!url) return '';

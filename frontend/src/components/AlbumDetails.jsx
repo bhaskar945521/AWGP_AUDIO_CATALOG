@@ -28,8 +28,12 @@ export default function AlbumDetails() {
         const audioList = audiosRes.data.data || audiosRes.data;
         setAudios(audioList);
       } catch (err) {
-        toast.error('Failed to load album details');
-        console.error(err);
+        // Detailed error logging for debugging
+        const status = err?.response?.status;
+        const data = err?.response?.data;
+        toast.error(`Failed to load album details (status: ${status || 'unknown'})`);
+        console.error('Album fetch error:', err);
+        if (data) console.error('Error payload:', data);
       } finally {
         setLoading(false);
       }
