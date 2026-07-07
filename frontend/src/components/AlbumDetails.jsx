@@ -122,9 +122,8 @@ export default function AlbumDetails() {
             <button className="btn-secondary album-back-btn" onClick={() => navigate('/albums')}>
               Back to Albums
             </button>
-            <span className="album-hero-count" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+            <span className="track-count-box" style={{ display: 'inline-flex', alignItems: 'center', background: 'var(--card-bg)', padding: '4px 8px', borderRadius: '6px', border: '1px solid var(--border)' }}>
                 {audios.length} {audios.length === 1 ? 'Track' : 'Tracks'}
-                <button type="button" className="admin-input" onClick={fetchAlbumData} style={{ fontSize: '0.75rem', padding: '4px 8px' }}>Refresh</button>
             </span>
           </div>
         </div>
