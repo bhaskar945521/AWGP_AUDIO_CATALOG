@@ -24,7 +24,7 @@ export default function Footer() {
         </div>
       </div>
       <div style={{ textAlign: 'center', padding: '8px 0 4px', fontSize: '0.75rem', color: 'var(--text-light)', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
-        Developed by <span style={{ color: 'var(--primary)', fontWeight: '600' }}>Bhaskar</span>
+        Developed by <span style={{ color: 'var(--saffron)', fontWeight: '600' }}>Bhaskar</span>
       </div>
     </footer>
   );

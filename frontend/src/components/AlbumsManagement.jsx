@@ -530,110 +530,112 @@ export default function AlbumsManagement() {
       {/* Edit Modal */}
       {editingId && (
         <div className="modal-backdrop">
-          <div className="modal-box">
-            <div className="modal-header">
+          <div className="modal-box" style={{ display: 'flex', flexDirection: 'column', maxHeight: '90vh' }}>
+            <div className="modal-header" style={{ flexShrink: 0 }}>
               <h3 className="modal-title">Edit Album</h3>
               <button className="modal-close" onClick={() => setEditingId(null)}><i className="fas fa-times" /></button>
             </div>
-            <form className="modal-body" onSubmit={handleEditSubmit}>
-              <div className="form-group">
-                <label className="form-label">Slug / ID</label>
-                <input type="text" name="name" className="form-input" value={editAlbum.name} onChange={handleEditChange} required />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Title</label>
-                <input type="text" name="title" className="form-input" value={editAlbum.title} onChange={handleEditChange} required />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Select Category</label>
-                <select value={editCategoryId} onChange={e => setEditCategoryId(e.target.value)} className="form-input" required>
-                  <option value="">-- Choose Category --</option>
-                  {categories.map(cat => (
-                    <option key={cat._id} value={cat._id}>{cat.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="form-group" style={{ marginBottom: '16px' }}>
-                <label className="form-label">Attach Audios (optional)</label>
-                
-                {/* Filters */}
-                <div style={{ display: 'flex', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
-                  <input
-                    type="text"
-                    placeholder="Search audios..."
-                    value={editAudioSearchQuery}
-                    onChange={e => setEditAudioSearchQuery(e.target.value)}
-                    className="form-input"
-                    style={{ flex: 1, minWidth: '120px', padding: '4px 8px', fontSize: '0.8rem' }}
-                  />
-                  <select
-                    value={editAudioCategoryFilter}
-                    onChange={e => {
-                      setEditAudioCategoryFilter(e.target.value);
-                      setEditAudioAlbumFilter('');
-                    }}
-                    className="form-input"
-                    style={{ flex: 1, minWidth: '120px', padding: '4px 8px', fontSize: '0.8rem' }}
-                  >
-                    <option value="">-- All Categories --</option>
+            <form onSubmit={handleEditSubmit} style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+              <div className="modal-body" style={{ flex: 1, overflowY: 'auto', paddingRight: '4px' }}>
+                <div className="form-group">
+                  <label className="form-label">Slug / ID</label>
+                  <input type="text" name="name" className="form-input" value={editAlbum.name} onChange={handleEditChange} required />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Title</label>
+                  <input type="text" name="title" className="form-input" value={editAlbum.title} onChange={handleEditChange} required />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Select Category</label>
+                  <select value={editCategoryId} onChange={e => setEditCategoryId(e.target.value)} className="form-input" required>
+                    <option value="">-- Choose Category --</option>
                     {categories.map(cat => (
                       <option key={cat._id} value={cat._id}>{cat.name}</option>
                     ))}
                   </select>
-                  <select
-                    value={editAudioAlbumFilter}
-                    onChange={e => setEditAudioAlbumFilter(e.target.value)}
-                    className="form-input"
-                    style={{ flex: 1, minWidth: '120px', padding: '4px 8px', fontSize: '0.8rem' }}
-                  >
-                    <option value="">-- All Albums --</option>
-                    {albums
-                      .filter(al => {
-                        if (!editAudioCategoryFilter) return true;
-                        const catId = al.categoryId && typeof al.categoryId === 'object' ? al.categoryId._id : al.categoryId;
-                        return catId === editAudioCategoryFilter;
-                      })
-                      .map(album => (
-                        <option key={album._id} value={album._id}>{album.title || album.name}</option>
+                </div>
+                <div className="form-group" style={{ marginBottom: '16px' }}>
+                  <label className="form-label">Attach Audios (optional)</label>
+                  
+                  {/* Filters */}
+                  <div style={{ display: 'flex', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
+                    <input
+                      type="text"
+                      placeholder="Search audios..."
+                      value={editAudioSearchQuery}
+                      onChange={e => setEditAudioSearchQuery(e.target.value)}
+                      className="form-input"
+                      style={{ flex: 1, minWidth: '120px', padding: '4px 8px', fontSize: '0.8rem' }}
+                    />
+                    <select
+                      value={editAudioCategoryFilter}
+                      onChange={e => {
+                        setEditAudioCategoryFilter(e.target.value);
+                        setEditAudioAlbumFilter('');
+                      }}
+                      className="form-input"
+                      style={{ flex: 1, minWidth: '120px', padding: '4px 8px', fontSize: '0.8rem' }}
+                    >
+                      <option value="">-- All Categories --</option>
+                      {categories.map(cat => (
+                        <option key={cat._id} value={cat._id}>{cat.name}</option>
                       ))}
-                  </select>
-                </div>
+                    </select>
+                    <select
+                      value={editAudioAlbumFilter}
+                      onChange={e => setEditAudioAlbumFilter(e.target.value)}
+                      className="form-input"
+                      style={{ flex: 1, minWidth: '120px', padding: '4px 8px', fontSize: '0.8rem' }}
+                    >
+                      <option value="">-- All Albums --</option>
+                      {albums
+                        .filter(al => {
+                          if (!editAudioCategoryFilter) return true;
+                          const catId = al.categoryId && typeof al.categoryId === 'object' ? al.categoryId._id : al.categoryId;
+                          return catId === editAudioCategoryFilter;
+                        })
+                        .map(album => (
+                          <option key={album._id} value={album._id}>{album.title || album.name}</option>
+                        ))}
+                    </select>
+                  </div>
 
-                <div style={{ maxHeight: '180px', overflowY: 'auto', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', background: '#fff' }}>
-                  {filteredEditAudiosForSelection.map(a => (
-                    <label key={a._id} style={{ display: 'flex', alignItems: 'center', marginBottom: '6px', cursor: 'pointer', fontSize: '0.85rem' }}>
-                      <input type="checkbox" value={a._id} checked={editAudioIds.includes(a._id)}
-                        onChange={e => {
-                          const id = e.target.value;
-                          setEditAudioIds(prev => e.target.checked ? [...prev, id] : prev.filter(v => v !== id));
-                        }}
-                        style={{ accentColor: 'var(--saffron)' }}
-                      />
-                      <span style={{ marginLeft: '8px', color: 'var(--text-main)' }}>{a.title || a._id}</span>
-                      {a.speaker && <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginLeft: '6px' }}>({a.speaker})</span>}
-                    </label>
-                  ))}
-                  {filteredEditAudiosForSelection.length === 0 && (
-                    <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '12px', fontSize: '0.82rem' }}>No audios match the current filter</div>
+                  <div style={{ maxHeight: '180px', overflowY: 'auto', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px', background: '#fff' }}>
+                    {filteredEditAudiosForSelection.map(a => (
+                      <label key={a._id} style={{ display: 'flex', alignItems: 'center', marginBottom: '6px', cursor: 'pointer', fontSize: '0.85rem' }}>
+                        <input type="checkbox" value={a._id} checked={editAudioIds.includes(a._id)}
+                          onChange={e => {
+                            const id = e.target.value;
+                            setEditAudioIds(prev => e.target.checked ? [...prev, id] : prev.filter(v => v !== id));
+                          }}
+                          style={{ accentColor: 'var(--saffron)' }}
+                        />
+                        <span style={{ marginLeft: '8px', color: 'var(--text-main)' }}>{a.title || a._id}</span>
+                        {a.speaker && <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginLeft: '6px' }}>({a.speaker})</span>}
+                      </label>
+                    ))}
+                    {filteredEditAudiosForSelection.length === 0 && (
+                      <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '12px', fontSize: '0.82rem' }}>No audios match the current filter</div>
+                    )}
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Description</label>
+                  <input type="text" name="description" className="form-input" value={editAlbum.description} onChange={handleEditChange} />
+                </div>
+                <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <button type="button" className="admin-input" onClick={() => editCoverFileRef.current && editCoverFileRef.current.click()}>Upload Cover Image</button>
+                  {editAlbum.coverImage && (
+                    <img
+                      src={resolveUrl(editAlbum.coverImage) || editAlbum.coverImage}
+                      alt="cover preview"
+                      style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '6px', border: '1px solid var(--border)' }}
+                    />
                   )}
+                  <input type="file" accept="image/*" ref={editCoverFileRef} style={{ display: 'none' }} onChange={handleEditCoverUpload} />
                 </div>
               </div>
-              <div className="form-group">
-                <label className="form-label">Description</label>
-                <input type="text" name="description" className="form-input" value={editAlbum.description} onChange={handleEditChange} />
-              </div>
-              <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <button type="button" className="admin-input" onClick={() => editCoverFileRef.current && editCoverFileRef.current.click()}>Upload Cover Image</button>
-                {editAlbum.coverImage && (
-                  <img
-                    src={resolveUrl(editAlbum.coverImage) || editAlbum.coverImage}
-                    alt="cover preview"
-                    style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '6px', border: '1px solid var(--border)' }}
-                  />
-                )}
-                <input type="file" accept="image/*" ref={editCoverFileRef} style={{ display: 'none' }} onChange={handleEditCoverUpload} />
-              </div>
-              <div className="modal-footer">
+              <div className="modal-footer" style={{ flexShrink: 0, marginTop: '16px', paddingTop: '16px', borderTop: '1px solid var(--border)' }}>
                 <button type="button" className="btn-ghost" onClick={() => setEditingId(null)}>Cancel</button>
                 <button type="submit" className="btn-primary">Save Changes</button>
               </div>

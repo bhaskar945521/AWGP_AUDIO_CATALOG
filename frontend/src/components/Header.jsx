@@ -62,7 +62,9 @@ export default function Header({ onToggleSidebar, onVoiceResult, searchQuery, on
 
   const markAllSeen = (items) => {
     const ids = items.map(i => i._id);
-    localStorage.setItem('seenNotifIds', JSON.stringify(ids));
+    const existing = getSeenIds();
+    const combined = Array.from(new Set([...existing, ...ids])).slice(-50);
+    localStorage.setItem('seenNotifIds', JSON.stringify(combined));
   };
 
   // Load site title from settings and categories for dropdown
@@ -81,9 +83,10 @@ export default function Header({ onToggleSidebar, onVoiceResult, searchQuery, on
       try {
         const res = await api.get('/audios/recent/count?hours=24');
         const items = res.data.items || [];
-        setNotifItems(items);
+        const top5Items = items.slice(0, 5);
+        setNotifItems(top5Items);
         const seenIds = getSeenIds();
-        const unseen = items.filter(i => !seenIds.includes(i._id));
+        const unseen = top5Items.filter(i => !seenIds.includes(i._id));
         setNotifCount(unseen.length);
       } catch { }
     };

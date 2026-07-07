@@ -37,6 +37,8 @@ export default function Admin() {
   const [categoryCoverPreview, setCategoryCoverPreview] = useState(null);
   const [editCoverFile, setEditCoverFile] = useState(null);
   const [editCoverPreview, setEditCoverPreview] = useState(null);
+  const [editAudioCoverFile, setAudioCoverFile] = useState(null);
+  const [editAudioCoverPreview, setAudioCoverPreview] = useState(null);
   const [addingCategory, setAddingCategory] = useState(false);
   // Key to force remount AlbumsManagement after category creation for fresh categories
   const [albumRefreshKey, setAlbumRefreshKey] = useState(0);
@@ -152,6 +154,8 @@ export default function Admin() {
       duration: audio.duration || '',
       albumIds: audio.albumIds ? audio.albumIds.map(a => typeof a === 'string' ? a : a._id) : []
     });
+    setAudioCoverFile(null);
+    setAudioCoverPreview(audio.imageUrl || null);
   };
 
 
@@ -172,10 +176,25 @@ export default function Admin() {
     setIsSaving(true);
     setError('');
     try {
+      let payload = editForm;
+      let headers = authConfig().headers;
+      
+      if (editAudioCoverFile) {
+        payload = new FormData();
+        payload.append('title', editForm.title);
+        payload.append('speaker', editForm.speaker);
+        payload.append('duration', editForm.duration);
+        payload.append('albumIds', JSON.stringify(editForm.albumIds));
+        payload.append('imageFile', editAudioCoverFile);
+        headers = { ...headers, 'Content-Type': 'multipart/form-data' };
+      } else if (editAudioCoverPreview && !editAudioCoverPreview.startsWith('blob:') && editAudioCoverPreview !== editingAudio.imageUrl) {
+        payload = { ...editForm, imageUrl: editAudioCoverPreview };
+      }
+
       const res = await api.put(
         `/audios/${editingAudio._id}`,
-        editForm,
-        authConfig()
+        payload,
+        { headers }
       );
       setAudios(prev => prev.map(a => a._id === editingAudio._id ? res.data : a));
       setEditingAudio(null);
@@ -509,6 +528,7 @@ export default function Admin() {
                         }}
                       />
                     </th>
+                    <th>Title</th>
                     <th>Speaker</th>
                     <th>Albums</th>
                     <th>Format</th>
@@ -1027,6 +1047,37 @@ export default function Admin() {
                 />
               </div>
 
+              <div className="form-group" style={{ marginBottom: 12 }}>
+                <label className="form-label">Cover Image</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <button type="button" className="btn-ghost" onClick={() => { setGalleryTarget('editAudio'); setShowGallery(true); }} style={{ fontSize: '0.8rem', padding: '6px 12px' }}>
+                    <i className="fas fa-images"></i> From Gallery
+                  </button>
+                  <button type="button" className="btn-ghost" onClick={() => document.getElementById('edit-audio-pc').click()} style={{ fontSize: '0.8rem', padding: '6px 12px' }}>
+                    <i className="fas fa-desktop"></i> From PC
+                  </button>
+                </div>
+                <input
+                  id="edit-audio-pc"
+                  type="file"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={e => {
+                    const file = e.target.files?.[0];
+                    if (file && file.type.startsWith('image/')) {
+                      setAudioCoverFile(file);
+                      setAudioCoverPreview(URL.createObjectURL(file));
+                    }
+                  }}
+                />
+                {editAudioCoverPreview && (
+                  <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <img src={resolveUrl(editAudioCoverPreview)} alt="Preview" style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 6, border: '1px solid var(--border)' }} />
+                    <button type="button" className="btn-ghost" onClick={() => { setAudioCoverFile(null); setAudioCoverPreview(null); }} style={{ fontSize: '0.8rem' }}>Remove</button>
+                  </div>
+                )}
+              </div>
+
               <div className="modal-footer">
                 <button
                   type="button"
@@ -1054,14 +1105,14 @@ export default function Admin() {
 
       {/* Gallery Picker Modal */}
       {showGallery && (
-        <div className="modal-backdrop" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100 }}>
-          <div className="modal-box" style={{ maxWidth: '600px', background: '#fff', borderRadius: '12px', padding: '20px' }}>
+        <div className="modal-backdrop" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100 }} onClick={() => setShowGallery(false)}>
+          <div className="modal-box" style={{ maxWidth: '600px', background: '#fff', borderRadius: '12px', padding: '20px' }} onClick={e => e.stopPropagation()}>
             <h3>Select Cover Image</h3>
             <div style={{ maxHeight: '400px', overflowY: 'auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '10px' }}>
               {galleryImages.map((img, idx) => (
                 <img
                   key={idx}
-                  src={img.url || img}
+                  src={resolveUrl(img.url || img)}
                   alt={`gallery-${idx}`}
                   style={{ width: '100%', height: 150, objectFit: 'cover', cursor: 'pointer', border: '2px solid transparent' }}
                   onClick={() => {
@@ -1070,7 +1121,10 @@ export default function Admin() {
                       setCategoryCoverPreview(img.url);
                     } else if (galleryTarget === 'edit') {
                       setEditCoverFile(null);
-                      setEditCoverPreview(img.url);
+                      setEditCoverPreview(img.url || img);
+                    } else if (galleryTarget === 'editAudio') {
+                      setAudioCoverFile(null);
+                      setAudioCoverPreview(img.url || img);
                     }
                     setShowGallery(false);
                   }}

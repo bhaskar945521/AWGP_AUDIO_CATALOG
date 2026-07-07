@@ -785,55 +785,7 @@ export default function UploadAudioModal({ isOpen, onClose, onUploadSuccess }) {
               >
                 Choose from Gallery
               </button>
-              {/* Gallery modal */}
-              {showAlbumGallery && (
-                <div className="gallery-modal" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-                  <div style={{ background: '#fff', padding: 20, borderRadius: 8, maxHeight: '80vh', overflowY: 'auto', width: '90%' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-                      <h3 style={{ margin: 0 }}>Select Cover Image</h3>
-                      <button onClick={() => setShowAlbumGallery(false)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer' }}>✕</button>
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 12 }}>
-                      {galleryImages.map((img, idx) => {
-                        const imgUrl = img.url ? resolveUrl(img.url) : resolveUrl(img);
-                    return (
-                      <img
-                        key={idx}
-                        src={imgUrl}
-                        alt={`gallery-${idx}`}
-                        style={{ width: '100%', height: 100, objectFit: 'contain', cursor: 'pointer', border: '2px solid transparent' }}
-                        onClick={async () => {
-                          // Revoke previous preview if it was a blob URL to avoid memory leaks
-                          if (imagePreview && imagePreview.startsWith('blob:')) {
-                            URL.revokeObjectURL(imagePreview);
-                          }
-                          // If the image is from the server (has a URL), fetch it to create a File object
-                          if (img.url) {
-                            try {
-                              const fullUrl = resolveUrl(img.url);
-                              const response = await fetch(fullUrl);
-                              const blob = await response.blob();
-                              const fileName = img.url.split('/').pop() || 'gallery-image.jpg';
-                              const file = new File([blob], fileName, { type: blob.type });
-                              setImageFile(file);
-                            } catch (e) {
-                              console.error('Failed to fetch gallery image', e);
-                              setImageFile(null);
-                            }
-                          } else {
-                            // If img is a base64/data URI, we can set it directly without a File
-                            setImageFile(null);
-                          }
-                          setImagePreview(imgUrl);
-                          setShowAlbumGallery(false);
-                        }}
-                          />
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-              )}
+
               <input
                 ref={imageInputRef}
                 type="file"
@@ -886,6 +838,56 @@ export default function UploadAudioModal({ isOpen, onClose, onUploadSuccess }) {
           </div>
         </form>
       </div>
+      
+      {/* Gallery modal */}
+      {showAlbumGallery && (
+        <div className="gallery-modal" onClick={() => setShowAlbumGallery(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ background: '#fff', padding: 20, borderRadius: 8, maxHeight: '80vh', overflowY: 'auto', width: '90%' }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
+              <h3 style={{ margin: 0, color: '#333' }}>Select Cover Image</h3>
+              <button type="button" onClick={() => setShowAlbumGallery(false)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#666' }}>✕</button>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 12 }}>
+              {galleryImages.map((img, idx) => {
+                const imgUrl = img.url ? resolveUrl(img.url) : resolveUrl(img);
+                return (
+                  <img
+                    key={idx}
+                    src={imgUrl}
+                    alt={`gallery-${idx}`}
+                    style={{ width: '100%', height: 100, objectFit: 'contain', cursor: 'pointer', border: '2px solid transparent' }}
+                    onClick={async () => {
+                      // Revoke previous preview if it was a blob URL to avoid memory leaks
+                      if (imagePreview && imagePreview.startsWith('blob:')) {
+                        URL.revokeObjectURL(imagePreview);
+                      }
+                      // If the image is from the server (has a URL), fetch it to create a File object
+                      if (img.url) {
+                        try {
+                          const fullUrl = resolveUrl(img.url);
+                          const response = await fetch(fullUrl);
+                          const blob = await response.blob();
+                          const fileName = img.url.split('/').pop() || 'gallery-image.jpg';
+                          const file = new File([blob], fileName, { type: blob.type });
+                          setImageFile(file);
+                        } catch (e) {
+                          console.error('Failed to fetch gallery image', e);
+                          setImageFile(null);
+                        }
+                      } else {
+                        // If img is a base64/data URI, we can set it directly without a File
+                        setImageFile(null);
+                      }
+                      setImagePreview(imgUrl);
+                      setShowAlbumGallery(false);
+                    }}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

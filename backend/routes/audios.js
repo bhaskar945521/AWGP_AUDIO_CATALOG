@@ -370,20 +370,50 @@ router.post(
 );
 
 // ─── PUT /api/audios/:id ─────────────────────────────────────────────────────
-router.put('/:id', auth, roleCheck(['admin', 'onlyuser']), rejectCategoryFields, async (req, res) => {
+router.put('/:id', auth, roleCheck(['admin', 'onlyuser']), upload.single('imageFile'), rejectCategoryFields, async (req, res) => {
   try {
-    const { title, speaker, duration, description, albumIds, tags } = req.body;
+    const { title, speaker, duration, description, albumIds, tags, imageUrl } = req.body;
     const audio = await Audio.findById(req.params.id);
-    if (!audio) return res.status(404).json({ message: 'Audio not found' });
+    if (!audio) {
+      if (req.file) deleteLocalFile(`/uploads/audio-images/${req.file.filename}`);
+      return res.status(404).json({ message: 'Audio not found' });
+    }
+    
     if (title) audio.title = title;
     if (speaker !== undefined) audio.speaker = speaker;
     if (duration) audio.duration = duration;
     if (description !== undefined) audio.description = description;
     if (albumIds !== undefined) audio.albumIds = parseArrayField(albumIds);
     if (tags !== undefined) audio.tags = parseArrayField(tags);
+
+    // Handle cover image replacement
+    let newImageUrl = null;
+    if (req.file) {
+      newImageUrl = `/uploads/audio-images/${req.file.filename}`;
+    } else if (imageUrl) {
+      newImageUrl = imageUrl;
+    }
+
+    let oldImageUrl = null;
+    if (newImageUrl && newImageUrl !== audio.imageUrl) {
+      oldImageUrl = audio.imageUrl;
+      audio.imageUrl = newImageUrl;
+    }
+
     const saved = await audio.save();
+
+    // Delete old local image ONLY after successful DB save, if it's not a placeholder
+    if (oldImageUrl && oldImageUrl !== '/placeholder.png' && !oldImageUrl.startsWith('http')) {
+      if (oldImageUrl !== newImageUrl) {
+        deleteLocalFile(oldImageUrl);
+      }
+    }
+
     res.json(saved);
   } catch (err) {
+    if (req.file) {
+      deleteLocalFile(`/uploads/audio-images/${req.file.filename}`);
+    }
     res.status(400).json({ message: err.message });
   }
 });

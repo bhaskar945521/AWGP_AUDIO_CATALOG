@@ -21,6 +21,9 @@ export default function AudioPlayer({ currentAudio, onNext, onPrev, onClose }) {
 
   const [volume, setVolume] = useState(80);
   const [isMuted, setIsMuted] = useState(false);
+  
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragValue, setDragValue] = useState(0);
 
   // Sync volume to shared audio element
   useEffect(() => {
@@ -40,7 +43,15 @@ export default function AudioPlayer({ currentAudio, onNext, onPrev, onClose }) {
     const value = Number(e.target.value || 0);
     if (Number.isNaN(value)) return;
     const clamped = Math.max(0, Math.min(100, value));
+    setDragValue(clamped);
+  };
+
+  const handleSeekEnd = (e) => {
+    const value = Number(e.target.value || 0);
+    if (Number.isNaN(value)) return;
+    const clamped = Math.max(0, Math.min(100, value));
     seek(clamped);
+    setIsDragging(false);
     if (!isPlaying) setIsPlaying(true);
   };
 
@@ -114,13 +125,16 @@ export default function AudioPlayer({ currentAudio, onNext, onPrev, onClose }) {
           </button>
         </div>
         <div className="player-progress-wrapper">
-          <span className="time-display">{formatTime(currentTime)}</span>
+          <span className="time-display">{formatTime(isDragging ? (dragValue / 100) * duration : currentTime)}</span>
           <input
             type="range"
             className="progress-bar"
-            value={progress}
-            onInput={handleProgressChange}
+            value={isDragging ? dragValue : progress}
+            onMouseDown={() => { setIsDragging(true); setDragValue(progress); }}
+            onTouchStart={() => { setIsDragging(true); setDragValue(progress); }}
             onChange={handleProgressChange}
+            onMouseUp={handleSeekEnd}
+            onTouchEnd={handleSeekEnd}
             min="0"
             max="100"
             step="0.1"
