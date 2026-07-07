@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import api from '../api';
 import { useOutletContext, useSearchParams } from 'react-router-dom';
 import AudioCard from './AudioCard';
+import AddToAlbumModal from './AddToAlbumModal';
 import { useAudio } from '../context/AudioContext';
 
 const ITEMS_PER_PAGE = 12;
@@ -16,6 +17,7 @@ export default function Library() {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const [addToAlbumAudioId, setAddToAlbumAudioId] = useState(null);
 
   const urlCategory = searchParams.get('category') || '';
   const [filterCategory, setFilterCategory] = useState(urlCategory);
@@ -168,6 +170,7 @@ export default function Library() {
                 onPlay={() => { setQueue(audios); setCurrentAudio(audio); }}
                 onToggleFavorite={() => toggleFavorite(audio._id)}
                 onDelete={handleDelete}
+                onAddToAlbum={(id) => setAddToAlbumAudioId(id)}
               />
             ))}
           </div>
@@ -207,6 +210,14 @@ export default function Library() {
       )}
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+
+      {/* Add to Existing Album Modal */}
+      {addToAlbumAudioId && (
+        <AddToAlbumModal
+          audioId={addToAlbumAudioId}
+          onClose={() => setAddToAlbumAudioId(null)}
+        />
+      )}
     </div>
   );
 }

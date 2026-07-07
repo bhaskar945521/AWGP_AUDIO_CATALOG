@@ -199,14 +199,11 @@ export default function Dashboard() {
     return audios.filter(a => a.albumIds && a.albumIds.some(id => (typeof id === 'string' ? id : id._id) === albumId)).length;
   };
 
-  // Get audio count for each category
-  const getCategoryAudioCount = (catId, catName) => {
-    const catAlbums = albums.filter(al => (al.categoryId && (typeof al.categoryId === 'string' ? al.categoryId : al.categoryId._id) === catId));
-    const catAlbumIds = catAlbums.map(al => al._id);
-    return audios.filter(a => {
-      if (a.albumIds && a.albumIds.some(id => catAlbumIds.includes(typeof id === 'string' ? id : id._id))) return true;
-      if (a.category === catName) return true;
-      return false;
+  // Get album count for each category
+  const getCategoryAlbumCount = (catId) => {
+    return albums.filter(al => {
+      const cid = typeof al.categoryId === 'string' ? al.categoryId : al.categoryId?._id;
+      return cid === catId;
     }).length;
   };
 
@@ -381,7 +378,7 @@ export default function Dashboard() {
                 <div className="categories-marquee-content">
                   {([...categories, ...categories] || []).map((cat, index) => (
                     <CategoryCard key={`${cat._id}-${index}`} title={cat.name}
-                      count={getCategoryAudioCount(cat._id, cat.name)}
+                      count={getCategoryAlbumCount(cat._id)}
                       icon={categoryIcons[cat.name?.toLowerCase()] || 'fas fa-folder'}
                       imageUrl={cat.coverImageUrl}
                       description={categoryDescriptions[cat.name?.toLowerCase()] || 'Explore spiritual content'}

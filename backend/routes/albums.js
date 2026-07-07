@@ -247,4 +247,52 @@ router.post('/from-selection-with-edits', auth, roleCheck(['admin','user','onlyu
     res.status(500).json({ error: err.message });
   }
 });
+// ─── PATCH /api/albums/:albumId/add-audios ───────────────────────────────────
+// Associate one or more audios to an existing album
+router.patch('/:albumId/add-audios', auth, roleCheck(['admin', 'user', 'onlyuser']), async (req, res) => {
+  try {
+    let { audioIds } = req.body;
+
+    if (!audioIds) return res.status(400).json({ error: 'audioIds is required' });
+
+    // Normalise: accept JSON string, array, or single string
+    if (typeof audioIds === 'string') {
+      try { audioIds = JSON.parse(audioIds); } catch (_) {
+        audioIds = audioIds.split(',').map(s => s.trim()).filter(Boolean);
+      }
+    }
+    if (!Array.isArray(audioIds) || audioIds.length === 0) {
+      return res.status(400).json({ error: 'audioIds must be a non-empty array' });
+    }
+
+    const album = await Album.findById(req.params.albumId);
+    if (!album) return res.status(404).json({ error: 'Album not found' });
+
+    // Verify all audio IDs exist
+    const found = await Audio.find({ _id: { $in: audioIds } }).select('_id');
+    if (found.length !== audioIds.length) {
+      return res.status(400).json({ error: 'One or more audioIds are invalid' });
+    }
+
+    // Add audios to album (avoid duplicates)
+    await Album.findByIdAndUpdate(
+      album._id,
+      { $addToSet: { audioIds: { $each: audioIds } } }
+    );
+
+    // Add album reference to each audio
+    await Audio.updateMany(
+      { _id: { $in: audioIds } },
+      { $addToSet: { albumIds: album._id } }
+    );
+
+    const updated = await Album.findById(album._id).populate('categoryId');
+    res.json({ message: 'Audios associated successfully', album: updated });
+  } catch (err) {
+    console.error('[add-audios]', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
+

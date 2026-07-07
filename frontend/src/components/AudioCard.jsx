@@ -7,7 +7,7 @@ import { resolveUrl } from '../api';
 export default function AudioCard({
   _id, title, speaker, category, language, duration,
   isFavorite, image, imageUrl,
-  onPlay, onToggleFavorite, onDelete
+  onPlay, onToggleFavorite, onDelete, onAddToAlbum
 }) {
   const { isAdmin } = useAuth();
   const navigate = useNavigate();
@@ -44,6 +44,15 @@ export default function AudioCard({
         {/* Admin options */}
         {isAdmin && (
           <div className="audio-options" onClick={e => e.stopPropagation()}>
+            {/* Add to Existing Album */}
+            <button
+              className="audio-option-btn"
+              title="Add to Existing Album"
+              onClick={() => onAddToAlbum && onAddToAlbum(_id)}
+              style={{ color: '#f7a84d' }}
+            >
+              <i className="fas fa-folder-plus" />
+            </button>
             <button
               className="audio-option-btn delete"
               title="Delete"
