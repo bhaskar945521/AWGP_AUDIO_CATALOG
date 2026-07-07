@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import api, { resolveUrl } from '../api';
-import AudioCard from './AudioCard';
+
 import { useAudio } from '../context/AudioContext';
 import toast from 'react-hot-toast';
 import Footer from './Footer';
-import './AlbumDetails.css';
 
 export default function AlbumDetails() {
   const { id } = useParams();
@@ -137,44 +136,56 @@ export default function AlbumDetails() {
           <div className="section-title">Tracks in this Album</div>
         </div>
 
-          {audios.length === 0 ? (
-            <div className="empty-state" style={{ padding: '60px 0', border: '1.5px dashed var(--border)', borderRadius: 12 }}>
-              <div className="empty-icon"><i className="fas fa-music" style={{ fontSize: '2.5rem' }} /></div>
-              <div className="empty-title">No tracks yet</div>
-              <div className="empty-desc">This album does not have any audio tracks associated with it yet.</div>
-            </div>
-          ) : (
-            <table className="audio-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr>
-                  <th style={{ padding: '8px', borderBottom: '2px solid var(--border)', textAlign: 'left' }}>Title</th>
-                  <th style={{ padding: '8px', borderBottom: '2px solid var(--border)', textAlign: 'left' }}>Speaker</th>
-                  <th style={{ padding: '8px', borderBottom: '2px solid var(--border)', textAlign: 'left' }}>Duration</th>
-                  <th style={{ padding: '8px', borderBottom: '2px solid var(--border)', textAlign: 'center' }}>Fav</th>
-                  <th style={{ padding: '8px', borderBottom: '2px solid var(--border)', textAlign: 'center' }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {audios.map(audio => (
-                  <tr key={audio._id} className="audio-row" style={{ cursor: 'pointer' }} onClick={() => { setQueue(audios); setCurrentAudio(audio); }}>
-                    <td style={{ padding: '8px', borderBottom: '1px solid var(--border)' }}>{audio.title}</td>
-                    <td style={{ padding: '8px', borderBottom: '1px solid var(--border)' }}>{audio.speaker}</td>
-                    <td style={{ padding: '8px', borderBottom: '1px solid var(--border)' }}>{audio.duration}</td>
-                    <td style={{ padding: '8px', borderBottom: '1px solid var(--border)', textAlign: 'center' }}>
-                      <button type="button" className="admin-input" onClick={e => { e.stopPropagation(); toggleFavorite(audio._id); }} style={{ background: 'none', border: 'none' }}>
-                        {audio.isFavorite ? <i className="fas fa-star" style={{ color: '#f5c518' }} /> : <i className="far fa-star" />}
-                      </button>
-                    </td>
-                    <td style={{ padding: '8px', borderBottom: '1px solid var(--border)', textAlign: 'center' }}>
-                      <button type="button" className="admin-input album-card-admin-btn-delete" onClick={e => { e.stopPropagation(); handleDelete(audio._id); }} style={{ background: 'none', border: 'none' }}>
-                        <i className="fas fa-trash-alt" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+        {audios.length === 0 ? (
+          <div className="empty-state" style={{ padding: '60px 0', border: '1.5px dashed var(--border)', borderRadius: 12 }}>
+            <div className="empty-icon"><i className="fas fa-music" style={{ fontSize: '2.5rem' }} /></div>
+            <div className="empty-title">No tracks yet</div>
+            <div className="empty-desc">This album does not have any audio tracks associated with it yet.</div>
+          </div>
+        ) : (
+          <div className="audios-grid">
+            <div className="audio-list" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {audios.map((audio, idx) => {
+              const coverSrc = audio.imageUrl && audio.imageUrl !== '/placeholder.png'
+                ? resolveUrl(audio.imageUrl)
+                : audio.image && audio.image !== '/placeholder.png'
+                  ? audio.image
+                  : '/placeholder.png';
+              return (
+                <div
+                  key={audio._id}
+                  className="audio-row"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '8px 12px',
+                    background: 'var(--card-bg)',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    gap: '12px',
+                    border: '1px solid var(--border)'
+                  }}
+                  onClick={() => { setQueue(audios); setCurrentAudio(audio); }}
+                >
+                  <span style={{ width: '24px', fontWeight: '600' }}>{idx + 1}.</span>
+                  <img
+                    src={coverSrc}
+                    alt={audio.title}
+                    style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '4px' }}
+                    onError={e => { e.currentTarget.src = '/placeholder.png'; }}
+                  />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: '500', color: 'var(--text-main)' }}>{audio.title}</div>
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                      {audio.speaker || 'Unknown Speaker'}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          </div>
+        )}
       </section>
       <Footer />
     </div>
