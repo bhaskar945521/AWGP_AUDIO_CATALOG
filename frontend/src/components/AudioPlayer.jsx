@@ -12,6 +12,8 @@ export default function AudioPlayer({ currentAudio, onNext, onPrev, onClose }) {
     setIsPlaying,
     repeatMode,
     cycleRepeat,
+    isShuffle,
+    toggleShuffle,
     progress,
     currentTime,
     duration,
@@ -143,23 +145,37 @@ export default function AudioPlayer({ currentAudio, onNext, onPrev, onClose }) {
         </div>
       </div>
 
-      {/* Volume + Repeat + Close — RIGHT */}
+      {/* Volume + Repeat + Shuffle + Close — RIGHT */}
       <div className="player-actions">
+        {/* Shuffle button */}
+        <button
+          className={`action-btn shuffle-btn ${isShuffle ? 'active' : ''}`}
+          onClick={toggleShuffle}
+          title={isShuffle ? 'Shuffle: On' : 'Shuffle: Off'}
+          style={{ cursor: 'pointer' }}
+        >
+          <i className="fas fa-random" />
+        </button>
+
         {/* 3-state repeat button */}
         <button
           className={`action-btn repeat-btn ${repeatMode !== REPEAT_NONE ? 'active' : ''} ${repeatMode === REPEAT_ONE ? 'repeat-one' : ''}`}
           onClick={cycleRepeat}
           title={repeatLabel}
-          style={{ position: 'relative' }}
+          style={{ position: 'relative', cursor: 'pointer' }}
         >
           <i className={repeatIcon} />
           {/* "1" badge when repeat-one is active */}
           {repeatMode === REPEAT_ONE && (
-            <span className="repeat-one-badge">1</span>
+            <span className="repeat-one-badge" style={{ position: 'absolute', top: '-6px', right: '-6px', background: 'var(--brand-orange-accent, #f97316)', color: '#fff', fontSize: '9px', fontWeight: 'bold', borderRadius: '50%', width: '13px', height: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>1</span>
+          )}
+          {/* "∞" badge when repeat-all is active */}
+          {repeatMode === REPEAT_ALL && (
+            <span className="repeat-one-badge" style={{ position: 'absolute', top: '-6px', right: '-6px', background: 'var(--brand-orange-accent, #f97316)', color: '#fff', fontSize: '8px', fontWeight: 'bold', borderRadius: '50%', width: '13px', height: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center', paddingBottom: '1px' }}>∞</span>
           )}
         </button>
 
-        <button className="action-btn" onClick={toggleMute} title={isMuted ? 'Unmute' : 'Mute'}>
+        <button className="action-btn" onClick={toggleMute} title={isMuted ? 'Unmute' : 'Mute'} style={{ cursor: 'pointer' }}>
           <i className={volumeIcon} />
         </button>
         <input
@@ -172,7 +188,7 @@ export default function AudioPlayer({ currentAudio, onNext, onPrev, onClose }) {
           style={{ width: 80 }}
           title="Volume"
         />
-        <button className="action-btn" onClick={onClose} title="Close player">
+        <button className="action-btn" onClick={onClose} title="Close player" style={{ cursor: 'pointer' }}>
           <i className="fas fa-times" />
         </button>
       </div>

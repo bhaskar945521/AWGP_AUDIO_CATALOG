@@ -61,8 +61,7 @@ export default function Albums() {
   }, []);
 
   const getAlbumAudioCount = (albumId) => {
-    // Count audios that reference this album via the `albumIds` array
-    return audios.filter(audio => Array.isArray(audio.albumIds) && audio.albumIds.includes(albumId)).length;
+    return audios.filter(a => a.albumIds && a.albumIds.some(id => (typeof id === 'string' ? id : id._id) === albumId)).length;
   };
 
   const openCreateModal = () => {

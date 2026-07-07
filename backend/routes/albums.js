@@ -251,7 +251,7 @@ router.post('/from-selection-with-edits', auth, roleCheck(['admin','user','onlyu
 // Associate one or more audios to an existing album
 router.patch('/:albumId/add-audios', auth, roleCheck(['admin', 'user', 'onlyuser']), async (req, res) => {
   try {
-    let { audioIds } = req.body;
+    let { audioIds, audioUpdates } = req.body;
 
     if (!audioIds) return res.status(400).json({ error: 'audioIds is required' });
 
@@ -274,6 +274,28 @@ router.patch('/:albumId/add-audios', auth, roleCheck(['admin', 'user', 'onlyuser
       return res.status(400).json({ error: 'One or more audioIds are invalid' });
     }
 
+    // Apply optional audio edits
+    const updatedAudios = [];
+    if (audioUpdates) {
+      let parsedUpdates = audioUpdates;
+      if (typeof audioUpdates === 'string') {
+        try { parsedUpdates = JSON.parse(audioUpdates); } catch (_) {}
+      }
+      if (Array.isArray(parsedUpdates) && parsedUpdates.length) {
+        for (const upd of parsedUpdates) {
+          const { audioId, title, speaker, description, tags } = upd;
+          const audio = await Audio.findById(audioId);
+          if (!audio) continue;
+          if (title !== undefined) audio.title = title;
+          if (speaker !== undefined) audio.speaker = speaker;
+          if (description !== undefined) audio.description = description;
+          if (Array.isArray(tags)) audio.tags = tags;
+          await audio.save();
+          updatedAudios.push(audio);
+        }
+      }
+    }
+
     // Add audios to album (avoid duplicates)
     await Album.findByIdAndUpdate(
       album._id,
@@ -287,7 +309,7 @@ router.patch('/:albumId/add-audios', auth, roleCheck(['admin', 'user', 'onlyuser
     );
 
     const updated = await Album.findById(album._id).populate('categoryId');
-    res.json({ message: 'Audios associated successfully', album: updated });
+    res.json({ message: 'Audios associated successfully', album: updated, updatedAudios });
   } catch (err) {
     console.error('[add-audios]', err);
     res.status(500).json({ error: err.message });

@@ -27,6 +27,12 @@ export default function AlbumsManagement() {
   const [selectedAudioIds, setSelectedAudioIds] = useState([]);
   const [editAudioIds, setEditAudioIds] = useState([]);
 
+  // States for associating selected audios (existing vs new album)
+  const [formMode, setFormMode] = useState('create'); // 'create' or 'existing'
+  const [existingCategoryId, setExistingCategoryId] = useState('');
+  const [existingAlbumId, setExistingAlbumId] = useState('');
+
+
   // States for filtering the audios list
   const [audioSearchQuery, setAudioSearchQuery] = useState('');
   const [audioCategoryFilter, setAudioCategoryFilter] = useState('');
@@ -169,6 +175,47 @@ export default function AlbumsManagement() {
   const handleCreate = async e => {
     e.preventDefault();
     setCreating(true);
+
+    if (formMode === 'existing') {
+      if (!existingAlbumId) {
+        toast.error('Please select an existing album');
+        setCreating(false);
+        return;
+      }
+      if (selectedAudioIds.length === 0) {
+        toast.error('Please select at least one audio track');
+        setCreating(false);
+        return;
+      }
+
+      const loadingToast = toast.loading('Adding to existing album...');
+      try {
+        await api.patch(
+          `/albums/${existingAlbumId}/add-audios`,
+          {
+            audioIds: selectedAudioIds,
+            audioUpdates: Object.entries(audioEdits)
+              .filter(([, upd]) => Object.keys(upd).length)
+              .map(([audioId, upd]) => ({ audioId, ...upd }))
+          },
+          authConfig()
+        );
+
+        toast.success('Audios added to album successfully', { id: loadingToast });
+        setSelectedAudioIds([]);
+        setAudioEdits({});
+        setExistingCategoryId('');
+        setExistingAlbumId('');
+        fetchAlbums();
+      } catch (err) {
+        toast.error(err.response?.data?.error || err.response?.data?.message || 'Failed to add to album', { id: loadingToast });
+        console.error('Add to album error', err);
+      } finally {
+        setCreating(false);
+      }
+      return;
+    }
+
     const loadingToast = toast.loading('Creating album...');
 
     try {
@@ -360,89 +407,179 @@ export default function AlbumsManagement() {
         <span className="admin-panel-count">{albums.length} albums</span>
       </div>
 
-      {/* Create Album Form */}
-      <form className="admin-add-album" onSubmit={handleCreate} style={{ marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', padding: '16px', background: 'var(--saffron-pale)', borderRadius: '8px', border: '1px solid var(--border-saffron)', width: '100%' }}>
-        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', width: '100%', alignItems: 'center' }}>
-          <input type="text" name="name" placeholder="Slug / ID" className="admin-input" style={{ flex: 1, minWidth: '120px' }} value={newAlbum.name} onChange={handleInputChange} required />
-          <input type="text" name="title" placeholder="Title" className="admin-input" style={{ flex: 1, minWidth: '150px' }} value={newAlbum.title} onChange={handleInputChange} required />
-          <input type="text" name="description" placeholder="Description" className="admin-input" style={{ flex: 1.5, minWidth: '200px' }} value={newAlbum.description} onChange={handleInputChange} />
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <button type="button" className="admin-input" onClick={() => coverFileRef.current && coverFileRef.current.click()}>Upload Cover Image</button>
-            {newAlbum.coverImage && (
-              <img
-                src={resolveUrl(newAlbum.coverImage) || newAlbum.coverImage}
-                alt="cover preview"
-                style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px', border: '1px solid var(--border)' }}
-              />
-            )}
-          </div>
-          <input type="file" accept="image/*" ref={coverFileRef} style={{ display: 'none' }} onChange={handleCoverUpload} />
+      {/* Create / Associate Form */}
+      <form className="admin-add-album" onSubmit={handleCreate} style={{ marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', padding: '20px', background: 'var(--saffron-pale)', borderRadius: '12px', border: '1px solid var(--border-saffron)', width: '100%' }}>
+        {/* Mode Tabs */}
+        <div style={{ display: 'flex', gap: '10px', borderBottom: '1px solid rgba(247,168,77,0.15)', paddingBottom: '10px', marginBottom: '8px' }}>
+          <button
+            type="button"
+            onClick={() => setFormMode('create')}
+            style={{
+              padding: '6px 14px',
+              fontSize: '0.85rem',
+              fontWeight: 700,
+              borderRadius: '6px',
+              border: 'none',
+              cursor: 'pointer',
+              background: formMode === 'create' ? 'var(--saffron)' : 'transparent',
+              color: formMode === 'create' ? '#fff' : 'var(--text-muted)',
+              transition: 'all 0.2s'
+            }}
+          >
+            <i className="fas fa-plus-circle" style={{ marginRight: 6 }} />
+            Create New Album
+          </button>
+          <button
+            type="button"
+            onClick={() => setFormMode('existing')}
+            style={{
+              padding: '6px 14px',
+              fontSize: '0.85rem',
+              fontWeight: 700,
+              borderRadius: '6px',
+              border: 'none',
+              cursor: 'pointer',
+              background: formMode === 'existing' ? 'var(--saffron)' : 'transparent',
+              color: formMode === 'existing' ? '#fff' : 'var(--text-muted)',
+              transition: 'all 0.2s'
+            }}
+          >
+            <i className="fas fa-folder-plus" style={{ marginRight: 6 }} />
+            Add to Existing Album
+          </button>
         </div>
-        <div style={{ width: '100%' }}>
-          <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>Category</label>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center', marginBottom: '10px' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', cursor: 'pointer' }}>
-              <input
-                type="radio"
-                name="categoryType"
-                checked={!isNewCategory}
-                onChange={() => {
-                  setIsNewCategory(false);
-                  setNewCategoryName('');
-                  setNewCategoryCover('');
-                }}
-              />
-              Use existing category
-            </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', cursor: 'pointer' }}>
-              <input
-                type="radio"
-                name="categoryType"
-                checked={isNewCategory}
-                onChange={() => {
-                  setIsNewCategory(true);
-                  setSelectedCategoryId('');
-                }}
-              />
-              Create new category
-            </label>
-          </div>
 
-          {!isNewCategory ? (
-            <select value={selectedCategoryId} onChange={e => setSelectedCategoryId(e.target.value)} className="admin-input" style={{ width: '100%', maxWidth: '320px' }} required>
-              <option value="">-- Choose existing category --</option>
-              {categories.map(cat => (
-                <option key={cat._id} value={cat._id}>{cat.name}</option>
-              ))}
-            </select>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%', maxWidth: '320px' }}>
-              <input
-                type="text"
-                placeholder="New category name"
-                className="admin-input"
-                value={newCategoryName}
-                onChange={e => setNewCategoryName(e.target.value)}
-                style={{ width: '100%' }}
-                required
-              />
+        {formMode === 'create' ? (
+          <>
+            {/* Create New Album Fields */}
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', width: '100%', alignItems: 'center' }}>
+              <input type="text" name="name" placeholder="Slug / ID" className="admin-input" style={{ flex: 1, minWidth: '120px' }} value={newAlbum.name} onChange={handleInputChange} required />
+              <input type="text" name="title" placeholder="Title" className="admin-input" style={{ flex: 1, minWidth: '150px' }} value={newAlbum.title} onChange={handleInputChange} required />
+              <input type="text" name="description" placeholder="Description" className="admin-input" style={{ flex: 1.5, minWidth: '200px' }} value={newAlbum.description} onChange={handleInputChange} />
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <button type="button" className="admin-input" onClick={() => categoryCoverFileRef.current && categoryCoverFileRef.current.click()}>Upload Category Cover (Optional)</button>
-                {newCategoryCover && (
+                <button type="button" className="admin-input" onClick={() => coverFileRef.current && coverFileRef.current.click()}>Upload Cover Image</button>
+                {newAlbum.coverImage && (
                   <img
-                    src={resolveUrl(newCategoryCover) || newCategoryCover}
-                    alt="category cover preview"
+                    src={resolveUrl(newAlbum.coverImage) || newAlbum.coverImage}
+                    alt="cover preview"
                     style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px', border: '1px solid var(--border)' }}
                   />
                 )}
               </div>
-              <input type="file" accept="image/*" ref={categoryCoverFileRef} style={{ display: 'none' }} onChange={handleCategoryCoverUpload} />
+              <input type="file" accept="image/*" ref={coverFileRef} style={{ display: 'none' }} onChange={handleCoverUpload} />
             </div>
-          )}
-        </div>
+            <div style={{ width: '100%' }}>
+              <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>Category</label>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center', marginBottom: '10px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', cursor: 'pointer' }}>
+                  <input
+                    type="radio"
+                    name="categoryType"
+                    checked={!isNewCategory}
+                    onChange={() => {
+                      setIsNewCategory(false);
+                      setNewCategoryName('');
+                      setNewCategoryCover('');
+                    }}
+                  />
+                  Use existing category
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', cursor: 'pointer' }}>
+                  <input
+                    type="radio"
+                    name="categoryType"
+                    checked={isNewCategory}
+                    onChange={() => {
+                      setIsNewCategory(true);
+                      setSelectedCategoryId('');
+                    }}
+                  />
+                  Create new category
+                </label>
+              </div>
+
+              {!isNewCategory ? (
+                <select value={selectedCategoryId} onChange={e => setSelectedCategoryId(e.target.value)} className="admin-input" style={{ width: '100%', maxWidth: '320px' }} required>
+                  <option value="">-- Choose existing category --</option>
+                  {categories.map(cat => (
+                    <option key={cat._id} value={cat._id}>{cat.name}</option>
+                  ))}
+                </select>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%', maxWidth: '320px' }}>
+                  <input
+                    type="text"
+                    placeholder="New category name"
+                    className="admin-input"
+                    value={newCategoryName}
+                    onChange={e => setNewCategoryName(e.target.value)}
+                    style={{ width: '100%' }}
+                    required
+                  />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <button type="button" className="admin-input" onClick={() => categoryCoverFileRef.current && categoryCoverFileRef.current.click()}>Upload Category Cover (Optional)</button>
+                    {newCategoryCover && (
+                      <img
+                        src={resolveUrl(newCategoryCover) || newCategoryCover}
+                        alt="category cover preview"
+                        style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px', border: '1px solid var(--border)' }}
+                      />
+                    )}
+                  </div>
+                  <input type="file" accept="image/*" ref={categoryCoverFileRef} style={{ display: 'none' }} onChange={handleCategoryCoverUpload} />
+                </div>
+              )}
+            </div>
+          </>
+        ) : (
+          /* Existing Album Mode Fields */
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', width: '100%' }}>
+            <div style={{ flex: 1, minWidth: '220px' }}>
+              <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>Choose Category</label>
+              <select
+                value={existingCategoryId}
+                onChange={e => {
+                  setExistingCategoryId(e.target.value);
+                  setExistingAlbumId('');
+                }}
+                className="admin-input"
+                style={{ width: '100%' }}
+                required
+              >
+                <option value="">-- Choose Category --</option>
+                {categories.map(cat => (
+                  <option key={cat._id} value={cat._id}>{cat.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div style={{ flex: 1, minWidth: '220px' }}>
+              <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>Choose Existing Album</label>
+              <select
+                value={existingAlbumId}
+                onChange={e => setExistingAlbumId(e.target.value)}
+                className="admin-input"
+                style={{ width: '100%' }}
+                disabled={!existingCategoryId}
+                required
+              >
+                <option value="">-- Select Album --</option>
+                {albums
+                  .filter(al => {
+                    const cid = al.categoryId && typeof al.categoryId === 'object' ? al.categoryId._id : al.categoryId;
+                    return cid === existingCategoryId;
+                  })
+                  .map(al => (
+                    <option key={al._id} value={al._id}>{al.title || al.name}</option>
+                  ))}
+              </select>
+            </div>
+          </div>
+        )}
+
         <div style={{ width: '100%', marginBottom: '10px' }}>
-          <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>Attach Audios (optional):</label>
-          
+          <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>Select Audios to Associate:</label>
+
           {/* Filters */}
           <div style={{ display: 'flex', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
             <input
@@ -511,22 +648,34 @@ export default function AlbumsManagement() {
           <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
             {selectedAudioIds.length} audio{selectedAudioIds.length === 1 ? '' : 's'} selected
           </span>
-          <button
-            type="button"
-            className="btn-ghost"
-            onClick={() => {
-              if (canBuildAlbum) setShowPreview(true);
-              else toast.error('Fill album name, title and category first');
-            }}
-            disabled={!canBuildAlbum}
-          >
-            <i className="fas fa-eye" /> Preview
-          </button>
-          <button type="submit" className="btn-primary" disabled={!canBuildAlbum || creating}>
-            {creating ? <i className="fas fa-spinner fa-spin" /> : <><i className="fas fa-plus" /> Create Album</>}
-          </button>
+          {formMode === 'create' ? (
+            <>
+              <button
+                type="button"
+                className="btn-ghost"
+                onClick={() => {
+                  if (canBuildAlbum) setShowPreview(true);
+                  else toast.error('Fill album name, title and category first');
+                }}
+                disabled={!canBuildAlbum}
+              >
+                <i className="fas fa-eye" /> Preview
+              </button>
+              <button type="submit" className="btn-primary" disabled={!canBuildAlbum || creating}>
+                {creating ? <i className="fas fa-spinner fa-spin" /> : <><i className="fas fa-plus" /> Create Album</>}
+              </button>
+            </>
+          ) : (
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={!existingAlbumId || selectedAudioIds.length === 0 || creating}
+            >
+              {creating ? <i className="fas fa-spinner fa-spin" /> : <><i className="fas fa-save" /> Save Changes</>}
+            </button>
+          )}
         </div>
-      </form>
+       </form>
 
       {/* Search Input */}
       <input type="text" placeholder="Search albums..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="admin-input" style={{ marginBottom: '1rem', width: '100%', maxWidth: '300px' }} />
