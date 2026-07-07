@@ -46,6 +46,23 @@ export default function AlbumDetails() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, location.key]);
 
+  // Refetch when page becomes visible or window gains focus
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        fetchAlbumData();
+      }
+    };
+    const handleFocus = () => fetchAlbumData();
+    document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, []);
+
+
   const playAll = () => {
     if (audios.length === 0) return;
     setQueue(audios);
@@ -122,7 +139,7 @@ export default function AlbumDetails() {
             <button className="btn-secondary album-back-btn" onClick={() => navigate('/albums')}>
               Back to Albums
             </button>
-            <span className="track-count-box" style={{ display: 'inline-flex', alignItems: 'center', background: 'var(--card-bg)', padding: '4px 8px', borderRadius: '6px', border: '1px solid var(--border)' }}>
+            <span className="track-count-box" style={{ display: 'inline-flex', alignItems: 'center', background: '#ff9800', color: '#fff', padding: '4px 8px', borderRadius: '6px', border: '1px solid var(--border)' }}>
                 {audios.length} {audios.length === 1 ? 'Track' : 'Tracks'}
             </span>
           </div>
