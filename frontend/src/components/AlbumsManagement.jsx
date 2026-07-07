@@ -22,6 +22,7 @@ export default function AlbumsManagement() {
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
   const [isNewCategory, setIsNewCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
+  const [newCategoryCover, setNewCategoryCover] = useState('');
   const [editCategoryId, setEditCategoryId] = useState('');
   const [selectedAudioIds, setSelectedAudioIds] = useState([]);
   const [editAudioIds, setEditAudioIds] = useState([]);
@@ -76,6 +77,7 @@ export default function AlbumsManagement() {
   const [showCreateFromSelection, setShowCreateFromSelection] = useState(false);
   const fileInputRef = useRef(null);
   const coverFileRef = useRef(null);
+  const categoryCoverFileRef = useRef(null);
   const editCoverFileRef = useRef(null);
 
   const canBuildAlbum = !creating && newAlbum.name.trim() && newAlbum.title.trim() && (selectedCategoryId || newCategoryName.trim());
@@ -187,7 +189,7 @@ export default function AlbumsManagement() {
         } else {
           const catRes = await api.post(
             '/categories',
-            { name: newCategoryName.trim() },
+            { name: newCategoryName.trim(), coverImageUrl: newCategoryCover },
             authConfig()
           );
           finalCategoryId = catRes.data._id;
@@ -222,11 +224,12 @@ export default function AlbumsManagement() {
       setSelectedCategoryId('');
       setIsNewCategory(false);
       setNewCategoryName('');
+      setNewCategoryCover('');
       setSelectedAudioIds([]);
       setAudioEdits({});
       fetchAlbums();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to create album', { id: loadingToast });
+      toast.error(err.response?.data?.error || err.response?.data?.message || 'Failed to create album', { id: loadingToast });
       console.error('Create album error', err);
     } finally {
       setCreating(false);
@@ -258,7 +261,7 @@ export default function AlbumsManagement() {
       fetchAlbums();
     } catch (err) {
       console.error('Update album error', err);
-      toast.error(err.response?.data?.message || 'Failed to update album');
+      toast.error(err.response?.data?.error || err.response?.data?.message || 'Failed to update album');
     }
   };
 
@@ -270,7 +273,7 @@ export default function AlbumsManagement() {
       fetchAlbums();
     } catch (err) {
       console.error('Delete album error', err);
-      toast.error(err.response?.data?.message || 'Failed to delete album');
+      toast.error(err.response?.data?.error || err.response?.data?.message || 'Failed to delete album');
     }
   };
 
@@ -324,6 +327,31 @@ export default function AlbumsManagement() {
       });
   };
 
+  // Handle category cover image upload (for new category creation)
+  const handleCategoryCoverUpload = e => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Show local preview immediately
+    const localUrl = URL.createObjectURL(file);
+    setNewCategoryCover(localUrl);
+
+    const formData = new FormData();
+    formData.append('images', file);
+    api.post('/gallery/upload', formData, {
+      headers: { ...authConfig().headers, 'Content-Type': 'multipart/form-data' },
+    })
+      .then(res => {
+        const uploaded = Array.isArray(res.data) ? res.data[0] : res.data;
+        setNewCategoryCover(uploaded?.url || '');
+        toast.success('Category cover uploaded successfully');
+      })
+      .catch(err => {
+        console.error('Category cover upload error', err);
+        toast.error('Failed to upload category cover');
+      });
+  };
+
   // UI Rendering
   return (
     <div className="admin-panel">
@@ -361,6 +389,7 @@ export default function AlbumsManagement() {
                 onChange={() => {
                   setIsNewCategory(false);
                   setNewCategoryName('');
+                  setNewCategoryCover('');
                 }}
               />
               Use existing category
@@ -387,15 +416,28 @@ export default function AlbumsManagement() {
               ))}
             </select>
           ) : (
-            <input
-              type="text"
-              placeholder="New category name"
-              className="admin-input"
-              value={newCategoryName}
-              onChange={e => setNewCategoryName(e.target.value)}
-              style={{ width: '100%', maxWidth: '320px' }}
-              required
-            />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%', maxWidth: '320px' }}>
+              <input
+                type="text"
+                placeholder="New category name"
+                className="admin-input"
+                value={newCategoryName}
+                onChange={e => setNewCategoryName(e.target.value)}
+                style={{ width: '100%' }}
+                required
+              />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <button type="button" className="admin-input" onClick={() => categoryCoverFileRef.current && categoryCoverFileRef.current.click()}>Upload Category Cover (Optional)</button>
+                {newCategoryCover && (
+                  <img
+                    src={resolveUrl(newCategoryCover) || newCategoryCover}
+                    alt="category cover preview"
+                    style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px', border: '1px solid var(--border)' }}
+                  />
+                )}
+              </div>
+              <input type="file" accept="image/*" ref={categoryCoverFileRef} style={{ display: 'none' }} onChange={handleCategoryCoverUpload} />
+            </div>
           )}
         </div>
         <div style={{ width: '100%', marginBottom: '10px' }}>

@@ -126,7 +126,7 @@ export default function Albums() {
       setModalOpen(false);
       fetchAlbums();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to save album');
+      toast.error(err.response?.data?.error || err.response?.data?.message || 'Failed to save album');
       console.error(err);
     }
   };
@@ -146,7 +146,7 @@ export default function Albums() {
       toast.success('Album deleted successfully');
       fetchAlbums();
     } catch (err) {
-      toast.error('Failed to delete album');
+      toast.error(err.response?.data?.error || err.response?.data?.message || 'Failed to delete album');
       console.error(err);
     }
   };

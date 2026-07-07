@@ -62,18 +62,21 @@ function parseArrayField(field) {
   router.post('/', auth, roleCheck(['admin','user','onlyuser']), upload.single('coverImage'), async (req, res) => {
     try {
       const { name, title, description, categoryId, audioIds } = req.body;
-      let coverImage = '/album_placeholder.png';
-      
-      if (req.file) {
-        coverImage = `/uploads/album-covers/${req.file.filename}`;
-      }
+    let coverImage = req.body.coverImage || '/album_placeholder.png';
+    
+    if (req.file) {
+      coverImage = `/uploads/album-covers/${req.file.filename}`;
+    }
 
     const newAlbum = new Album({ name, title, description, coverImage, categoryId, audioIds });
     await newAlbum.save();
     res.status(201).json(newAlbum);
     } catch (err) {
       console.error(err);
-      res.status(500).json({ message: 'Server error' });
+      if (err.code === 11000) {
+        return res.status(400).json({ error: 'An album with this Name / Slug already exists. Please choose a unique name.' });
+      }
+      res.status(500).json({ message: 'Server error', error: err.message });
     }
   });
 
@@ -91,18 +94,23 @@ function parseArrayField(field) {
 
       if (req.file) {
         // Delete old cover image if it exists and is not placeholder
-        if (album.coverImage && album.coverImage !== '/album_placeholder.png') {
+        if (album.coverImage && album.coverImage !== '/album_placeholder.png' && !album.coverImage.startsWith('http') && album.coverImage !== req.body.coverImage) {
           deleteLocalFile(album.coverImage);
         }
         // Set new cover image
         album.coverImage = `/uploads/album-covers/${req.file.filename}`;
+      } else if (req.body.coverImage !== undefined) {
+        album.coverImage = req.body.coverImage;
       }
 
     await album.save();
       res.json(album);
     } catch (err) {
       console.error(err);
-      res.status(500).json({ message: 'Server error' });
+      if (err.code === 11000) {
+        return res.status(400).json({ error: 'An album with this Name / Slug already exists. Please choose a unique name.' });
+      }
+      res.status(500).json({ message: 'Server error', error: err.message });
     }
   });
 
@@ -133,7 +141,7 @@ router.delete('/:id', auth, roleCheck(['admin','user','onlyuser']), async (req, 
 router.post('/from-selection', auth, roleCheck(['admin','user','onlyuser']), upload.single('coverImage'), async (req, res) => {
   try {
     const { albumName, title, description, categoryId, audioIds } = req.body;
-    let coverImage = '/album_placeholder.png';
+    let coverImage = req.body.coverImage || '/album_placeholder.png';
 
     if (!albumName || !categoryId) {
       return res.status(400).json({ error: 'albumName and categoryId are required' });
@@ -170,6 +178,9 @@ router.post('/from-selection', auth, roleCheck(['admin','user','onlyuser']), upl
     res.status(201).json(newAlbum);
   } catch (err) {
     console.error(err);
+    if (err.code === 11000) {
+      return res.status(400).json({ error: 'An album with this Name / Slug already exists. Please choose a unique name.' });
+    }
     res.status(500).json({ error: err.message });
   }
 });
@@ -178,7 +189,7 @@ router.post('/from-selection', auth, roleCheck(['admin','user','onlyuser']), upl
 router.post('/from-selection-with-edits', auth, roleCheck(['admin','user','onlyuser']), upload.single('coverImage'), async (req, res) => {
   try {
     const { albumName, title, description, categoryId, audioIds, audioUpdates } = req.body;
-    let coverImage = '/album_placeholder.png';
+    let coverImage = req.body.coverImage || '/album_placeholder.png';
 
     if (!albumName || !categoryId) {
       return res.status(400).json({ error: 'albumName and categoryId are required' });
@@ -230,6 +241,9 @@ router.post('/from-selection-with-edits', auth, roleCheck(['admin','user','onlyu
     res.status(201).json({ album: newAlbum, updatedAudios });
   } catch (err) {
     console.error(err);
+    if (err.code === 11000) {
+      return res.status(400).json({ error: 'An album with this Name / Slug already exists. Please choose a unique name.' });
+    }
     res.status(500).json({ error: err.message });
   }
 });
