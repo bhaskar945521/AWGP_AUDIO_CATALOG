@@ -1,0 +1,355 @@
+const express = require('express');
+const router = express.Router();
+const auth = require('../middleware/auth');
+const Favorite = require('../models/Favorite');
+const Like = require('../models/Like');
+const Dislike = require('../models/Dislike');
+const Feedback = require('../models/Feedback');
+const ListeningHistory = require('../models/ListeningHistory');
+const Audio = require('../models/Audio');
+
+// =============================================================
+// MODULE 4: FAVORITES
+// =============================================================
+
+// POST /api/audio/:id/favorite — Add to favorites
+router.post('/audio/:id/favorite', auth, async (req, res) => {
+  const audioId = req.params.id;
+  const userId = req.user._id;
+  try {
+    const audioExists = await Audio.findById(audioId);
+    if (!audioExists) return res.status(404).json({ message: 'Audio track not found' });
+
+    await Favorite.findOneAndUpdate(
+      { userId, audioId },
+      { userId, audioId },
+      { upsert: true, new: true }
+    );
+    res.status(201).json({ message: 'Added to favorites', favorited: true });
+  } catch (err) {
+    console.error('Favorite add error:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// DELETE /api/audio/:id/favorite — Remove from favorites
+router.delete('/audio/:id/favorite', auth, async (req, res) => {
+  const audioId = req.params.id;
+  const userId = req.user._id;
+  try {
+    await Favorite.findOneAndDelete({ userId, audioId });
+    res.json({ message: 'Removed from favorites', favorited: false });
+  } catch (err) {
+    console.error('Favorite remove error:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// GET /api/user/favorites — All favorited tracks for logged-in user
+router.get('/user/favorites', auth, async (req, res) => {
+  const userId = req.user._id;
+  try {
+    const favorites = await Favorite.find({ userId })
+      .populate('audioId')
+      .sort({ createdAt: -1 });
+    const audios = favorites.map(f => f.audioId).filter(Boolean);
+    res.json(audios);
+  } catch (err) {
+    console.error('Get favorites error:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// =============================================================
+// MODULE 5 & 6: LIKES & DISLIKES (mutually exclusive)
+// =============================================================
+
+// POST /api/audio/:id/like — Toggle like (removes dislike if present)
+router.post('/audio/:id/like', auth, async (req, res) => {
+  const audioId = req.params.id;
+  const userId = req.user._id;
+  try {
+    const existingLike = await Like.findOne({ userId, audioId });
+    if (existingLike) {
+      // Already liked — toggle off
+      await Like.findOneAndDelete({ userId, audioId });
+      const likeCount = await Like.countDocuments({ audioId });
+      return res.json({ liked: false, likeCount });
+    }
+    // Remove any existing dislike first (mutual exclusion)
+    await Dislike.findOneAndDelete({ userId, audioId });
+
+    await Like.create({ userId, audioId });
+    const likeCount = await Like.countDocuments({ audioId });
+    const dislikeCount = await Dislike.countDocuments({ audioId });
+    res.status(201).json({ liked: true, disliked: false, likeCount, dislikeCount });
+  } catch (err) {
+    console.error('Like error:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// POST /api/audio/:id/dislike — Toggle dislike (removes like if present)
+router.post('/audio/:id/dislike', auth, async (req, res) => {
+  const audioId = req.params.id;
+  const userId = req.user._id;
+  try {
+    const existingDislike = await Dislike.findOne({ userId, audioId });
+    if (existingDislike) {
+      // Already disliked — toggle off
+      await Dislike.findOneAndDelete({ userId, audioId });
+      const dislikeCount = await Dislike.countDocuments({ audioId });
+      return res.json({ disliked: false, dislikeCount });
+    }
+    // Remove any existing like first (mutual exclusion)
+    await Like.findOneAndDelete({ userId, audioId });
+
+    await Dislike.create({ userId, audioId });
+    const likeCount = await Like.countDocuments({ audioId });
+    const dislikeCount = await Dislike.countDocuments({ audioId });
+    res.status(201).json({ disliked: true, liked: false, likeCount, dislikeCount });
+  } catch (err) {
+    console.error('Dislike error:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// GET /api/audio/:id/reactions — Get like/dislike counts + user's current reaction
+router.get('/audio/:id/reactions', auth, async (req, res) => {
+  const audioId = req.params.id;
+  const userId = req.user._id;
+  try {
+    const [likeCount, dislikeCount, userLike, userDislike] = await Promise.all([
+      Like.countDocuments({ audioId }),
+      Dislike.countDocuments({ audioId }),
+      Like.findOne({ userId, audioId }),
+      Dislike.findOne({ userId, audioId }),
+    ]);
+    res.json({
+      likeCount,
+      dislikeCount,
+      liked: !!userLike,
+      disliked: !!userDislike,
+    });
+  } catch (err) {
+    console.error('Reactions fetch error:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// =============================================================
+// MODULE 7: FEEDBACK
+// =============================================================
+
+// POST /api/feedback — Submit feedback (public users)
+router.post('/feedback', auth, async (req, res) => {
+  const { message, rating, audioId, isGeneral } = req.body;
+  const userId = req.user._id;
+  if (!message || message.trim().length === 0) {
+    return res.status(400).json({ message: 'Feedback message is required' });
+  }
+  try {
+    const feedback = await Feedback.create({
+      userId,
+      audioId: audioId || null,
+      message: message.trim(),
+      rating: rating || null,
+      isGeneral: isGeneral || !audioId,
+    });
+    res.status(201).json({ message: 'Feedback submitted', feedback });
+  } catch (err) {
+    console.error('Feedback submit error:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// GET /api/feedback — List all feedback (admin & onlyuser only)
+router.get('/feedback', auth, async (req, res) => {
+  const role = req.user.role;
+  if (!['admin', 'onlyuser'].includes(role)) {
+    return res.status(403).json({ message: 'Access denied' });
+  }
+  try {
+    const feedback = await Feedback.find()
+      .populate('userId', 'fullName email username')
+      .populate('audioId', 'title speaker')
+      .sort({ createdAt: -1 });
+    res.json(feedback);
+  } catch (err) {
+    console.error('Feedback list error:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// POST /api/audio/:id/feedback — Submit feedback for a specific track
+router.post('/audio/:id/feedback', auth, async (req, res) => {
+  const audioId = req.params.id;
+  const { message, rating } = req.body;
+  const userId = req.user._id;
+  if (!message || message.trim().length === 0) {
+    return res.status(400).json({ message: 'Feedback message is required' });
+  }
+  try {
+    const feedback = await Feedback.create({
+      userId,
+      audioId,
+      message: message.trim(),
+      rating: rating || null,
+      isGeneral: false,
+    });
+    res.status(201).json({ message: 'Feedback submitted', feedback });
+  } catch (err) {
+    console.error('Audio feedback submit error:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// =============================================================
+// MODULE 8: LISTENING HISTORY
+// =============================================================
+
+// POST /api/listening/start — Record start of a listening session
+router.post('/listening/start', auth, async (req, res) => {
+  const { audioId } = req.body;
+  const userId = req.user._id;
+  if (!audioId) return res.status(400).json({ message: 'audioId is required' });
+  try {
+    const session = await ListeningHistory.create({
+      userId,
+      audioId,
+      sessionStart: new Date(),
+    });
+    res.status(201).json({ sessionId: session._id });
+  } catch (err) {
+    console.error('Listening start error:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// PATCH /api/listening/:sessionId/end — Record end of a session
+router.patch('/listening/:sessionId/end', auth, async (req, res) => {
+  const { sessionId } = req.params;
+  const { durationListened } = req.body;
+  try {
+    const session = await ListeningHistory.findOneAndUpdate(
+      { _id: sessionId, userId: req.user._id },
+      {
+        sessionEnd: new Date(),
+        durationListened: durationListened || 0,
+      },
+      { new: true }
+    );
+    if (!session) return res.status(404).json({ message: 'Session not found' });
+    res.json({ message: 'Session recorded', session });
+  } catch (err) {
+    console.error('Listening end error:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// GET /api/user/history — Get listening history for logged-in user
+router.get('/user/history', auth, async (req, res) => {
+  const userId = req.user._id;
+  try {
+    const history = await ListeningHistory.find({ userId })
+      .populate('audioId', 'title speaker duration image imageUrl category')
+      .sort({ sessionStart: -1 })
+      .limit(100);
+    res.json(history);
+  } catch (err) {
+    console.error('Listening history error:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// =============================================================
+// MODULE 9: ANALYTICS
+// =============================================================
+
+// GET /api/analytics — Aggregated stats (admin & onlyuser)
+router.get('/analytics', auth, async (req, res) => {
+  const role = req.user.role;
+  if (!['admin', 'onlyuser'].includes(role)) {
+    return res.status(403).json({ message: 'Access denied' });
+  }
+  try {
+    const [
+      totalFavorites,
+      totalLikes,
+      totalDislikes,
+      totalFeedback,
+      totalSessions,
+      topLiked,
+      recentFeedback,
+    ] = await Promise.all([
+      Favorite.countDocuments(),
+      Like.countDocuments(),
+      Dislike.countDocuments(),
+      Feedback.countDocuments(),
+      ListeningHistory.countDocuments(),
+
+      // Top 5 most liked tracks
+      Like.aggregate([
+        { $group: { _id: '$audioId', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+        { $limit: 5 },
+        { $lookup: { from: 'audios', localField: '_id', foreignField: '_id', as: 'audio' } },
+        { $unwind: { path: '$audio', preserveNullAndEmptyArrays: true } },
+        { $project: { count: 1, title: '$audio.title', speaker: '$audio.speaker' } },
+      ]),
+
+      // 5 most recent feedback entries
+      Feedback.find()
+        .populate('userId', 'fullName email username')
+        .populate('audioId', 'title')
+        .sort({ createdAt: -1 })
+        .limit(5),
+    ]);
+
+    // Total listening time in minutes
+    const listenAgg = await ListeningHistory.aggregate([
+      { $group: { _id: null, totalSeconds: { $sum: '$durationListened' } } },
+    ]);
+    const totalListeningMinutes = listenAgg.length > 0
+      ? Math.round(listenAgg[0].totalSeconds / 60)
+      : 0;
+
+    // Unique listeners count
+    const uniqueListeners = await ListeningHistory.distinct('userId');
+
+    res.json({
+      totals: {
+        favorites: totalFavorites,
+        likes: totalLikes,
+        dislikes: totalDislikes,
+        feedback: totalFeedback,
+        sessions: totalSessions,
+        listeningMinutes: totalListeningMinutes,
+        uniqueListeners: uniqueListeners.length,
+      },
+      topLiked,
+      recentFeedback,
+    });
+  } catch (err) {
+    console.error('Analytics error:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// DELETE /api/feedback/:id — Delete a feedback log (admin/onlyuser)
+router.delete('/feedback/:id', auth, async (req, res) => {
+  const role = req.user.role;
+  if (!['admin', 'onlyuser'].includes(role)) {
+    return res.status(403).json({ message: 'Access denied' });
+  }
+  try {
+    const deleted = await Feedback.findByIdAndDelete(req.params.id);
+    if (!deleted) return res.status(404).json({ message: 'Feedback not found' });
+    res.json({ message: 'Feedback deleted successfully' });
+  } catch (err) {
+    console.error('Feedback delete error:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+module.exports = router;
