@@ -305,7 +305,7 @@ export default function Dashboard() {
               <div className="hero-actions">
                 <p className="hero-subtitle hero-subtitle--spaced">
                 <span className="hero-subtitle-line">Explore the timeless teachings of <strong className="hero-highlight">Pragya Geet</strong>,</span>
-                <span className="hero-subtitle-line"><strong className="hero-highlight">Amritvani</strong>, and profound spiritual wisdom from</span>
+                <span className="hero-subtitle-line"><strong className="hero-highlight">Amritvani</strong>, and profound spiritual wisdom from  </span>
                 <span className="hero-subtitle-line hero-subtitle-line--no-break"><strong className="hero-highlight">All World Gayatri Pariwar</strong> — all in one place.</span>
               </p>
               </div>
