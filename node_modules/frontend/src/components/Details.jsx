@@ -96,17 +96,10 @@ export default function Details() {
   // ─── Toggle favorite ────────────────────────────────────────
   const toggleFavorite = async () => {
     if (!audio) return;
-    if (isPublicUser) {
-      toggleFavoriteTrack(audio._id);
-    } else {
-      try {
-        const res = await api.patch(`/audios/${audio._id}/favorite`);
-        setAudio(prev => ({ ...prev, isFavorite: res.data.isFavorite }));
-      } catch (err) { console.error(err); }
-    }
+    toggleFavoriteTrack(audio._id);
   };
 
-  const isFav = isPublicUser ? userFavorites.includes(audio?._id) : audio?.isFavorite;
+  const isFav = userFavorites.includes(audio?._id);
 
   // ─── Handle play / pause ────────────────────────────────────
   const handlePlay = () => {

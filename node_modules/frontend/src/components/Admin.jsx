@@ -52,7 +52,43 @@ export default function Admin() {
   const [galleryTarget, setGalleryTarget] = useState(null);
   const fileInputRef = useRef(null);
 
-  const [activeTab, setActiveTab] = useState('library');
+  // Define tabs based on user permissions to get default tab
+  const availableTabs = [];
+
+  // Audio Library tab if has any audio permission
+  if (isAdmin || hasAnyPermission(['audio_view', 'audio_upload', 'audio_edit', 'audio_delete'])) {
+    availableTabs.push({ id: 'library', label: 'Audio Library', icon: 'fas fa-music' });
+  }
+
+  // Categories tab if has any category permission
+  if (isAdmin || hasAnyPermission(['category_view', 'category_create', 'category_edit', 'category_delete'])) {
+    availableTabs.push({ id: 'categories', label: 'Categories', icon: 'fas fa-tags' });
+  }
+
+  // Albums tab if has any album permission
+  if (isAdmin || hasAnyPermission(['album_view', 'album_create', 'album_edit', 'album_delete'])) {
+    availableTabs.push({ id: 'albums', label: 'Albums', icon: 'fas fa-photo-video' });
+  }
+
+  // Feedback tab if has any feedback permission
+  if (isAdmin || hasAnyPermission(['feedback_view', 'feedback_delete'])) {
+    availableTabs.push({ id: 'feedback', label: 'Feedback Management', icon: 'fas fa-comment-alt' });
+  }
+
+  // Analytics tab if has analytics permission
+  if (isAdmin || hasPermission('analytics_view')) {
+    availableTabs.push({ id: 'analytics', label: 'Analytics Dashboard', icon: 'fas fa-chart-bar' });
+  }
+
+  // Only admin sees Users tab
+  if (isAdmin) {
+    availableTabs.push({ id: 'users', label: 'Users', icon: 'fas fa-users' });
+  }
+
+  // Default to first available tab or library if no tabs
+  const defaultTab = availableTabs.length > 0 ? availableTabs[0].id : 'library';
+
+  const [activeTab, setActiveTab] = useState(defaultTab);
   const [filterExt, setFilterExt] = useState('');
   const [filterCat, setFilterCat] = useState('');
 
@@ -340,45 +376,7 @@ export default function Admin() {
   const totalTracks = audios.length;
   const totalFavorites = audios.filter(a => a.isFavorite).length;
   const totalCategories = categories.length;
-
   // Non-admin users can access admin panel (restricted features handled via tabs)
-
-  // Define tabs based on user permissions
-  const availableTabs = [];
-
-  // Audio Library tab if has any audio permission
-  if (isAdmin || hasAnyPermission(['audio_view', 'audio_upload', 'audio_edit', 'audio_delete'])) {
-    availableTabs.push({ id: 'library', label: 'Audio Library', icon: 'fas fa-music' });
-  }
-
-  // Categories tab if has any category permission
-  if (isAdmin || hasAnyPermission(['category_view', 'category_create', 'category_edit', 'category_delete'])) {
-    availableTabs.push({ id: 'categories', label: 'Categories', icon: 'fas fa-tags' });
-  }
-
-  // Albums tab if has any album permission
-  if (isAdmin || hasAnyPermission(['album_view', 'album_create', 'album_edit', 'album_delete'])) {
-    availableTabs.push({ id: 'albums', label: 'Albums', icon: 'fas fa-photo-video' });
-  }
-
-  // Feedback tab if has any feedback permission
-  if (isAdmin || hasAnyPermission(['feedback_view', 'feedback_delete'])) {
-    availableTabs.push({ id: 'feedback', label: 'Feedback Management', icon: 'fas fa-comment-alt' });
-  }
-
-  // Analytics tab if has analytics permission
-  if (isAdmin || hasPermission('analytics_view')) {
-    availableTabs.push({ id: 'analytics', label: 'Analytics Dashboard', icon: 'fas fa-chart-bar' });
-  }
-
-  // Only admin sees Users tab
-  if (isAdmin) {
-    availableTabs.push({ id: 'users', label: 'Users', icon: 'fas fa-users' });
-  }
-
-  // Default to first available tab or library if no tabs
-  const defaultTab = availableTabs.length > 0 ? availableTabs[0].id : 'library';
-  const [activeTab, setActiveTab] = useState(defaultTab);
 
   return (
     <div className="admin-page">

@@ -8,18 +8,13 @@ export default function Favorites() {
   const { searchQuery, setSearchQuery } = useOutletContext();
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading]     = useState(true);
-  const { setCurrentAudio, setQueue, isPublicUser, toggleFavoriteTrack, userFavorites } = useAudio();
+  const { setCurrentAudio, setQueue, toggleFavoriteTrack, userFavorites } = useAudio();
 
   const loadFavorites = async () => {
     try {
       setLoading(true);
-      if (isPublicUser) {
-        const res = await api.get('/user/favorites');
-        setFavorites(res.data);
-      } else {
-        const res = await api.get('/audios');
-        setFavorites(res.data.filter(a => a.isFavorite));
-      }
+      const res = await api.get('/user/favorites');
+      setFavorites(res.data);
     } catch (err) {
       console.error('Failed to load favorites', err);
     } finally {
@@ -31,19 +26,12 @@ export default function Favorites() {
 
   // Sync favorites dynamically if they are toggled from outside this page (e.g., player, details card)
   useEffect(() => {
-    if (isPublicUser) {
-      setFavorites(prev => prev.filter(a => userFavorites.includes(a._id)));
-    }
-  }, [userFavorites, isPublicUser]);
+    setFavorites(prev => prev.filter(a => userFavorites.includes(a._id)));
+  }, [userFavorites]);
 
   const toggleFavorite = async (id) => {
     try {
-      if (isPublicUser) {
-        await toggleFavoriteTrack(id);
-      } else {
-        await api.patch(`/audios/${id}/favorite`);
-        setFavorites(prev => prev.filter(a => a._id !== id));
-      }
+      await toggleFavoriteTrack(id);
     } catch (err) { console.error(err); }
   };
 

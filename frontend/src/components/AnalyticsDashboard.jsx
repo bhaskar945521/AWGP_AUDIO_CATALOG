@@ -61,7 +61,31 @@ export default function AnalyticsDashboard() {
 
   if (!data) return null;
 
-  const { totals, topLiked, recentFeedback } = data;
+  const { totals, topLiked, recentFeedback, userActivity = [] } = data;
+
+  // Format seconds → human readable (e.g. "2h 14m" or "45m")
+  const fmtDuration = (secs) => {
+    if (!secs || secs <= 0) return '—';
+    const h = Math.floor(secs / 3600);
+    const m = Math.floor((secs % 3600) / 60);
+    const s = Math.floor(secs % 60);
+    if (h > 0) return `${h}h ${m}m`;
+    if (m > 0) return `${m}m ${s}s`;
+    return `${s}s`;
+  };
+
+  const fmtDate = (dateStr) => {
+    if (!dateStr) return '—';
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  };
+
+  const roleColor = (role) => {
+    if (role === 'admin') return '#f7a84d';
+    if (role === 'onlyuser') return '#9f7aea';
+    if (role === 'public_user') return '#48bb78';
+    return 'var(--text-muted)';
+  };
 
   return (
     <div className="admin-panel">
@@ -172,6 +196,90 @@ export default function AnalyticsDashboard() {
           )}
         </div>
       </div>
+
+      {/* ── User Activity Table ─────────────────────────────── */}
+      <div style={{ padding: '0 20px 28px' }}>
+        <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '14px' }}>
+          <i className="fas fa-user-clock" style={{ color: '#4299e1', marginRight: '7px' }} />
+          User Activity — App Usage Time
+        </div>
+
+        {userActivity.length === 0 ? (
+          <div style={{ color: 'var(--text-muted)', fontSize: '0.88rem', padding: '16px 0' }}>
+            No listening sessions recorded yet.
+          </div>
+        ) : (
+          <div style={{ overflowX: 'auto', borderRadius: '14px', border: '1.5px solid var(--border)' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+              <thead>
+                <tr style={{ background: 'var(--card-bg, rgba(255,255,255,0.04))' }}>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1.5px solid var(--border)' }}>#</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1.5px solid var(--border)' }}>User</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1.5px solid var(--border)' }}>Role</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'center', color: 'var(--text-muted)', fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1.5px solid var(--border)' }}>Sessions</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'center', color: 'var(--text-muted)', fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1.5px solid var(--border)' }}>Time Listened</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1.5px solid var(--border)' }}>Last Seen</th>
+                </tr>
+              </thead>
+              <tbody>
+                {userActivity.map((u, idx) => (
+                  <tr
+                    key={u._id}
+                    style={{
+                      borderBottom: idx < userActivity.length - 1 ? '1px solid var(--border)' : 'none',
+                      transition: 'background 0.15s',
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(247,168,77,0.05)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                  >
+                    <td style={{ padding: '12px 16px', color: 'var(--text-muted)', fontWeight: 700 }}>{idx + 1}</td>
+                    <td style={{ padding: '12px 16px' }}>
+                      <div style={{ fontWeight: 700, color: 'var(--text-main)' }}>
+                        {u.fullName || u.username || 'Unknown'}
+                      </div>
+                      {u.email && (
+                        <div style={{ fontSize: '0.73rem', color: 'var(--text-muted)' }}>{u.email}</div>
+                      )}
+                      {!u.fullName && !u.email && u.username && (
+                        <div style={{ fontSize: '0.73rem', color: 'var(--text-muted)' }}>@{u.username}</div>
+                      )}
+                    </td>
+                    <td style={{ padding: '12px 16px' }}>
+                      <span style={{
+                        display: 'inline-block',
+                        padding: '2px 10px',
+                        borderRadius: 99,
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        background: `${roleColor(u.role)}18`,
+                        color: roleColor(u.role),
+                        border: `1px solid ${roleColor(u.role)}44`,
+                        textTransform: 'capitalize',
+                      }}>
+                        {u.role || 'user'}
+                      </span>
+                    </td>
+                    <td style={{ padding: '12px 16px', textAlign: 'center', fontWeight: 700, color: '#4299e1' }}>
+                      {u.sessionCount}
+                    </td>
+                    <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                      <span style={{ fontWeight: 800, color: 'var(--saffron)', fontSize: '0.95rem' }}>
+                        <i className="fas fa-clock" style={{ marginRight: 5, opacity: 0.7 }} />
+                        {fmtDuration(u.totalSeconds)}
+                      </span>
+                    </td>
+                    <td style={{ padding: '12px 16px', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                      {fmtDate(u.lastSeen)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }

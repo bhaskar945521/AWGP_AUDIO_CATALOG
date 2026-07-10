@@ -60,7 +60,10 @@ function MobilePlayerBar({ currentAudio, onNext, onPrev, onClose }) {
     isShuffle,
     toggleShuffle,
     toggleFavorite,
+    userFavorites,
   } = useAudio();
+
+  const isFav = userFavorites.includes(currentAudio?._id);
   const [isSeeking, setIsSeeking] = useState(false);
 
   const getImg = () => {
@@ -188,11 +191,11 @@ function MobilePlayerBar({ currentAudio, onNext, onPrev, onClose }) {
         </button>
 
         <button
-          className={`mobile-action-btn mobile-favorite-btn ${currentAudio?.isFavorite ? 'active' : ''}`}
+          className={`mobile-action-btn mobile-favorite-btn ${isFav ? 'active' : ''}`}
           onClick={toggleFavorite}
-          aria-label={currentAudio?.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+          aria-label={isFav ? 'Remove from favorites' : 'Add to favorites'}
         >
-          <i className={currentAudio?.isFavorite ? 'fas fa-heart' : 'far fa-heart'} />
+          <i className={isFav ? 'fas fa-heart' : 'far fa-heart'} />
         </button>
 
         <button className="mobile-action-btn mobile-close-btn" onClick={onClose} aria-label="Close player">

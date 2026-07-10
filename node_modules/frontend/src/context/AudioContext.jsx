@@ -50,7 +50,7 @@ export const AudioProvider = ({ children }) => {
 
   // Fetch user-specific favorites on mount or login
   useEffect(() => {
-    if (token && role?.toLowerCase() === 'public_user') {
+    if (token) {
       api.get('/user/favorites')
         .then(res => {
           const list = res.data.data || res.data;
@@ -60,7 +60,7 @@ export const AudioProvider = ({ children }) => {
     } else {
       setUserFavorites([]);
     }
-  }, [token, role]);
+  }, [token]);
 
   // ── When track changes: load new src ────────────────────────
   useEffect(() => {
@@ -245,36 +245,30 @@ export const AudioProvider = ({ children }) => {
     setIsShuffle(s => !s);
   }, []);
 
-  // Toggle favorite by specific audio track ID (User-specific or Global)
+  // Toggle favorite by specific audio track ID (User-specific)
   const toggleFavoriteTrack = useCallback(async (audioId) => {
     if (!audioId) return;
-    if (isPublicUser) {
-      const isFav = userFavorites.includes(audioId);
-      try {
-        if (isFav) {
-          await api.delete(`/audio/${audioId}/favorite`);
-          setUserFavorites(prev => prev.filter(id => id !== audioId));
-        } else {
-          await api.post(`/audio/${audioId}/favorite`);
-          setUserFavorites(prev => [...prev, audioId]);
-        }
-      } catch (err) {
-        console.error('[AudioContext] Failed to toggle user-specific favorite:', err);
-      }
-    } else {
-      // Legacy global behavior
-      try {
-        const res = await api.patch(`/audios/${audioId}/favorite`);
-        const newFav = res.data.isFavorite;
+    const isFav = userFavorites.includes(audioId);
+    try {
+      if (isFav) {
+        await api.delete(`/audio/${audioId}/favorite`);
+        setUserFavorites(prev => prev.filter(id => id !== audioId));
         if (currentAudioRef.current && currentAudioRef.current._id === audioId) {
-          setCurrentAudioState(prev => prev ? { ...prev, isFavorite: newFav } : null);
+          setCurrentAudioState(prev => prev ? { ...prev, isFavorite: false } : null);
         }
-        setQueue(prev => prev.map(a => a._id === audioId ? { ...a, isFavorite: newFav } : a));
-      } catch (err) {
-        console.error('[AudioContext] Failed to toggle global favorite:', err);
+        setQueue(prev => prev.map(a => a._id === audioId ? { ...a, isFavorite: false } : a));
+      } else {
+        await api.post(`/audio/${audioId}/favorite`);
+        setUserFavorites(prev => [...prev, audioId]);
+        if (currentAudioRef.current && currentAudioRef.current._id === audioId) {
+          setCurrentAudioState(prev => prev ? { ...prev, isFavorite: true } : null);
+        }
+        setQueue(prev => prev.map(a => a._id === audioId ? { ...a, isFavorite: true } : a));
       }
+    } catch (err) {
+      console.error('[AudioContext] Failed to toggle user-specific favorite:', err);
     }
-  }, [isPublicUser, userFavorites]);
+  }, [userFavorites]);
 
   // ── Toggle Favorite (current audio) ─────────────────────────
   const toggleFavorite = useCallback(async () => {

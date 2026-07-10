@@ -10,8 +10,8 @@ export default function AudioCard({
   isFavorite, image, imageUrl,
   onPlay, onToggleFavorite, onDelete, onAddToAlbum
 }) {
-  const { isAdmin, hasPermission, isPublicUser: isPublicUserAuth } = useAuth();
-  const { isPublicUser, userFavorites, toggleFavoriteTrack } = useAudio();
+  const { isAdmin, hasPermission } = useAuth();
+  const { userFavorites, toggleFavoriteTrack } = useAudio();
   const navigate = useNavigate();
   
   const canEditAudio = isAdmin || hasPermission('audio_edit');
@@ -19,15 +19,11 @@ export default function AudioCard({
   const canAddToAlbum = isAdmin || hasPermission('album_edit');
   const showAdminOptions = canEditAudio || canDeleteAudio || canAddToAlbum;
 
-  const finalIsFavorite = isPublicUser ? userFavorites.includes(_id) : isFavorite;
+  const finalIsFavorite = userFavorites.includes(_id);
 
   const handleFavoriteClick = (e) => {
     e.stopPropagation();
-    if (isPublicUser) {
-      toggleFavoriteTrack(_id);
-    } else if (onToggleFavorite) {
-      onToggleFavorite();
-    }
+    toggleFavoriteTrack(_id);
   };
 
   const displayImage = image && image !== '/placeholder.png'

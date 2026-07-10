@@ -310,6 +310,40 @@ router.get('/analytics', auth, permissionCheck(['analytics_view']), async (req, 
     // Unique listeners count
     const uniqueListeners = await ListeningHistory.distinct('userId');
 
+    // Per-user listening activity — who used the app, how long, last seen
+    const userActivity = await ListeningHistory.aggregate([
+      {
+        $group: {
+          _id: '$userId',
+          totalSeconds: { $sum: '$durationListened' },
+          sessionCount: { $sum: 1 },
+          lastSeen: { $max: '$sessionStart' },
+        },
+      },
+      { $sort: { totalSeconds: -1 } },
+      { $limit: 20 },
+      {
+        $lookup: {
+          from: 'users',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'userInfo',
+        },
+      },
+      { $unwind: { path: '$userInfo', preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          totalSeconds: 1,
+          sessionCount: 1,
+          lastSeen: 1,
+          username: '$userInfo.username',
+          fullName: '$userInfo.fullName',
+          email: '$userInfo.email',
+          role: '$userInfo.role',
+        },
+      },
+    ]);
+
     res.json({
       totals: {
         favorites: totalFavorites,
@@ -322,6 +356,7 @@ router.get('/analytics', auth, permissionCheck(['analytics_view']), async (req, 
       },
       topLiked,
       recentFeedback,
+      userActivity,
     });
   } catch (err) {
     console.error('Analytics error:', err);

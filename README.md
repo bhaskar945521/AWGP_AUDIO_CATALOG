@@ -46,22 +46,26 @@
   - Create/edit/delete categories (with cover images)
   - Create/edit/delete albums with cover images
   - Add audio tracks to albums
-- ❤️ **Favorites System**:
-  - Add/remove favorites per user
-  - My Favorites page
-- 👍 **Like/Dislike System**:
-  - Like/dislike audio tracks
-  - One like/dislike per user
-- 💬 **Feedback System**:
-  - Public users can submit feedback (with optional rating)
-  - Users can edit/delete their own feedback
-  - Admin/authorized users can view/delete feedback
-- 📊 **Analytics Dashboard**:
-  - Total users, active users, total audio, albums, categories
-  - Likes, dislikes, favorites, feedback stats
-  - Most played audio, most liked, most favorited, most active user
-- 📱 **Responsive design**:
-  - Mobile-friendly with specific breakpoints
+- ❤️ **Favorites System** (User-Specific):
+  - Completely per-user favorites — each account has its own list
+  - Works for all roles: Admin, OnlyUser, Public User
+  - Add/remove via heart button on any card, player, or details page
+  - My Favorites page shows only the logged-in user's saved tracks
+- 👍 **Like / Dislike System** (Per-User, Mutually Exclusive):
+  - Each user's like/dislike is independent
+  - Liking removes any existing dislike and vice versa (mutual exclusion)
+  - Real-time counts shown on audio detail page
+- 💬 **Feedback / Comment System**:
+  - Any logged-in user can submit feedback with an optional star rating
+  - Track-specific and general feedback support
+  - Admin / authorized OnlyUsers can view and delete all feedback
+- 📊 **Analytics Dashboard** (Admin & Permission-Based):
+  - Total favorites, likes, dislikes, feedback, sessions, listening minutes, unique listeners
+  - Top 5 most liked tracks
+  - Recent feedback entries
+  - 🆕 **User Activity Table**: See per-user app usage — sessions count, total time listened, last seen timestamp
+- 📱 **Responsive Design**:
+  - Mobile-friendly with bottom navigation bar and mobile player strip
 - 📷 **Gallery Management**:
   - Upload/delete gallery images
 - 🔍 **Search System**:
@@ -69,6 +73,9 @@
   - Voice search support
 - 🎨 **Customizable Settings**:
   - Customize site title, logo, colors via admin panel
+- 🎵 **Listening Session Tracking**:
+  - Automatically records when a user starts/stops listening
+  - Session duration stored in database for analytics
 
 ---
 
@@ -280,17 +287,26 @@ AWGP_AUDIO_CATLOG/
 | PUT    | `/api/albums/:id`       | Update album (requires `album_edit`) |
 | DELETE | `/api/albums/:id`       | Delete album (requires `album_delete`) |
 
-### Favorites
-| Method | Endpoint                | Description              |
-|--------|-------------------------|--------------------------|
-| GET    | `/api/user/favorites`   | Get user's favorites     |
-| PATCH  | `/api/audios/:id/favorite` | Toggle favorite |
+### Favorites (User-Specific)
+| Method | Endpoint                      | Description                          |
+|--------|-------------------------------|--------------------------------------|
+| GET    | `/api/user/favorites`         | Get logged-in user's favorites       |
+| POST   | `/api/audio/:id/favorite`     | Add to favorites (user-specific)     |
+| DELETE | `/api/audio/:id/favorite`     | Remove from favorites (user-specific)|
 
-### Likes/Dislikes
-| Method | Endpoint                | Description              |
-|--------|-------------------------|--------------------------|
-| POST   | `/api/audios/:id/like`  | Like audio (removes dislike) |
-| POST   | `/api/audios/:id/dislike` | Dislike audio (removes like) |
+### Likes / Dislikes (Per-User, Mutually Exclusive)
+| Method | Endpoint                      | Description                          |
+|--------|-------------------------------|--------------------------------------|
+| POST   | `/api/audio/:id/like`         | Like track (auto-removes dislike)    |
+| POST   | `/api/audio/:id/dislike`      | Dislike track (auto-removes like)    |
+| GET    | `/api/audio/:id/reactions`    | Get like/dislike counts + user state |
+
+### Listening Sessions
+| Method | Endpoint                            | Description                     |
+|--------|-------------------------------------|---------------------------------|
+| POST   | `/api/listening/start`              | Start a listening session       |
+| PATCH  | `/api/listening/:sessionId/end`     | End session & record duration   |
+| GET    | `/api/user/history`                 | Get user's listening history    |
 
 ### Feedback
 | Method | Endpoint                | Description              |
@@ -328,36 +344,83 @@ AWGP_AUDIO_CATLOG/
 
 ## 📝 Changelog
 
-### Latest Changes (2026-07-10)
+### v2.0 — Production Enhancement (2026-07-10)
+
+#### 🔐 Authentication
+- **Inline Admin Login**: Press `Ctrl + Shift + A` on the public login page → Admin form swaps **inline** (no redirect, no reload)
+- Press `Escape` or click "Back to Public Login" to return
+- Admin Dashboard is completely hidden from public — accessible only via keyboard shortcut
+- **Developer Credit**: "Developed By Bhaskar" added to login card footer
+
+#### ❤️ Favorites — Fully User-Specific (All Roles)
+- Replaced legacy global `isFavorite` flag on Audio model with user-specific `Favorite` collection
+- Every role (Admin, OnlyUser, Public User) gets their own independent favorites list
+- Unified `toggleFavoriteTrack` in `AudioContext` — always calls `/api/audio/:id/favorite` (POST/DELETE)
+- Updated: `AudioContext.jsx`, `Details.jsx`, `Favorites.jsx`, `Library.jsx`, `AudioCard.jsx`, `Layout.jsx`
+
+#### 👍 Like / Dislike — Per-User, Mutually Exclusive
+- New `Like` and `Dislike` MongoDB collections — fully per-user
+- Liking auto-removes any existing dislike, and vice versa
+- Real-time count and user reaction state shown on Details page
+- Routes: `POST /api/audio/:id/like`, `POST /api/audio/:id/dislike`, `GET /api/audio/:id/reactions`
+
+#### 💬 Feedback / Comments
+- Any authenticated user can submit feedback with optional star rating (1–5)
+- Track-specific (`POST /api/audio/:id/feedback`) and general (`POST /api/feedback`) endpoints
+- Admin & OnlyUsers with `feedback_view` can view all feedback
+- Admin & OnlyUsers with `feedback_delete` can delete feedback
+- `FeedbackManagement.jsx` UI in Admin panel
+
+#### 🔐 Dynamic Permission System (OnlyUser)
+- `permissions` field added to User model
+- `permissionCheck` middleware enforces permissions on all protected routes
+- Permissions included in JWT token and fetched fresh from `/api/auth/me` on login
+- Admin panel → Users Management: assign permissions via checkboxes per user
+- Available permission groups: Audio, Category, Album, Feedback, Analytics
+
+#### 📊 Analytics Dashboard — Enhanced
+- Added **User Activity Table**: per-user breakdown of app usage
+  - User name, role, session count, total listening time (`2h 14m` format), last seen date
+  - Sorted by most time listened (top 20 users)
+- Existing stats: Total favorites, likes, dislikes, feedback, sessions, minutes, unique listeners
+- Top 5 most liked tracks with rank badges
+- Recent 5 feedback entries with ratings
+- Access controlled via `analytics_view` permission
+
+#### 🎵 Listening Session Tracking
+- Auto-records when user plays audio on Details page
+- Session start (`POST /api/listening/start`) and end (`PATCH /api/listening/:id/end`) tracked
+- Duration in seconds stored in `ListeningHistory` collection
+- Powers analytics: total minutes, unique listeners, per-user time
+
+#### ⚙️ Auth System Improvements
+- Added `/api/auth/me` endpoint to return current user with latest permissions
+- Permissions stored in both JWT and `localStorage`
+- `hasPermission(perm)` and `hasAnyPermission(perms)` helpers in `AuthContext`
+- Admin always bypasses permission checks
+
+---
+
+### v1.0 — Initial Release (2026-07-08)
 
 1. **Dynamic Permissions System**
    - Added `permissions` field to User model
-   - Created new `permissionCheck` middleware
-   - Updated all backend routes to enforce permissions
-   - Added UI in UsersManagement for assigning permissions via checkboxes
-   - Updated frontend components to show/hide features based on permissions
+   - Created `permissionCheck` middleware
+   - Admin panel: assign permissions via checkboxes
 
-2. **Updated Auth System**
-   - Added permissions to JWT tokens
-   - Added `/api/auth/me` endpoint for fetching current user
-   - Updated login/register responses to include permissions
-   - Added `hasPermission` and `hasAnyPermission` functions in AuthContext
+2. **Audio Library Management**
+   - Upload, edit, delete audio files
+   - Category and album linking
+   - Voice search (Hindi/English bilingual)
 
-3. **Improved Admin Panel**
-   - Tabs shown/hidden based on user permissions
-   - Upload button only visible if user has `audio_upload` permission
-   - UsersManagement with full name, email, and permissions
+3. **Category & Album Management**
+   - Full CRUD with cover images
+   - Nested audio track management
 
-4. **AudioCard Improvements**
-   - Show edit/delete/add-to-album buttons only if user has permissions
-   - Uses api module instead of direct axios
-
-5. **Category Dropdown Improvements**
-   - Max height of ~7 categories, smooth vertical scrolling
-   - Custom scrollbar styling
-
-6. **Favorites, Like/Dislike, Feedback**
-   - All existing features maintained and working correctly
+4. **Admin Panel**
+   - Role-based tab visibility
+   - UsersManagement with full name, email, permissions
+   - Upload modal with FFmpeg MP3 conversion
 
 ---
 

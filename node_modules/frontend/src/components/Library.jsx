@@ -9,7 +9,7 @@ const ITEMS_PER_PAGE = 12;
 
 export default function Library() {
   const { searchQuery, setSearchQuery } = useOutletContext();
-  const { setCurrentAudio, setQueue } = useAudio();
+  const { setCurrentAudio, setQueue, toggleFavoriteTrack } = useAudio();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [audios, setAudios] = useState([]);
@@ -77,13 +77,8 @@ export default function Library() {
     fetchFilteredAudios();
   }, [searchQuery, filterCategory, currentPage]);
 
-  const toggleFavorite = async (id) => {
-    try {
-      const res = await api.patch(`/audios/${id}/favorite`);
-      setAudios(prev => prev.map(a => a._id === id ? { ...a, isFavorite: res.data.isFavorite } : a));
-    } catch (err) {
-      console.error(err);
-    }
+  const toggleFavorite = (id) => {
+    toggleFavoriteTrack(id);
   };
 
   const handleDelete = (id) => {
