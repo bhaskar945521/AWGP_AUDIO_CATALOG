@@ -24,6 +24,16 @@ const bilingualSynonyms = {
   'सत्य': ['truth', 'satya'],
   'शांति': ['peace', 'shanti'],
   'प्रेम': ['love', 'prem'],
+  'गायत्री': ['gayatri'],
+  'गायत्री मंत्र': ['gayatri mantra', 'gayatri mantras'],
+  'पंडित': ['pandit', 'pt'],
+  'पंडित श्रीराम': ['pandit shriram', 'pt shriram'],
+  'पंडित श्रीराम शर्मा': ['pandit shriram sharma', 'pt shriram sharma'],
+  'श्रीराम': ['shriram'],
+  'श्रीराम शर्मा': ['shriram sharma'],
+  'युग': ['yug'],
+  'युग निर्माण': ['yug nirman'],
+  'निर्माण': ['nirman'],
   // English → Hindi (for reverse search)
   'bhajan': ['भजन', 'भजनें'],
   'pravachan': ['प्रवचन', 'प्रवचनें'],
@@ -53,20 +63,43 @@ const bilingualSynonyms = {
   'peace': ['शांति'],
   'shanti': ['शांति'],
   'love': ['प्रेम'],
-  'prem': ['प्रेम']
+  'prem': ['प्रेम'],
+  'gayatri': ['गायत्री'],
+  'gayatri mantra': ['गायत्री मंत्र'],
+  'pandit': ['पंडित'],
+  'pt': ['पंडित'],
+  'pandit shriram': ['पंडित श्रीराम'],
+  'pt shriram': ['पंडित श्रीराम'],
+  'pandit shriram sharma': ['पंडित श्रीराम शर्मा'],
+  'pt shriram sharma': ['पंडित श्रीराम शर्मा'],
+  'shriram': ['श्रीराम'],
+  'shriram sharma': ['श्रीराम शर्मा'],
+  'yug': ['युग'],
+  'yug nirman': ['युग निर्माण'],
+  'nirman': ['निर्माण']
 };
 
 // Function to get all search terms (original + synonyms + transliterations)
 const getAllSearchTerms = (query) => {
   const terms = [query.toLowerCase()];
-  const words = query.toLowerCase().split(/\s+/);
-  
+  const lowerQuery = query.toLowerCase();
+  const words = lowerQuery.split(/\s+/);
+
+  // First check for multi-word synonyms (longest first to match longer phrases)
+  const sortedSynonyms = Object.keys(bilingualSynonyms).sort((a, b) => b.length - a.length);
+  sortedSynonyms.forEach(phrase => {
+    if (lowerQuery.includes(phrase)) {
+      terms.push(...bilingualSynonyms[phrase].map(s => s.toLowerCase()));
+    }
+  });
+
+  // Then check for individual word synonyms
   words.forEach(word => {
     if (bilingualSynonyms[word]) {
       terms.push(...bilingualSynonyms[word].map(s => s.toLowerCase()));
     }
   });
-  
+
   return [...new Set(terms)]; // Remove duplicates
 };
 
@@ -87,6 +120,7 @@ router.get('/', async (req, res) => {
         $or: [
           { title: regex },
           { speaker: regex },
+          { description: regex },
           { tags: { $in: searchTerms.map(t => new RegExp(t, 'i')) } }
         ]
       }).select('title speaker _id imageUrl audioUrl duration').lean(),

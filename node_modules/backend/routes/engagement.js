@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
+const permissionCheck = require('../middleware/permissionCheck');
 const Favorite = require('../models/Favorite');
 const Like = require('../models/Like');
 const Dislike = require('../models/Dislike');
@@ -163,12 +164,8 @@ router.post('/feedback', auth, async (req, res) => {
   }
 });
 
-// GET /api/feedback — List all feedback (admin & onlyuser only)
-router.get('/feedback', auth, async (req, res) => {
-  const role = req.user.role;
-  if (!['admin', 'onlyuser'].includes(role)) {
-    return res.status(403).json({ message: 'Access denied' });
-  }
+// GET /api/feedback — List all feedback (admin & authorized onlyuser only)
+router.get('/feedback', auth, permissionCheck(['feedback_view']), async (req, res) => {
   try {
     const feedback = await Feedback.find()
       .populate('userId', 'fullName email username')
@@ -266,12 +263,8 @@ router.get('/user/history', auth, async (req, res) => {
 // MODULE 9: ANALYTICS
 // =============================================================
 
-// GET /api/analytics — Aggregated stats (admin & onlyuser)
-router.get('/analytics', auth, async (req, res) => {
-  const role = req.user.role;
-  if (!['admin', 'onlyuser'].includes(role)) {
-    return res.status(403).json({ message: 'Access denied' });
-  }
+// GET /api/analytics — Aggregated stats (admin & authorized onlyuser)
+router.get('/analytics', auth, permissionCheck(['analytics_view']), async (req, res) => {
   try {
     const [
       totalFavorites,
@@ -336,12 +329,8 @@ router.get('/analytics', auth, async (req, res) => {
   }
 });
 
-// DELETE /api/feedback/:id — Delete a feedback log (admin/onlyuser)
-router.delete('/feedback/:id', auth, async (req, res) => {
-  const role = req.user.role;
-  if (!['admin', 'onlyuser'].includes(role)) {
-    return res.status(403).json({ message: 'Access denied' });
-  }
+// DELETE /api/feedback/:id — Delete a feedback log (admin/authorized onlyuser)
+router.delete('/feedback/:id', auth, permissionCheck(['feedback_delete']), async (req, res) => {
   try {
     const deleted = await Feedback.findByIdAndDelete(req.params.id);
     if (!deleted) return res.status(404).json({ message: 'Feedback not found' });

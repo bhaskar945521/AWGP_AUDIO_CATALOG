@@ -46,17 +46,25 @@ function AdminRoute({ children }) {
   return children;
 }
 
-function StaffRoute({ children }) {
-  const { isAdmin, isOnlyUser } = useAuth();
-  if (!isAdmin && !isOnlyUser) {
+function PermissionRoute({ children, requiredPermissions }) {
+  const { isAdmin, hasAnyPermission } = useAuth();
+  
+  // Admin has access to everything
+  if (isAdmin) {
+    return children;
+  }
+  
+  // Check if user has any of the required permissions
+  if (requiredPermissions && !hasAnyPermission(requiredPermissions)) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '50vh', textAlign: 'center', color: 'var(--text-muted)' }}>
         <i className="fas fa-lock" style={{ fontSize: '3rem', color: '#e53e3e', marginBottom: '16px' }} />
         <h2 style={{ color: 'var(--text-main)', marginBottom: '8px' }}>Access Denied</h2>
-        <p>You do not have permission to view the Admin control panel.</p>
+        <p>You do not have permission to view this section.</p>
       </div>
     );
   }
+  
   return children;
 }
 
@@ -76,7 +84,7 @@ function AppContent() {
             <Route path="favorites" element={<Favorites />} />
             <Route path="profile" element={<UserProfile />} />
             <Route path="details/:id" element={<Details />} />
-            <Route path="admin" element={<StaffRoute><Admin /></StaffRoute>} />
+            <Route path="admin" element={<PermissionRoute requiredPermissions={['analytics_view', 'feedback_view', 'feedback_delete', 'audio_view', 'category_view', 'album_view']}><Admin /></PermissionRoute>} />
             <Route path="users" element={<AdminRoute><UsersManagement /></AdminRoute>} />
             {/* Catch-all redirects back to Home */}
             <Route path="*" element={<Dashboard />} />

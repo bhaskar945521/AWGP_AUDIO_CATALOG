@@ -23,17 +23,52 @@
 - [Project Structure](#-project-structure)
 - [Environment Variables](#-environment-variables)
 - [API Overview](#-api-overview)
+- [Permissions System](#-permissions-system)
+- [Changelog](#-changelog)
 
 ---
 
 ## ✨ Features
 
-- 🔐 User Authentication (Register / Login with JWT)
-- 🎵 Upload & manage audio files
-- 🗂️ Categorized audio catalog
-- 🔍 Search & filter functionality
-- 👤 Admin panel for content management
-- 📱 Responsive design (mobile-friendly)
+- 🔐 **User Authentication**:
+  - Public User Registration/Login with JWT
+  - Admin Login via CTRL+SHIFT+A (Hidden on Landing Page)
+  - Multiple User Roles: Admin, User, OnlyUser, PublicUser
+- 🔐 **Dynamic Permissions System**:
+  - Granular permissions for audio, categories, albums, feedback, analytics
+  - Admin has full access
+  - OnlyUser gets assigned specific permissions
+- 🎵 **Audio Library Management**:
+  - Upload & manage audio files (with auto-conversion to MP3)
+  - Search & filter functionality (Hindi/English bilingual support)
+  - Voice search (Hindi/English)
+- 🗂️ **Category & Album Management**:
+  - Create/edit/delete categories (with cover images)
+  - Create/edit/delete albums with cover images
+  - Add audio tracks to albums
+- ❤️ **Favorites System**:
+  - Add/remove favorites per user
+  - My Favorites page
+- 👍 **Like/Dislike System**:
+  - Like/dislike audio tracks
+  - One like/dislike per user
+- 💬 **Feedback System**:
+  - Public users can submit feedback (with optional rating)
+  - Users can edit/delete their own feedback
+  - Admin/authorized users can view/delete feedback
+- 📊 **Analytics Dashboard**:
+  - Total users, active users, total audio, albums, categories
+  - Likes, dislikes, favorites, feedback stats
+  - Most played audio, most liked, most favorited, most active user
+- 📱 **Responsive design**:
+  - Mobile-friendly with specific breakpoints
+- 📷 **Gallery Management**:
+  - Upload/delete gallery images
+- 🔍 **Search System**:
+  - Bilingual (Hindi ↔ English) synonym search
+  - Voice search support
+- 🎨 **Customizable Settings**:
+  - Customize site title, logo, colors via admin panel
 
 ---
 
@@ -65,8 +100,8 @@ Before you begin, make sure you have the following installed:
 ### Step 1: Clone the Repository
 
 ```bash
-git clone https://github.com/bhaskar945521/AWGP_AUDIO_CATALOG.git
-cd AWGP_AUDIO_CATALOG
+git clone https://github.com/bhaskar945521/AWGP_AUDIO_CATLOG.git
+cd AWGP_AUDIO_CATLOG
 ```
 
 ### Step 2: Install All Dependencies (Root + Frontend + Backend)
@@ -91,6 +126,8 @@ Then open `backend/.env` and update the values:
 PORT=5000
 MONGODB_URI=mongodb://localhost:27017/awgp-audio-catalog
 JWT_SECRET=your-very-secret-key-change-this
+ADMIN_USERNAME=admin  # Optional, defaults to shantikunjadmin
+ADMIN_PASSWORD=pass   # Optional, defaults to Shantikunj2026
 ```
 
 #### Frontend `.env`
@@ -152,9 +189,9 @@ npm run dev --prefix frontend
 ## 📁 Project Structure
 
 ```
-AWGP_AUDIO_CATALOG/
+AWGP_AUDIO_CATLOG/
 ├── 📂 backend/              # Node.js + Express API
-│   ├── 📂 middleware/       # Auth & other middleware
+│   ├── 📂 middleware/       # Auth, role, permission middleware
 │   ├── 📂 models/          # Mongoose models (User, Audio, etc.)
 │   ├── 📂 routes/          # API route handlers
 │   ├── 📂 utils/           # Helper utilities
@@ -167,7 +204,7 @@ AWGP_AUDIO_CATALOG/
 │   ├── 📂 src/
 │   │   ├── 📂 components/  # Reusable UI components
 │   │   ├── 📂 pages/       # Page components
-│   │   ├── 📂 context/     # React Context (auth, etc.)
+│   │   ├── 📂 context/     # React Context (auth, audio)
 │   │   └── App.jsx         # Root component
 │   ├── index.html
 │   ├── .env.example        # Environment variable template
@@ -189,6 +226,8 @@ AWGP_AUDIO_CATALOG/
 | `PORT`         | Port for the Express server          | `5000`                                        |
 | `MONGODB_URI`  | MongoDB connection string            | `mongodb://localhost:27017/awgp-audio-catalog`|
 | `JWT_SECRET`   | Secret key for JWT signing           | *(must be changed in production)*            |
+| `ADMIN_USERNAME` | Default admin username              | `shantikunjadmin`                             |
+| `ADMIN_PASSWORD` | Default admin password              | `Shantikunj2026`                             |
 
 ### Frontend (`frontend/.env`)
 
@@ -200,14 +239,125 @@ AWGP_AUDIO_CATALOG/
 
 ## 🌐 API Overview
 
+### Authentication
 | Method | Endpoint                | Description              |
 |--------|-------------------------|--------------------------|
-| POST   | `/api/auth/register`    | Register a new user      |
-| POST   | `/api/auth/login`       | Login & get JWT token    |
-| GET    | `/api/audio`            | Get all audio files      |
-| POST   | `/api/audio/upload`     | Upload new audio (admin) |
-| GET    | `/api/audio/:id`        | Get audio by ID          |
-| DELETE | `/api/audio/:id`        | Delete audio (admin)     |
+| POST   | `/api/register`         | Register a new public user |
+| POST   | `/api/login`            | Login as public user     |
+| POST   | `/api/logout`           | Logout user              |
+| POST   | `/api/auth/login`       | Admin login              |
+| GET    | `/api/auth/me`          | Get current user         |
+
+### Users
+| Method | Endpoint                | Description              |
+|--------|-------------------------|--------------------------|
+| GET    | `/api/users`            | Get all users (admin)    |
+| POST   | `/api/users`            | Create new user (admin)  |
+| PUT    | `/api/users/:id`        | Update user (admin)      |
+| DELETE | `/api/users/:id`        | Delete user (admin)      |
+
+### Audios
+| Method | Endpoint                | Description              |
+|--------|-------------------------|--------------------------|
+| GET    | `/api/audios`           | Get all audios           |
+| POST   | `/api/audios`           | Upload audio (requires `audio_upload`) |
+| PUT    | `/api/audios/:id`       | Update audio (requires `audio_edit`) |
+| DELETE | `/api/audios/:id`       | Delete audio (requires `audio_delete`) |
+
+### Categories
+| Method | Endpoint                | Description              |
+|--------|-------------------------|--------------------------|
+| GET    | `/api/categories`       | Get all categories       |
+| POST   | `/api/categories`       | Create category (requires `category_create`) |
+| PATCH  | `/api/categories/:id`   | Update category (requires `category_edit`) |
+| DELETE | `/api/categories/:id`   | Delete category (requires `category_delete`) |
+
+### Albums
+| Method | Endpoint                | Description              |
+|--------|-------------------------|--------------------------|
+| GET    | `/api/albums`           | Get all albums           |
+| POST   | `/api/albums`           | Create album (requires `album_create`) |
+| PUT    | `/api/albums/:id`       | Update album (requires `album_edit`) |
+| DELETE | `/api/albums/:id`       | Delete album (requires `album_delete`) |
+
+### Favorites
+| Method | Endpoint                | Description              |
+|--------|-------------------------|--------------------------|
+| GET    | `/api/user/favorites`   | Get user's favorites     |
+| PATCH  | `/api/audios/:id/favorite` | Toggle favorite |
+
+### Likes/Dislikes
+| Method | Endpoint                | Description              |
+|--------|-------------------------|--------------------------|
+| POST   | `/api/audios/:id/like`  | Like audio (removes dislike) |
+| POST   | `/api/audios/:id/dislike` | Dislike audio (removes like) |
+
+### Feedback
+| Method | Endpoint                | Description              |
+|--------|-------------------------|--------------------------|
+| POST   | `/api/feedback`         | Submit feedback          |
+| GET    | `/api/feedback`         | Get feedback (requires `feedback_view`) |
+| DELETE | `/api/feedback/:id`     | Delete feedback (requires `feedback_delete`) |
+
+### Analytics
+| Method | Endpoint                | Description              |
+|--------|-------------------------|--------------------------|
+| GET    | `/api/analytics`        | Get analytics (requires `analytics_view`) |
+
+### Search
+| Method | Endpoint                | Description              |
+|--------|-------------------------|--------------------------|
+| GET    | `/api/search`           | Bilingual search         |
+
+---
+
+## 🔐 Permissions System
+
+### Available Permissions
+| Group               | Permissions                          |
+|---------------------|--------------------------------------|
+| Audio Library       | `audio_view`, `audio_upload`, `audio_edit`, `audio_delete` |
+| Category Management | `category_view`, `category_create`, `category_edit`, `category_delete` |
+| Album Management    | `album_view`, `album_create`, `album_edit`, `album_delete` |
+| Feedback Management | `feedback_view`, `feedback_delete`  |
+| Analytics Dashboard | `analytics_view`                     |
+| User Management     | Admin Only                          |
+| Website Settings    | Admin Only                          |
+
+---
+
+## 📝 Changelog
+
+### Latest Changes (2026-07-10)
+
+1. **Dynamic Permissions System**
+   - Added `permissions` field to User model
+   - Created new `permissionCheck` middleware
+   - Updated all backend routes to enforce permissions
+   - Added UI in UsersManagement for assigning permissions via checkboxes
+   - Updated frontend components to show/hide features based on permissions
+
+2. **Updated Auth System**
+   - Added permissions to JWT tokens
+   - Added `/api/auth/me` endpoint for fetching current user
+   - Updated login/register responses to include permissions
+   - Added `hasPermission` and `hasAnyPermission` functions in AuthContext
+
+3. **Improved Admin Panel**
+   - Tabs shown/hidden based on user permissions
+   - Upload button only visible if user has `audio_upload` permission
+   - UsersManagement with full name, email, and permissions
+
+4. **AudioCard Improvements**
+   - Show edit/delete/add-to-album buttons only if user has permissions
+   - Uses api module instead of direct axios
+
+5. **Category Dropdown Improvements**
+   - Max height of ~7 categories, smooth vertical scrolling
+   - Custom scrollbar styling
+
+6. **Favorites, Like/Dislike, Feedback**
+   - All existing features maintained and working correctly
 
 ---
 
@@ -218,10 +368,6 @@ AWGP_AUDIO_CATALOG/
 3. Commit your changes: `git commit -m 'Add YourFeature'`
 4. Push to the branch: `git push origin feature/YourFeature`
 5. Open a Pull Request
-
----
-
-
 
 ---
 

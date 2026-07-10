@@ -18,12 +18,18 @@ router.get('/', auth, roleCheck(['admin']), async (req, res) => {
 
 // CREATE new user (admin only)
 router.post('/', auth, roleCheck(['admin']), async (req, res) => {
-  const { username, password, role } = req.body;
+  const { username, password, role, fullName, email, permissions } = req.body;
   if (!username || !password) return res.status(400).json({ message: 'Username and password required' });
   try {
     const existing = await User.findOne({ username });
     if (existing) return res.status(400).json({ message: 'Username already exists' });
-    const user = new User({ username, role: role || 'user' });
+    const user = new User({ 
+      username, 
+      role: role || 'onlyuser', // Default to onlyuser for new admin-created users
+      fullName: fullName || '',
+      email: email || '',
+      permissions: permissions || [] 
+    });
     const salt = await bcrypt.genSalt(10);
     user.passwordHash = await bcrypt.hash(password, salt);
     await user.save();
@@ -36,15 +42,19 @@ router.post('/', auth, roleCheck(['admin']), async (req, res) => {
   }
 });
 
-// UPDATE user (admin only) – allow role change and password reset
+// UPDATE user (admin only) – allow role change, password reset, and permissions update
 router.put('/:id', auth, roleCheck(['admin']), async (req, res) => {
-  const { role, password } = req.body;
+  const { role, password, fullName, email, permissions } = req.body;
   const update = {};
   if (role) update.role = role;
   if (password) {
     const salt = await bcrypt.genSalt(10);
     update.passwordHash = await bcrypt.hash(password, salt);
   }
+  if (fullName !== undefined) update.fullName = fullName;
+  if (email !== undefined) update.email = email;
+  if (permissions !== undefined) update.permissions = permissions;
+  
   try {
     const updated = await User.findByIdAndUpdate(req.params.id, update, { new: true }).select('-passwordHash');
     if (!updated) return res.status(404).json({ message: 'User not found' });

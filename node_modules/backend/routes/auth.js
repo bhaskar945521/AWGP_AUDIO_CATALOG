@@ -6,6 +6,20 @@ const bcrypt = require('bcryptjs');
 const auth = require('../middleware/auth');
 const roleCheck = require('../middleware/roleCheck');
 
+// Get current user info
+router.get('/me', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select('-passwordHash');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.json(user);
+  } catch (err) {
+    console.error('Get current user error:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // Login - public
 router.post('/login', async (req, res) => {
   const { username, password } = req.body;
@@ -17,8 +31,19 @@ router.post('/login', async (req, res) => {
     if (!user) return res.status(401).json({ message: 'Invalid credentials' });
     const valid = await user.validatePassword(password);
     if (!valid) return res.status(401).json({ message: 'Invalid credentials' });
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET || 'defaultsecret', { expiresIn: '7d' });
-    res.json({ token, role: user.role });
+    const token = jwt.sign(
+      { id: user._id, role: user.role, permissions: user.permissions || [] },
+      process.env.JWT_SECRET || 'defaultsecret',
+      { expiresIn: '7d' }
+    );
+    res.json({ 
+      token, 
+      role: user.role, 
+      permissions: user.permissions || [],
+      username: user.username,
+      email: user.email,
+      fullName: user.fullName
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

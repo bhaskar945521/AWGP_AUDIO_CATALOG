@@ -5,6 +5,7 @@ const Album = require('../models/Album');
 const Audio = require('../models/Audio');
 const auth = require('../middleware/auth');
 const roleCheck = require('../middleware/roleCheck');
+const permissionCheck = require('../middleware/permissionCheck');
 const { STORAGE_FOLDERS, generateUniqueFilename, deleteLocalFile } = require('../utils/localStorage');
 
 // Multer storage setup for album covers
@@ -59,7 +60,7 @@ function parseArrayField(field) {
   });
 
   // CREATE new album with optional cover image
-  router.post('/', auth, roleCheck(['admin','user','onlyuser']), upload.single('coverImage'), async (req, res) => {
+  router.post('/', auth, permissionCheck(['album_create']), upload.single('coverImage'), async (req, res) => {
     try {
       const { name, title, description, categoryId, audioIds } = req.body;
     let coverImage = req.body.coverImage || '/album_placeholder.png';
@@ -81,7 +82,7 @@ function parseArrayField(field) {
   });
 
   // UPDATE album with optional cover image
-  router.put('/:id', auth, roleCheck(['admin','user','onlyuser']), upload.single('coverImage'), async (req, res) => {
+  router.put('/:id', auth, permissionCheck(['album_edit']), upload.single('coverImage'), async (req, res) => {
     try {
       const { name, title, description, categoryId, audioIds } = req.body;
     const album = await Album.findById(req.params.id);
@@ -115,7 +116,7 @@ function parseArrayField(field) {
   });
 
 // DELETE album
-router.delete('/:id', auth, roleCheck(['admin','user','onlyuser']), async (req, res) => {
+router.delete('/:id', auth, permissionCheck(['album_delete']), async (req, res) => {
   try {
     const album = await Album.findByIdAndDelete(req.params.id);
     if (!album) return res.status(404).json({ message: 'Album not found' });
@@ -138,7 +139,7 @@ router.delete('/:id', auth, roleCheck(['admin','user','onlyuser']), async (req, 
   }
 });
 // New endpoint: Create Album from selected Audios (existing) with optional cover image
-router.post('/from-selection', auth, roleCheck(['admin','user','onlyuser']), upload.single('coverImage'), async (req, res) => {
+router.post('/from-selection', auth, permissionCheck(['album_create']), upload.single('coverImage'), async (req, res) => {
   try {
     const { albumName, title, description, categoryId, audioIds } = req.body;
     let coverImage = req.body.coverImage || '/album_placeholder.png';
@@ -186,7 +187,7 @@ router.post('/from-selection', auth, roleCheck(['admin','user','onlyuser']), upl
 });
 
 // New endpoint: Create Album from selected Audios with optional audio edits and optional cover image
-router.post('/from-selection-with-edits', auth, roleCheck(['admin','user','onlyuser']), upload.single('coverImage'), async (req, res) => {
+router.post('/from-selection-with-edits', auth, permissionCheck(['album_create']), upload.single('coverImage'), async (req, res) => {
   try {
     const { albumName, title, description, categoryId, audioIds, audioUpdates } = req.body;
     let coverImage = req.body.coverImage || '/album_placeholder.png';
@@ -249,7 +250,7 @@ router.post('/from-selection-with-edits', auth, roleCheck(['admin','user','onlyu
 });
 // ─── PATCH /api/albums/:albumId/add-audios ───────────────────────────────────
 // Associate one or more audios to an existing album
-router.patch('/:albumId/add-audios', auth, roleCheck(['admin', 'user', 'onlyuser']), async (req, res) => {
+router.patch('/:albumId/add-audios', auth, permissionCheck(['album_edit']), async (req, res) => {
   try {
     let { audioIds, audioUpdates } = req.body;
 

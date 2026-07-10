@@ -6,6 +6,7 @@ const Audio = require('../models/Audio');
 const Album = require('../models/Album');
 const auth = require('../middleware/auth');
 const roleCheck = require('../middleware/roleCheck');
+const permissionCheck = require('../middleware/permissionCheck');
 const multer = require('multer');
 const { STORAGE_FOLDERS, generateUniqueFilename, deleteLocalFile } = require('../utils/localStorage');
 
@@ -39,7 +40,7 @@ router.get('/', async (req, res) => {
 });
 
 // POST create new category
-router.post('/', auth, roleCheck(['admin', 'user', 'onlyuser']), upload.single('coverImage'), async (req, res) => {
+router.post('/', auth, permissionCheck(['category_create']), upload.single('coverImage'), async (req, res) => {
   try {
     const { name } = req.body;
     const existing = await Category.findOne({ name });
@@ -61,7 +62,7 @@ router.post('/', auth, roleCheck(['admin', 'user', 'onlyuser']), upload.single('
 });
 
 // PATCH rename / update cover image of a category
-router.patch('/:id', auth, roleCheck(['admin', 'user', 'onlyuser']), upload.single('coverImage'), async (req, res) => {
+router.patch('/:id', auth, permissionCheck(['category_edit']), upload.single('coverImage'), async (req, res) => {
   try {
     const { name } = req.body;
     const cat = await Category.findById(req.params.id);
@@ -88,7 +89,7 @@ router.patch('/:id', auth, roleCheck(['admin', 'user', 'onlyuser']), upload.sing
 });
 
 // DELETE category
-router.delete('/:id', auth, roleCheck(['admin', 'user', 'onlyuser']), async (req, res) => {
+router.delete('/:id', auth, permissionCheck(['category_delete']), async (req, res) => {
   try {
     const cat = await Category.findByIdAndDelete(req.params.id);
     if (!cat) return res.status(404).json({ message: 'Category not found' });

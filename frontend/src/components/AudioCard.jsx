@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../api';
 import { useAuth } from '../context/AuthContext';
 import { useAudio } from '../context/AudioContext';
 import { resolveUrl } from '../api';
@@ -10,9 +10,14 @@ export default function AudioCard({
   isFavorite, image, imageUrl,
   onPlay, onToggleFavorite, onDelete, onAddToAlbum
 }) {
-  const { isAdmin } = useAuth();
+  const { isAdmin, hasPermission, isPublicUser: isPublicUserAuth } = useAuth();
   const { isPublicUser, userFavorites, toggleFavoriteTrack } = useAudio();
   const navigate = useNavigate();
+  
+  const canEditAudio = isAdmin || hasPermission('audio_edit');
+  const canDeleteAudio = isAdmin || hasPermission('audio_delete');
+  const canAddToAlbum = isAdmin || hasPermission('album_edit');
+  const showAdminOptions = canEditAudio || canDeleteAudio || canAddToAlbum;
 
   const finalIsFavorite = isPublicUser ? userFavorites.includes(_id) : isFavorite;
 
@@ -55,35 +60,36 @@ export default function AudioCard({
         </div>
 
         {/* Admin options */}
-        {isAdmin && (
+        {showAdminOptions && (
           <div className="audio-options" onClick={e => e.stopPropagation()}>
             {/* Add to Existing Album */}
-            <button
-              className="audio-option-btn"
-              title="Add to Existing Album"
-              onClick={() => onAddToAlbum && onAddToAlbum(_id)}
-              style={{ color: '#f7a84d' }}
-            >
-              <i className="fas fa-folder-plus" />
-            </button>
-            <button
-              className="audio-option-btn delete"
-              title="Delete"
-              onClick={async () => {
-                if (!window.confirm('Delete this audio?')) return;
-                try {
-                  const token = localStorage.getItem('token');
-                  await axios.delete(`/api/audios/${_id}`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                  });
-                  if (onDelete) onDelete(_id);
-                } catch (err) {
-                  alert(err.response?.data?.message || 'Delete failed');
-                }
-              }}
-            >
-              <i className="fas fa-trash" />
-            </button>
+            {canAddToAlbum && (
+              <button
+                className="audio-option-btn"
+                title="Add to Existing Album"
+                onClick={() => onAddToAlbum && onAddToAlbum(_id)}
+                style={{ color: '#f7a84d' }}
+              >
+                <i className="fas fa-folder-plus" />
+              </button>
+            )}
+            {canDeleteAudio && (
+              <button
+                className="audio-option-btn delete"
+                title="Delete"
+                onClick={async () => {
+                  if (!window.confirm('Delete this audio?')) return;
+                  try {
+                    await api.delete(`/audios/${_id}`);
+                    if (onDelete) onDelete(_id);
+                  } catch (err) {
+                    alert(err.response?.data?.message || 'Delete failed');
+                  }
+                }}
+              >
+                <i className="fas fa-trash" />
+              </button>
+            )}
           </div>
         )}
       </div>

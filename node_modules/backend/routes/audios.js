@@ -12,6 +12,7 @@ const Album = require('../models/Album');
 const Category = require('../models/Category');
 const auth = require('../middleware/auth');
 const roleCheck = require('../middleware/roleCheck');
+const permissionCheck = require('../middleware/permissionCheck');
 const { STORAGE_FOLDERS, generateUniqueFilename, deleteLocalFile } = require('../utils/localStorage');
 
 function escapeRegExp(value) {
@@ -261,7 +262,7 @@ router.get('/:id', async (req, res) => {
 router.post(
   '/',
   auth,
-  roleCheck(['admin', 'user', 'onlyuser']),
+  permissionCheck(['audio_upload']),
   upload.fields([
     { name: 'audioFile', maxCount: 1 },
     { name: 'imageFile', maxCount: 1 }
@@ -370,7 +371,7 @@ router.post(
 );
 
 // ─── PUT /api/audios/:id ─────────────────────────────────────────────────────
-router.put('/:id', auth, roleCheck(['admin', 'onlyuser']), upload.single('imageFile'), rejectCategoryFields, async (req, res) => {
+router.put('/:id', auth, permissionCheck(['audio_edit']), upload.single('imageFile'), rejectCategoryFields, async (req, res) => {
   try {
     const { title, speaker, duration, description, albumIds, tags, imageUrl } = req.body;
     const audio = await Audio.findById(req.params.id);
@@ -419,7 +420,7 @@ router.put('/:id', auth, roleCheck(['admin', 'onlyuser']), upload.single('imageF
 });
 
 // ─── DELETE /api/audios/:id ──────────────────────────────────────────────────
-router.delete('/:id', auth, roleCheck(['admin', 'onlyuser']), async (req, res) => {
+router.delete('/:id', auth, permissionCheck(['audio_delete']), async (req, res) => {
   try {
     const audio = await Audio.findById(req.params.id);
     if (!audio) return res.status(404).json({ message: 'Audio not found' });

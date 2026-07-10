@@ -1,6 +1,28 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
+// Define all possible permissions
+const ALL_PERMISSIONS = [
+  'audio_view',
+  'audio_upload',
+  'audio_edit',
+  'audio_delete',
+  'category_view',
+  'category_create',
+  'category_edit',
+  'category_delete',
+  'album_view',
+  'album_create',
+  'album_edit',
+  'album_delete',
+  'feedback_view',
+  'feedback_delete',
+  'analytics_view',
+  'users_manage',
+  'settings_manage',
+  'admin_settings_manage'
+];
+
 const UserSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   email: { type: String }, // Optional/unique for public users
@@ -9,7 +31,13 @@ const UserSchema = new mongoose.Schema({
   // Allow flexible role values (admin, user, onlyuser, public_user, etc.)
   role: { type: String, enum: ['admin', 'user', 'onlyuser', 'public_user'], default: 'public_user' },
   // Simple work assignment – can be a free‑form description or list of audio IDs
-  assignedWork: { type: String, default: '' }
+  assignedWork: { type: String, default: '' },
+  // Dynamic permissions array
+  permissions: {
+    type: [String],
+    enum: ALL_PERMISSIONS,
+    default: []
+  }
 });
 
 // Helper to set password

@@ -34,12 +34,19 @@ router.post('/register', async (req, res) => {
 
     // Sign token for direct login on register
     const token = jwt.sign(
-      { id: newUser._id, role: newUser.role },
+      { id: newUser._id, role: newUser.role, permissions: newUser.permissions || [] },
       process.env.JWT_SECRET || 'defaultsecret',
       { expiresIn: '7d' }
     );
 
-    res.status(201).json({ token, role: newUser.role, fullName: newUser.fullName });
+    res.status(201).json({ 
+      token, 
+      role: newUser.role, 
+      permissions: newUser.permissions || [],
+      fullName: newUser.fullName,
+      email: newUser.email,
+      username: newUser.username
+    });
   } catch (err) {
     console.error('Registration error:', err);
     res.status(500).json({ message: err.message });
@@ -70,12 +77,19 @@ router.post('/login', async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user._id, role: user.role },
+      { id: user._id, role: user.role, permissions: user.permissions || [] },
       process.env.JWT_SECRET || 'defaultsecret',
       { expiresIn: '7d' }
     );
 
-    res.json({ token, role: user.role, fullName: user.fullName });
+    res.json({ 
+      token, 
+      role: user.role, 
+      permissions: user.permissions || [],
+      fullName: user.fullName,
+      email: user.email,
+      username: user.username
+    });
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).json({ message: err.message });
