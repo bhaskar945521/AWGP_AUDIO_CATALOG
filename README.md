@@ -314,7 +314,8 @@ AWGP_AUDIO_CATLOG/
 |--------|-------------------------------------|---------------------------------|
 | POST   | `/api/listening/start`              | Start a listening session       |
 | PATCH  | `/api/listening/:sessionId/end`     | End session & record duration   |
-| GET    | `/api/user/history`                 | Get user's listening history    |
+| GET    | `/api/user/history`                 | Get user's listening history (last 7 days only) |
+| DELETE | `/api/user/history`                 | Clear user's entire listening history |
 
 ### Feedback
 | Method | Endpoint                        | Description                                        |
@@ -356,6 +357,45 @@ AWGP_AUDIO_CATLOG/
 ---
 
 ## 📝 Changelog
+
+### v2.2 — Listening History, Enhanced Feedback Marquee & Public Counts (2026-07-11)
+
+#### 📜 Listening History Page
+- New `ListeningHistory.jsx` component added (accessible via Sidebar and Mobile Bottom Navigation)
+- Shows only last 7 days of listening history (filtered on backend)
+- Unique tracks with last listened time and total time listened
+- Clear History button with confirmation dialog
+- Backend endpoints: GET /user/history (last 7 days), DELETE /user/history (clear all)
+- Listening session tracking now works from all pages (moved to AudioContext)
+
+#### 👍 Like/Dislike Counts Visible to Everyone
+- Guests can now see like/dislike counts (interactive only for logged-in users)
+- Updated GET /audio/:id/reactions endpoint to work without authentication
+- Counts shown on AudioCard, AlbumDetails, and Details page
+- Interactive buttons only for authenticated users (guests see counts as text)
+
+#### 🎵 Album Page Quick Actions
+- Added Like/Dislike/Favorite/Comment buttons on each audio row in AlbumDetails
+- Buttons visible only for logged-in users
+- Hover effect on audio rows for better UX
+- Fetch reactions for all album tracks on page load
+
+#### 📣 Enhanced Feedback Marquee
+- Improved styling with gradient background and better visual hierarchy
+- Shows: 🎵 Track (Speaker) • Username — "Short feedback"
+- Changed label from "REVIEWS" to "USER LOVE" with heart icon
+- New smooth animation and better spacing
+- Still only shows admin-approved feedback
+
+#### 🔧 Admin Login Fix
+- Updated backend/server.js to always use User.setPassword() for admin password, ensuring correct hashing
+- Default admin credentials: shantikunjadmin / Shantikunj2026
+#### 🛡️ Admin Safety Check
+- Cannot delete admin accounts (backend restriction + frontend disabled button)
+- Cannot change last admin's role to non-admin
+- Always ensure at least one admin exists
+
+---
 
 ### v2.1 — Smart Search, Marquee & Feedback Approval (2026-07-10)
 

@@ -76,14 +76,23 @@ export default function UserProfile() {
   const [history, setHistory]   = useState([]);
   const [loading, setLoading]   = useState(true);
   const [userInfo, setUserInfo] = useState(null);
+  const [fullUser, setFullUser] = useState(null);
 
-  // Derive user info from JWT
+  // Derive user info from JWT (fallback)
   useEffect(() => {
     if (!token) return;
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
       setUserInfo(payload);
     } catch (e) {}
+  }, [token]);
+
+  // Fetch full user details from API
+  useEffect(() => {
+    if (!token) return;
+    api.get('/auth/me')
+      .then(res => setFullUser(res.data))
+      .catch(err => console.error('Could not fetch full user info', err));
   }, [token]);
 
   useEffect(() => {
@@ -142,12 +151,21 @@ export default function UserProfile() {
         {/* Info */}
         <div style={{ flex: 1, minWidth: 0 }}>
           <h1 style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
-            {userInfo?.fullName || userInfo?.username || 'User'}
+            {fullUser?.fullName || userInfo?.fullName || userInfo?.username || 'User'}
           </h1>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '4px 0 0' }}>
             <i className="fas fa-user-tag" style={{ marginRight: 6, color: 'var(--saffron)' }} />
-            {userInfo?.role === 'public_user' ? 'Catalog Listener' : userInfo?.role || 'User'}
+            {fullUser?.role === 'public_user' ? 'Catalog Listener' : fullUser?.role || userInfo?.role || 'User'}
           </p>
+          {/* Assigned Work */}
+          {fullUser?.assignedWork && (
+            <div style={{ marginTop: '12px', padding: '10px 14px', background: 'rgba(247,168,77,0.08)', borderRadius: '10px', border: '1px solid var(--saffron)' }}>
+              <p style={{ margin:0, fontSize:'0.78rem', fontWeight:700, color:'var(--saffron)', marginBottom:'4px', textTransform:'uppercase', letterSpacing:'0.05em' }}>
+                <i className="fas fa-tasks" style={{ marginRight:6 }} /> Assigned Work
+              </p>
+              <p style={{ margin:0, fontSize:'0.88rem', color:'var(--text-main)' }}>{fullUser.assignedWork}</p>
+            </div>
+          )}
         </div>
 
         {/* Logout button */}

@@ -30,6 +30,12 @@ export const AudioProvider = ({ children }) => {
 
   // User-specific favorites state
   const [userFavorites, setUserFavorites] = useState([]);
+  // User reactions state (map audioId to {liked, disliked, likeCount, dislikeCount})
+  const [userReactions, setUserReactions] = useState({});
+
+  // Listening session tracking refs
+  const sessionIdRef = useRef(null);
+  const sessionStartRef = useRef(null);
 
   // Single shared <audio> element — always mounted, all devices
   const audioRef = useRef(null);
@@ -61,6 +67,49 @@ export const AudioProvider = ({ children }) => {
       setUserFavorites([]);
     }
   }, [token]);
+
+  // ─── Listening Session Tracking (works everywhere) ───────────────
+  useEffect(() => {
+    if (!token || !currentAudio) {
+      // If no token or no audio, end any existing session
+      if (sessionIdRef.current && sessionStartRef.current) {
+        const durationListened = Math.round((Date.now() - sessionStartRef.current) / 1000);
+        api.patch(`/listening/${sessionIdRef.current}/end`, { durationListened }).catch(() => {});
+        sessionIdRef.current = null;
+        sessionStartRef.current = null;
+      }
+      return;
+    }
+
+    if (isPlaying && !sessionIdRef.current) {
+      // Start new session
+      api.post('/listening/start', { audioId: currentAudio._id })
+        .then(res => {
+          sessionIdRef.current = res.data.sessionId;
+          sessionStartRef.current = Date.now();
+        })
+        .catch(() => {});
+    } else if (!isPlaying && sessionIdRef.current) {
+      // End session when paused
+      const durationListened = sessionStartRef.current
+        ? Math.round((Date.now() - sessionStartRef.current) / 1000)
+        : 0;
+      api.patch(`/listening/${sessionIdRef.current}/end`, { durationListened })
+        .catch(() => {});
+      sessionIdRef.current = null;
+      sessionStartRef.current = null;
+    }
+  }, [isPlaying, currentAudio, token]);
+
+  // ─── Cleanup: End session on unmount ────────────────────────────
+  useEffect(() => {
+    return () => {
+      if (sessionIdRef.current && sessionStartRef.current) {
+        const durationListened = Math.round((Date.now() - sessionStartRef.current) / 1000);
+        api.patch(`/listening/${sessionIdRef.current}/end`, { durationListened }).catch(() => {});
+      }
+    };
+  }, []);
 
   // ── When track changes: load new src ────────────────────────
   useEffect(() => {
@@ -270,6 +319,39 @@ export const AudioProvider = ({ children }) => {
     }
   }, [userFavorites]);
 
+  // Fetch reactions for an audio track
+  const fetchReactions = useCallback(async (audioId) => {
+    if (!audioId) return;
+    try {
+      const res = await api.get(`/audio/${audioId}/reactions`);
+      setUserReactions(prev => ({ ...prev, [audioId]: res.data }));
+    } catch (err) {
+      console.error('[AudioContext] Failed to fetch reactions:', err);
+    }
+  }, []);
+
+  // Toggle like for an audio track
+  const toggleLike = useCallback(async (audioId) => {
+    if (!audioId || !token) return;
+    try {
+      const res = await api.post(`/audio/${audioId}/like`);
+      setUserReactions(prev => ({ ...prev, [audioId]: res.data }));
+    } catch (err) {
+      console.error('[AudioContext] Failed to toggle like:', err);
+    }
+  }, [token]);
+
+  // Toggle dislike for an audio track
+  const toggleDislike = useCallback(async (audioId) => {
+    if (!audioId || !token) return;
+    try {
+      const res = await api.post(`/audio/${audioId}/dislike`);
+      setUserReactions(prev => ({ ...prev, [audioId]: res.data }));
+    } catch (err) {
+      console.error('[AudioContext] Failed to toggle dislike:', err);
+    }
+  }, [token]);
+
   // ── Toggle Favorite (current audio) ─────────────────────────
   const toggleFavorite = useCallback(async () => {
     const cur = currentAudioRef.current;
@@ -306,6 +388,11 @@ export const AudioProvider = ({ children }) => {
         toggleFavoriteTrack,
         userFavorites,
         isPublicUser,
+        // reactions
+        userReactions,
+        fetchReactions,
+        toggleLike,
+        toggleDislike,
         // progress
         progress,
         currentTime,

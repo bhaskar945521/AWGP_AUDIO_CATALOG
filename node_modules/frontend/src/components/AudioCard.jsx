@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
 import { useAuth } from '../context/AuthContext';
@@ -10,8 +10,8 @@ export default function AudioCard({
   isFavorite, image, imageUrl,
   onPlay, onToggleFavorite, onDelete, onAddToAlbum
 }) {
-  const { isAdmin, hasPermission } = useAuth();
-  const { userFavorites, toggleFavoriteTrack } = useAudio();
+  const { isAdmin, hasPermission, token } = useAuth();
+  const { userFavorites, toggleFavoriteTrack, userReactions, fetchReactions, toggleLike, toggleDislike } = useAudio();
   const navigate = useNavigate();
   
   const canEditAudio = isAdmin || hasPermission('audio_edit');
@@ -20,10 +20,27 @@ export default function AudioCard({
   const showAdminOptions = canEditAudio || canDeleteAudio || canAddToAlbum;
 
   const finalIsFavorite = userFavorites.includes(_id);
+  const reactions = userReactions[_id] || { liked: false, disliked: false, likeCount: 0, dislikeCount: 0 };
+
+  useEffect(() => {
+    if (_id && !userReactions[_id]) {
+      fetchReactions(_id);
+    }
+  }, [_id, fetchReactions, userReactions]);
 
   const handleFavoriteClick = (e) => {
     e.stopPropagation();
     toggleFavoriteTrack(_id);
+  };
+
+  const handleLikeClick = (e) => {
+    e.stopPropagation();
+    toggleLike(_id);
+  };
+
+  const handleDislikeClick = (e) => {
+    e.stopPropagation();
+    toggleDislike(_id);
   };
 
   const displayImage = image && image !== '/placeholder.png'
@@ -105,10 +122,82 @@ export default function AudioCard({
             {duration || '—'}
           </span>
           {language && <span className="audio-lang">{language}</span>}
+          
+          {/* Like count + button (button only if token exists) */}
+          {token ? (
+            <button
+              onClick={handleLikeClick}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '4px',
+                color: reactions.liked ? 'var(--saffron)' : 'var(--text-muted)',
+                fontSize: '0.9rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '3px'
+              }}
+            >
+              <i className={reactions.liked ? 'fas fa-thumbs-up' : 'far fa-thumbs-up'} />
+              {reactions.likeCount > 0 && <span style={{ fontSize: '0.75rem' }}>{reactions.likeCount}</span>}
+            </button>
+          ) : (
+            reactions.likeCount > 0 && (
+              <span style={{ 
+                padding: '4px', 
+                color: 'var(--text-muted)', 
+                fontSize: '0.9rem', 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '3px' 
+              }}>
+                <i className="far fa-thumbs-up" />
+                <span style={{ fontSize: '0.75rem' }}>{reactions.likeCount}</span>
+              </span>
+            )
+          )}
+          
+          {/* Dislike count + button (button only if token exists) */}
+          {token ? (
+            <button
+              onClick={handleDislikeClick}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '4px',
+                color: reactions.disliked ? '#e53e3e' : 'var(--text-muted)',
+                fontSize: '0.9rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '3px'
+              }}
+            >
+              <i className={reactions.disliked ? 'fas fa-thumbs-down' : 'far fa-thumbs-down'} />
+              {reactions.dislikeCount > 0 && <span style={{ fontSize: '0.75rem' }}>{reactions.dislikeCount}</span>}
+            </button>
+          ) : (
+            reactions.dislikeCount > 0 && (
+              <span style={{ 
+                padding: '4px', 
+                color: 'var(--text-muted)', 
+                fontSize: '0.9rem', 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '3px' 
+              }}>
+                <i className="far fa-thumbs-down" />
+                <span style={{ fontSize: '0.75rem' }}>{reactions.dislikeCount}</span>
+              </span>
+            )
+          )}
+          
           <button
             className={`favorite-btn${finalIsFavorite ? ' active' : ''}`}
             onClick={handleFavoriteClick}
             title={finalIsFavorite ? 'Remove from favorites' : 'Add to favorites'}
+            style={!token ? { cursor: 'default', opacity: 0.5 } : {}}
           >
             <i className={finalIsFavorite ? 'fas fa-heart' : 'far fa-heart'} />
           </button>

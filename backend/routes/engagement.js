@@ -115,16 +115,29 @@ router.post('/audio/:id/dislike', auth, async (req, res) => {
   }
 });
 
-// GET /api/audio/:id/reactions — Get like/dislike counts + user's current reaction
-router.get('/audio/:id/reactions', auth, async (req, res) => {
+// GET /api/audio/:id/reactions — Get like/dislike counts + user's current reaction (if logged in)
+router.get('/audio/:id/reactions', async (req, res) => {
   const audioId = req.params.id;
-  const userId = req.user._id;
+  // Use auth middleware optionally: check if req.user exists
+  // We'll call auth manually but don't fail if not logged in
+  let userId = null;
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+    try {
+      const jwt = require('jsonwebtoken');
+      const token = req.headers.authorization.split(' ')[1];
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      userId = decoded.id;
+    } catch (err) {
+      // Token invalid, just continue as guest
+    }
+  }
+  
   try {
     const [likeCount, dislikeCount, userLike, userDislike] = await Promise.all([
       Like.countDocuments({ audioId }),
       Dislike.countDocuments({ audioId }),
-      Like.findOne({ userId, audioId }),
-      Dislike.findOne({ userId, audioId }),
+      userId ? Like.findOne({ userId, audioId }) : Promise.resolve(null),
+      userId ? Dislike.findOne({ userId, audioId }) : Promise.resolve(null),
     ]);
     res.json({
       likeCount,
@@ -285,17 +298,33 @@ router.patch('/listening/:sessionId/end', auth, async (req, res) => {
   }
 });
 
-// GET /api/user/history — Get listening history for logged-in user
+// GET /api/user/history — Get listening history for logged-in user (last 7 days only)
 router.get('/user/history', auth, async (req, res) => {
   const userId = req.user._id;
+  const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
   try {
-    const history = await ListeningHistory.find({ userId })
+    const history = await ListeningHistory.find({ 
+      userId, 
+      sessionStart: { $gte: oneWeekAgo } 
+    })
       .populate('audioId', 'title speaker duration image imageUrl category')
       .sort({ sessionStart: -1 })
       .limit(100);
     res.json(history);
   } catch (err) {
     console.error('Listening history error:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// DELETE /api/user/history — Clear all listening history for logged-in user (last 7 days or all)
+router.delete('/user/history', auth, async (req, res) => {
+  const userId = req.user._id;
+  try {
+    await ListeningHistory.deleteMany({ userId });
+    res.json({ message: 'Listening history cleared successfully' });
+  } catch (err) {
+    console.error('Clear history error:', err);
     res.status(500).json({ message: err.message });
   }
 });

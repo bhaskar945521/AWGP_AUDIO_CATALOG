@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api, { resolveUrl } from '../api';
 import { useAudio } from '../context/AudioContext';
@@ -9,16 +9,15 @@ export default function Details() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { setCurrentAudio, currentAudio, isPlaying, setIsPlaying,
-          toggleFavoriteTrack, userFavorites, isPublicUser } = useAudio();
-  const { token, isPublicUser: authPublicUser } = useAuth();
+          toggleFavoriteTrack, userFavorites, userReactions, fetchReactions, toggleLike, toggleDislike } = useAudio();
+  const { token } = useAuth();
 
   const [audio, setAudio]       = useState(null);
   const [loading, setLoading]   = useState(true);
   const [error, setError]       = useState(null);
 
-  // Reactions state
-  const [reactions, setReactions] = useState({ liked: false, disliked: false, likeCount: 0, dislikeCount: 0 });
-  const [reactLoading, setReactLoading] = useState(false);
+  // Reactions state from AudioContext
+  const reactions = userReactions[id] || { liked: false, disliked: false, likeCount: 0, dislikeCount: 0 };
 
   // Feedback state
   const [showFeedback, setShowFeedback] = useState(false);
@@ -26,10 +25,6 @@ export default function Details() {
   const [shortFeedback, setShortFeedback] = useState('');
   const [feedbackRating, setFeedbackRating] = useState(0);
   const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
-
-  // Listening session tracking
-  const sessionIdRef  = useRef(null);
-  const sessionStartRef = useRef(null);
 
   // ─── Fetch audio details ────────────────────────────────────
   useEffect(() => {
@@ -48,51 +43,12 @@ export default function Details() {
     fetchAudio();
   }, [id]);
 
-  // ─── Fetch reactions (likes/dislikes) for public users ─────
+  // ─── Fetch reactions (likes/dislikes) for all users ─────────
   useEffect(() => {
-    if (!id || !token) return;
-    api.get(`/audio/${id}/reactions`)
-      .then(res => setReactions(res.data))
-      .catch(() => {}); // silently fail — not critical
-  }, [id, token]);
-
-  // ─── Start listening session when track plays ───────────────
-  useEffect(() => {
-    if (!token || !audio) return;
-
-    const isThisTrackPlaying = currentAudio?._id === audio._id && isPlaying;
-
-    if (isThisTrackPlaying && !sessionIdRef.current) {
-      // Start session
-      api.post('/listening/start', { audioId: audio._id })
-        .then(res => {
-          sessionIdRef.current  = res.data.sessionId;
-          sessionStartRef.current = Date.now();
-        })
-        .catch(() => {});
-    } else if (!isThisTrackPlaying && sessionIdRef.current) {
-      // End session
-      const durationListened = sessionStartRef.current
-        ? Math.round((Date.now() - sessionStartRef.current) / 1000)
-        : 0;
-      api.patch(`/listening/${sessionIdRef.current}/end`, { durationListened })
-        .catch(() => {});
-      sessionIdRef.current  = null;
-      sessionStartRef.current = null;
+    if (id) {
+      fetchReactions(id);
     }
-  }, [isPlaying, currentAudio, audio, token]);
-
-  // ─── Clean up listening session on unmount ──────────────────
-  useEffect(() => {
-    return () => {
-      if (sessionIdRef.current && sessionStartRef.current) {
-        const durationListened = Math.round((Date.now() - sessionStartRef.current) / 1000);
-        api.patch(`/listening/${sessionIdRef.current}/end`, { durationListened }).catch(() => {});
-        sessionIdRef.current  = null;
-        sessionStartRef.current = null;
-      }
-    };
-  }, []);
+  }, [id, fetchReactions]);
 
   // ─── Toggle favorite ────────────────────────────────────────
   const toggleFavorite = async () => {
@@ -117,40 +73,12 @@ export default function Details() {
   // ─── Like / Dislike ─────────────────────────────────────────
   const handleLike = async () => {
     if (!token) return toast.error('Please log in to like tracks.');
-    setReactLoading(true);
-    try {
-      const res = await api.post(`/audio/${id}/like`);
-      setReactions(prev => ({
-        ...prev,
-        liked: res.data.liked,
-        disliked: false,
-        likeCount: res.data.likeCount,
-        dislikeCount: res.data.dislikeCount ?? prev.dislikeCount,
-      }));
-    } catch (err) {
-      toast.error('Failed to update like.');
-    } finally {
-      setReactLoading(false);
-    }
+    await toggleLike(id);
   };
 
   const handleDislike = async () => {
     if (!token) return toast.error('Please log in to react to tracks.');
-    setReactLoading(true);
-    try {
-      const res = await api.post(`/audio/${id}/dislike`);
-      setReactions(prev => ({
-        ...prev,
-        disliked: res.data.disliked,
-        liked: false,
-        dislikeCount: res.data.dislikeCount,
-        likeCount: res.data.likeCount ?? prev.likeCount,
-      }));
-    } catch (err) {
-      toast.error('Failed to update dislike.');
-    } finally {
-      setReactLoading(false);
-    }
+    await toggleDislike(id);
   };
 
   // ─── Feedback submission ────────────────────────────────────
@@ -277,18 +205,17 @@ export default function Details() {
           </div>
 
           {/* ── Like / Dislike / Feedback row ─────────────────── */}
-          {token && (
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-              marginTop: '18px',
-              flexWrap: 'wrap'
-            }}>
-              {/* Like */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            marginTop: '18px',
+            flexWrap: 'wrap'
+          }}>
+            {/* Like (count always visible, button only if logged in */}
+            {token ? (
               <button
                 type="button"
-                disabled={reactLoading}
                 onClick={handleLike}
                 style={{
                   display: 'flex',
@@ -308,11 +235,28 @@ export default function Details() {
                 <i className={reactions.liked ? 'fas fa-thumbs-up' : 'far fa-thumbs-up'} />
                 <span>{reactions.likeCount}</span>
               </button>
+            ) : (
+              <span style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '8px 16px',
+                borderRadius: '20px',
+                border: '1.5px solid var(--border)',
+                background: 'transparent',
+                color: 'var(--text-muted)',
+                fontWeight: 600,
+                fontSize: '0.85rem',
+              }}>
+                <i className="far fa-thumbs-up" />
+                <span>{reactions.likeCount}</span>
+              </span>
+            )}
 
-              {/* Dislike */}
+            {/* Dislike (count always visible, button only if logged in */}
+            {token ? (
               <button
                 type="button"
-                disabled={reactLoading}
                 onClick={handleDislike}
                 style={{
                   display: 'flex',
@@ -332,8 +276,26 @@ export default function Details() {
                 <i className={reactions.disliked ? 'fas fa-thumbs-down' : 'far fa-thumbs-down'} />
                 <span>{reactions.dislikeCount}</span>
               </button>
+            ) : (
+              <span style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '8px 16px',
+                borderRadius: '20px',
+                border: '1.5px solid var(--border)',
+                background: 'transparent',
+                color: 'var(--text-muted)',
+                fontWeight: 600,
+                fontSize: '0.85rem',
+              }}>
+                <i className="far fa-thumbs-down" />
+                <span>{reactions.dislikeCount}</span>
+              </span>
+            )}
 
-              {/* Feedback button */}
+            {/* Feedback button (only if logged in */}
+            {token && (
               <button
                 type="button"
                 onClick={() => setShowFeedback(v => !v)}
@@ -355,8 +317,8 @@ export default function Details() {
                 <i className="far fa-comment-alt" />
                 <span>Feedback</span>
               </button>
-            </div>
-          )}
+            )}
+          </div>
 
           {/* ── Feedback Form ──────────────────────────────────── */}
           {showFeedback && token && (

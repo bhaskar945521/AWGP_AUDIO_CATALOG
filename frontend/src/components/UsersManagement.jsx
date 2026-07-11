@@ -60,7 +60,8 @@ export default function UsersManagement() {
     role: 'onlyuser',
     fullName: '',
     email: '',
-    permissions: []
+    permissions: [],
+    assignedWork: ''
   });
   const [creating, setCreating] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -72,7 +73,8 @@ export default function UsersManagement() {
     email: '',
     permissions: [],
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    assignedWork: ''
   });
   const [showEditPassword, setShowEditPassword] = useState(false);
   const [showEditConfirmPassword, setShowEditConfirmPassword] = useState(false);
@@ -135,10 +137,11 @@ export default function UsersManagement() {
         role: newUser.role,
         fullName: newUser.fullName,
         email: newUser.email,
-        permissions: newUser.permissions
+        permissions: newUser.permissions,
+        assignedWork: newUser.assignedWork
       }, authConfig());
       toast.success('User created');
-      setNewUser({ username: '', password: '', confirmPassword: '', role: 'onlyuser', fullName: '', email: '', permissions: [] });
+      setNewUser({ username: '', password: '', confirmPassword: '', role: 'onlyuser', fullName: '', email: '', permissions: [], assignedWork: '' });
       fetchUsers();
     } catch (err) {
       console.error('Create user error', err);
@@ -159,6 +162,7 @@ export default function UsersManagement() {
         fullName: editUserForm.fullName,
         email: editUserForm.email,
         permissions: editUserForm.permissions,
+        assignedWork: editUserForm.assignedWork,
         ...(editUserForm.password ? { password: editUserForm.password } : {})
       }, authConfig());
       toast.success('User updated');
@@ -169,7 +173,8 @@ export default function UsersManagement() {
         email: '',
         permissions: [],
         password: '',
-        confirmPassword: ''
+        confirmPassword: '',
+        assignedWork: ''
       });
       fetchUsers();
     } catch (err) {
@@ -198,7 +203,8 @@ export default function UsersManagement() {
       email: user.email || '',
       permissions: user.permissions || [],
       password: '',
-      confirmPassword: ''
+      confirmPassword: '',
+      assignedWork: user.assignedWork || ''
     });
   };
 
@@ -210,7 +216,8 @@ export default function UsersManagement() {
       email: '',
       permissions: [],
       password: '',
-      confirmPassword: ''
+      confirmPassword: '',
+      assignedWork: ''
     });
   };
 
@@ -248,6 +255,14 @@ export default function UsersManagement() {
             className="admin-input"
             value={newUser.email}
             onChange={handleInputChange}
+          />
+          <textarea
+            name="assignedWork"
+            placeholder="Assigned Work"
+            className="admin-input"
+            value={newUser.assignedWork}
+            onChange={handleInputChange}
+            rows={2}
           />
           <div className="password-input-wrapper">
             <input
@@ -353,11 +368,22 @@ export default function UsersManagement() {
                   value={editUserForm.email}
                   onChange={(e) => handleInputChange(e, 'edit')}
                 />
+                <textarea
+                  name="assignedWork"
+                  placeholder="Assigned Work"
+                  className="admin-input"
+                  value={editUserForm.assignedWork}
+                  onChange={(e) => handleInputChange(e, 'edit')}
+                  rows={2}
+                />
                 <select
                   name="role"
                   className="admin-select role-select"
                   value={editUserForm.role}
                   onChange={(e) => handleInputChange(e, 'edit')}
+                  disabled={editingUser.role === 'admin' && users.filter(u => u.role === 'admin').length <= 1}
+                  style={{ opacity: editingUser.role === 'admin' && users.filter(u => u.role === 'admin').length <= 1 ? 0.7 : 1, cursor: editingUser.role === 'admin' && users.filter(u => u.role === 'admin').length <= 1 ? 'not-allowed' : 'pointer' }}
+                  title={editingUser.role === 'admin' && users.filter(u => u.role === 'admin').length <= 1 ? 'Must have at least one admin' : 'Change role'}
                 >
                   <option value="onlyuser">Onlyuser</option>
                   <option value="user">User</option>
@@ -445,6 +471,7 @@ export default function UsersManagement() {
                 <th>Full Name</th>
                 <th>Email</th>
                 <th>Role</th>
+                <th>Assigned Work</th>
                 <th>Permissions</th>
                 <th style={{ textAlign: 'right' }}>Actions</th>
               </tr>
@@ -456,6 +483,7 @@ export default function UsersManagement() {
                   <td>{u.fullName || '-'}</td>
                   <td>{u.email || '-'}</td>
                   <td>{u.role}</td>
+                  <td>{u.assignedWork || '-'}</td>
                   <td>
                     {u.permissions && u.permissions.length > 0 
                       ? u.permissions.join(', ') 
@@ -465,7 +493,13 @@ export default function UsersManagement() {
                     <button className="admin-action-btn edit" onClick={() => startEdit(u)} title="Edit User">
                       <i className="fas fa-edit" />
                     </button>
-                    <button className="admin-action-btn delete" onClick={() => handleDelete(u._id)} title="Delete User">
+                    <button 
+                      className="admin-action-btn delete" 
+                      onClick={() => handleDelete(u._id)} 
+                      title={u.role === 'admin' ? 'Cannot delete admin accounts' : 'Delete User'}
+                      disabled={u.role === 'admin'}
+                      style={{ opacity: u.role === 'admin' ? 0.5 : 1, cursor: u.role === 'admin' ? 'not-allowed' : 'pointer' }}
+                    >
                       <i className="fas fa-trash-alt" />
                     </button>
                   </td>

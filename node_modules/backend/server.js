@@ -162,13 +162,15 @@ mongoose.connect(process.env.MONGODB_URI)
     console.log('[DB] Connected to MongoDB');
     const adminUsername = process.env.ADMIN_USERNAME || 'shantikunjadmin';
     const adminPassword = process.env.ADMIN_PASSWORD || 'Shantikunj2026';
-    const adminExists = await User.findOne({ username: adminUsername });
-    if (!adminExists) {
-      const admin = new User({ username: adminUsername, role: 'admin' });
-      await admin.setPassword(adminPassword);
-      await admin.save();
+    let admin = await User.findOne({ username: adminUsername });
+    if (!admin) {
+      admin = new User({ username: adminUsername, role: 'admin' });
       console.log('[DB] Default admin created:', adminUsername);
     }
+    // Always update admin password to ensure it's correct
+    await admin.setPassword(adminPassword);
+    await admin.save();
+    console.log('[DB] Admin credentials updated');
   })
   .catch(err => {
     console.error('[DB] Connection Error:', err.message);

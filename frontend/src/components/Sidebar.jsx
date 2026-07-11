@@ -42,10 +42,16 @@ function Sidebar({ onOpenUpload }) {
         )}
 
         {isPublicUser && (
-          <NavLink to="/favorites" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
-            <i className="fas fa-heart" />
-            <span>Favorites</span>
-          </NavLink>
+          <>
+            <NavLink to="/favorites" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
+              <i className="fas fa-heart" />
+              <span>Favorites</span>
+            </NavLink>
+            <NavLink to="/history" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
+              <i className="fas fa-history" />
+              <span>Listening History</span>
+            </NavLink>
+          </>
         )}
 
         {/* Profile — public users only */}

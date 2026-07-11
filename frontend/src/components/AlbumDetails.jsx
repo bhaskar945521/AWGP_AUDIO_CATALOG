@@ -3,13 +3,15 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import api, { resolveUrl } from '../api';
 
 import { useAudio } from '../context/AudioContext';
+import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import Footer from './Footer';
 
 export default function AlbumDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { setCurrentAudio, setQueue, toggleFavoriteTrack } = useAudio();
+  const { setCurrentAudio, setQueue, toggleFavoriteTrack, userFavorites, userReactions, fetchReactions, toggleLike, toggleDislike } = useAudio();
+  const { token } = useAuth();
   const [album, setAlbum] = useState(null);
   const [audios, setAudios] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -38,6 +40,16 @@ export default function AlbumDetails() {
   useEffect(() => {
     fetchAlbumData();
   }, [id]);
+  
+  // Fetch reactions for all audios in album when audios change
+  useEffect(() => {
+    if (audios.length === 0) return;
+    audios.forEach(audio => {
+      if (!userReactions[audio._id]) {
+        fetchReactions(audio._id);
+      }
+    });
+  }, [audios, fetchReactions, userReactions]);
 
   useEffect(() => {
     const handleVisibility = () => {
@@ -158,6 +170,9 @@ export default function AlbumDetails() {
                 : audio.image && audio.image !== '/placeholder.png'
                   ? audio.image
                   : '/placeholder.png';
+              const isFav = userFavorites.includes(audio._id);
+              const reactions = userReactions[audio._id] || { liked: false, disliked: false, likeCount: 0, dislikeCount: 0 };
+
               return (
                 <div
                   key={audio._id}
@@ -165,12 +180,14 @@ export default function AlbumDetails() {
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    padding: '8px 12px',
+                    padding: '10px 12px',
                     background: 'var(--card-bg)',
-                    borderRadius: '6px',
+                    borderRadius: '10px',
                     cursor: 'pointer',
                     gap: '12px',
-                    border: '1px solid var(--border)'
+                    border: '1px solid var(--border)',
+                    position: 'relative',
+                    transition: 'all 0.2s ease'
                   }}
                   onClick={() => { setQueue(audios); setCurrentAudio(audio); }}
                 >
@@ -187,6 +204,117 @@ export default function AlbumDetails() {
                       {audio.speaker || 'Unknown Speaker'}
                     </div>
                   </div>
+                  
+                  {/* Quick Action Buttons */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }} onClick={(e) => e.stopPropagation()}>
+                    {/* Like (count always visible to all, button only if logged in */}
+                    {token ? (
+                      <button
+                        onClick={() => toggleLike(audio._id)}
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          cursor: 'pointer',
+                          padding: '6px',
+                          color: reactions.liked ? 'var(--saffron)' : 'var(--text-muted)',
+                          fontSize: '1rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px'
+                        }}
+                        title="Like"
+                      >
+                        <i className={reactions.liked ? 'fas fa-thumbs-up' : 'far fa-thumbs-up'} />
+                        {reactions.likeCount > 0 && <span style={{ fontSize: '0.8rem' }}>{reactions.likeCount}</span>}
+                      </button>
+                    ) : (
+                      reactions.likeCount > 0 && (
+                        <span style={{ 
+                          padding: '6px', 
+                          color: 'var(--text-muted)', 
+                          fontSize: '1rem', 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          gap: '4px'
+                        }}>
+                          <i className="far fa-thumbs-up" />
+                          <span style={{ fontSize: '0.8rem' }}>{reactions.likeCount}</span>
+                        </span>
+                      )
+                    )}
+                    
+                    {/* Dislike (count always visible to all, button only if logged in */}
+                    {token ? (
+                      <button
+                        onClick={() => toggleDislike(audio._id)}
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          cursor: 'pointer',
+                          padding: '6px',
+                          color: reactions.disliked ? '#e53e3e' : 'var(--text-muted)',
+                          fontSize: '1rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px'
+                        }}
+                        title="Dislike"
+                      >
+                        <i className={reactions.disliked ? 'fas fa-thumbs-down' : 'far fa-thumbs-down'} />
+                        {reactions.dislikeCount > 0 && <span style={{ fontSize: '0.8rem' }}>{reactions.dislikeCount}</span>}
+                      </button>
+                    ) : (
+                      reactions.dislikeCount > 0 && (
+                        <span style={{ 
+                          padding: '6px', 
+                          color: 'var(--text-muted)', 
+                          fontSize: '1rem', 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          gap: '4px'
+                        }}>
+                          <i className="far fa-thumbs-down" />
+                          <span style={{ fontSize: '0.8rem' }}>{reactions.dislikeCount}</span>
+                        </span>
+                      )
+                    )}
+                    
+                    {/* Favorite button (only if logged in */}
+                    {token && (
+                      <button
+                        onClick={() => toggleFavoriteTrack(audio._id)}
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          cursor: 'pointer',
+                          padding: '6px',
+                          color: isFav ? '#e53e3e' : 'var(--text-muted)',
+                          fontSize: '1.1rem'
+                        }}
+                        title={isFav ? "Remove from Favorites" : "Add to Favorites"}
+                      >
+                        <i className={isFav ? 'fas fa-heart' : 'far fa-heart'} />
+                      </button>
+                    )}
+                    
+                    {/* Comment button (only if logged in) */}
+                    {token && (
+                      <button
+                        onClick={() => navigate(`/details/${audio._id}`)}
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          cursor: 'pointer',
+                          padding: '6px',
+                          color: 'var(--text-muted)',
+                          fontSize: '1rem'
+                        }}
+                        title="Comment/Feedback"
+                      >
+                        <i className="far fa-comment-alt" />
+                      </button>
+                    )}
+                  </div>
                 </div>
               );
             })}
@@ -195,6 +323,13 @@ export default function AlbumDetails() {
         )}
       </section>
       <Footer />
+      <style>{`
+        .audio-row:hover {
+          border-color: var(--saffron) !important;
+          box-shadow: 0 2px 12px rgba(247,168,77,0.2) !important;
+          background: var(--card-bg);
+        }
+      `}</style>
     </div>
   );
 }

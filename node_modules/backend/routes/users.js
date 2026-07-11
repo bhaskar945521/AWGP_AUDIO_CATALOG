@@ -18,7 +18,7 @@ router.get('/', auth, roleCheck(['admin']), async (req, res) => {
 
 // CREATE new user (admin only)
 router.post('/', auth, roleCheck(['admin']), async (req, res) => {
-  const { username, password, role, fullName, email, permissions } = req.body;
+  const { username, password, role, fullName, email, permissions, assignedWork } = req.body;
   if (!username || !password) return res.status(400).json({ message: 'Username and password required' });
   try {
     const existing = await User.findOne({ username });
@@ -28,10 +28,10 @@ router.post('/', auth, roleCheck(['admin']), async (req, res) => {
       role: role || 'onlyuser', // Default to onlyuser for new admin-created users
       fullName: fullName || '',
       email: email || '',
-      permissions: permissions || [] 
+      permissions: permissions || [],
+      assignedWork: assignedWork || ''
     });
-    const salt = await bcrypt.genSalt(10);
-    user.passwordHash = await bcrypt.hash(password, salt);
+    await user.setPassword(password);
     await user.save();
     const userObj = user.toObject();
     delete userObj.passwordHash;
@@ -44,21 +44,30 @@ router.post('/', auth, roleCheck(['admin']), async (req, res) => {
 
 // UPDATE user (admin only) – allow role change, password reset, and permissions update
 router.put('/:id', auth, roleCheck(['admin']), async (req, res) => {
-  const { role, password, fullName, email, permissions } = req.body;
-  const update = {};
-  if (role) update.role = role;
-  if (password) {
-    const salt = await bcrypt.genSalt(10);
-    update.passwordHash = await bcrypt.hash(password, salt);
-  }
-  if (fullName !== undefined) update.fullName = fullName;
-  if (email !== undefined) update.email = email;
-  if (permissions !== undefined) update.permissions = permissions;
-  
+  const { role, password, fullName, email, permissions, assignedWork } = req.body;
   try {
-    const updated = await User.findByIdAndUpdate(req.params.id, update, { new: true }).select('-passwordHash');
-    if (!updated) return res.status(404).json({ message: 'User not found' });
-    res.json(updated);
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    
+    // Safety check: Don't allow changing last admin's role to non-admin
+    if (user.role === 'admin' && role && role !== 'admin') {
+      const adminCount = await User.countDocuments({ role: 'admin' });
+      if (adminCount <= 1) {
+        return res.status(403).json({ message: 'Must have at least one admin' });
+      }
+    }
+    
+    if (role) user.role = role;
+    if (password) await user.setPassword(password);
+    if (fullName !== undefined) user.fullName = fullName;
+    if (email !== undefined) user.email = email;
+    if (permissions !== undefined) user.permissions = permissions;
+    if (assignedWork !== undefined) user.assignedWork = assignedWork;
+    
+    await user.save();
+    const userObj = user.toObject();
+    delete userObj.passwordHash;
+    res.json(userObj);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error' });
@@ -68,8 +77,21 @@ router.put('/:id', auth, roleCheck(['admin']), async (req, res) => {
 // DELETE user (admin only)
 router.delete('/:id', auth, roleCheck(['admin']), async (req, res) => {
   try {
-    const user = await User.findByIdAndDelete(req.params.id);
+    const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ message: 'User not found' });
+    
+    // Safety check 1: Don't allow deleting admin users
+    if (user.role === 'admin') {
+      return res.status(403).json({ message: 'Cannot delete admin accounts' });
+    }
+    
+    // Safety check 2: Ensure there's always at least one admin (redundant but extra layer)
+    const adminCount = await User.countDocuments({ role: 'admin' });
+    if (adminCount < 1) {
+      return res.status(403).json({ message: 'Must have at least one admin' });
+    }
+    
+    await User.findByIdAndDelete(req.params.id);
     res.json({ message: 'User deleted' });
   } catch (err) {
     console.error(err);

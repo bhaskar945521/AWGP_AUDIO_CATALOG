@@ -10,6 +10,7 @@ const Library = React.lazy(() => import('./components/Library'));
 const Albums = React.lazy(() => import('./components/Albums'));
 const AlbumDetails = React.lazy(() => import('./components/AlbumDetails'));
 const Favorites = React.lazy(() => import('./components/Favorites'));
+const ListeningHistory = React.lazy(() => import('./components/ListeningHistory'));
 const Details = React.lazy(() => import('./components/Details'));
 const Admin = React.lazy(() => import('./components/Admin'));
 const Login = React.lazy(() => import('./components/Login'));
@@ -79,11 +80,12 @@ function AppContent() {
           <Route path="/" element={<Layout />}>
             <Route index element={<Dashboard />} />
             <Route path="library" element={<Library />} />
-            <Route path="albums" element={<Albums />} />
-            <Route path="albums/:id" element={<AlbumDetails />} />
-            <Route path="favorites" element={<Favorites />} />
-            <Route path="profile" element={<UserProfile />} />
-            <Route path="details/:id" element={<Details />} />
+          <Route path="albums" element={<Albums />} />
+          <Route path="albums/:id" element={<AlbumDetails />} />
+          <Route path="favorites" element={<Favorites />} />
+          <Route path="history" element={<ListeningHistory />} />
+          <Route path="profile" element={<UserProfile />} />
+          <Route path="details/:id" element={<Details />} />
             <Route path="admin" element={<PermissionRoute requiredPermissions={['analytics_view', 'feedback_view', 'feedback_delete', 'audio_view', 'category_view', 'album_view']}><Admin /></PermissionRoute>} />
             <Route path="users" element={<AdminRoute><UsersManagement /></AdminRoute>} />
             {/* Catch-all redirects back to Home */}
