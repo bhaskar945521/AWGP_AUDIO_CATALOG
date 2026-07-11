@@ -40,14 +40,14 @@
   - OnlyUser gets assigned specific permissions
 - 🎵 **Audio Library Management**:
   - Upload & manage audio files (with auto-conversion to MP3)
-  - Search & filter functionality (Hindi/English bilingual support)
-  - Voice search (Hindi/English)
+  - **Smart Relevance Search** — results sorted by score (Exact > Starts-With > Contains > Speaker > Tags)
+  - Hindi/English bilingual synonym support + Voice search
 - 🗂️ **Category & Album Management**:
   - Create/edit/delete categories (with cover images)
   - Create/edit/delete albums with cover images
   - Add audio tracks to albums
 - ❤️ **Favorites System** (User-Specific):
-  - Completely per-user favorites — each account has its own list
+  - Completely per-user favorites — each account has its own playlist
   - Works for all roles: Admin, OnlyUser, Public User
   - Add/remove via heart button on any card, player, or details page
   - My Favorites page shows only the logged-in user's saved tracks
@@ -56,21 +56,29 @@
   - Liking removes any existing dislike and vice versa (mutual exclusion)
   - Real-time counts shown on audio detail page
 - 💬 **Feedback / Comment System**:
-  - Any logged-in user can submit feedback with an optional star rating
+  - Any logged-in user can submit feedback with optional star rating (1–5)
+  - Includes a **Short Feedback Summary** field (max 100 chars) for the public marquee
   - Track-specific and general feedback support
   - Admin / authorized OnlyUsers can view and delete all feedback
+- 📣 **Public Feedback Marquee Ticker** (NEW):
+  - Scrolling ticker bar displayed at the top of every page — visible to all visitors
+  - Shows: 🎵 Track Title · (Speaker) | Username: "Short feedback"
+  - **Pause on hover**, **click to navigate** directly to that audio's detail page
+  - Only admin-approved reviews appear in the marquee
+- 🛡️ **Admin Feedback Approval System** (NEW):
+  - Admin reviews each feedback submission before it goes public
+  - Toggle "Approve for Ticker" on/off per feedback
+  - Edit the short summary text inline before approving
+  - Unapproved feedback stays private; approved ones appear in the live marquee
 - 📊 **Analytics Dashboard** (Admin & Permission-Based):
   - Total favorites, likes, dislikes, feedback, sessions, listening minutes, unique listeners
   - Top 5 most liked tracks
   - Recent feedback entries
-  - 🆕 **User Activity Table**: See per-user app usage — sessions count, total time listened, last seen timestamp
+  - **User Activity Table**: per-user breakdown — sessions, total time, last seen
 - 📱 **Responsive Design**:
   - Mobile-friendly with bottom navigation bar and mobile player strip
 - 📷 **Gallery Management**:
   - Upload/delete gallery images
-- 🔍 **Search System**:
-  - Bilingual (Hindi ↔ English) synonym search
-  - Voice search support
 - 🎨 **Customizable Settings**:
   - Customize site title, logo, colors via admin panel
 - 🎵 **Listening Session Tracking**:
@@ -309,11 +317,14 @@ AWGP_AUDIO_CATLOG/
 | GET    | `/api/user/history`                 | Get user's listening history    |
 
 ### Feedback
-| Method | Endpoint                | Description              |
-|--------|-------------------------|--------------------------|
-| POST   | `/api/feedback`         | Submit feedback          |
-| GET    | `/api/feedback`         | Get feedback (requires `feedback_view`) |
-| DELETE | `/api/feedback/:id`     | Delete feedback (requires `feedback_delete`) |
+| Method | Endpoint                        | Description                                        |
+|--------|---------------------------------|----------------------------------------------------|
+| POST   | `/api/feedback`                 | Submit general feedback (with optional `shortFeedback`) |
+| POST   | `/api/audio/:id/feedback`       | Submit track-specific feedback                     |
+| GET    | `/api/feedback`                 | Get all feedback (requires `feedback_view`)        |
+| GET    | `/api/feedback/approved`        | **Public** — Get all admin-approved feedbacks for marquee |
+| PATCH  | `/api/feedback/:id/approve`     | Approve/unapprove + edit short summary (admin only)|
+| DELETE | `/api/feedback/:id`             | Delete feedback (requires `feedback_delete`)       |
 
 ### Analytics
 | Method | Endpoint                | Description              |
@@ -321,28 +332,71 @@ AWGP_AUDIO_CATLOG/
 | GET    | `/api/analytics`        | Get analytics (requires `analytics_view`) |
 
 ### Search
-| Method | Endpoint                | Description              |
-|--------|-------------------------|--------------------------|
-| GET    | `/api/search`           | Bilingual search         |
+| Method | Endpoint                | Description                                      |
+|--------|-------------------------|--------------------------------------------------|
+| GET    | `/api/search?q=keyword` | Smart bilingual search with relevance scoring    |
+| GET    | `/api/audios?search=kw` | Audios list with inline smart relevance sorting  |
 
 ---
 
 ## 🔐 Permissions System
 
 ### Available Permissions
-| Group               | Permissions                          |
-|---------------------|--------------------------------------|
-| Audio Library       | `audio_view`, `audio_upload`, `audio_edit`, `audio_delete` |
+| Group               | Permissions                                                      |
+|---------------------|------------------------------------------------------------------|
+| Audio Library       | `audio_view`, `audio_upload`, `audio_edit`, `audio_delete`       |
 | Category Management | `category_view`, `category_create`, `category_edit`, `category_delete` |
-| Album Management    | `album_view`, `album_create`, `album_edit`, `album_delete` |
-| Feedback Management | `feedback_view`, `feedback_delete`  |
-| Analytics Dashboard | `analytics_view`                     |
-| User Management     | Admin Only                          |
-| Website Settings    | Admin Only                          |
+| Album Management    | `album_view`, `album_create`, `album_edit`, `album_delete`       |
+| Feedback Management | `feedback_view`, `feedback_delete`                               |
+| Feedback Approval   | Admin Only — approve/reject public marquee reviews               |
+| Analytics Dashboard | `analytics_view`                                                 |
+| User Management     | Admin Only                                                       |
+| Website Settings    | Admin Only                                                       |
 
 ---
 
 ## 📝 Changelog
+
+### v2.1 — Smart Search, Marquee & Feedback Approval (2026-07-10)
+
+#### 🔍 Smart Relevance-Based Search
+- Completely redesigned search engine in `search.js` and `audios.js`
+- Results ranked by **relevance score** (higher = better match):
+  | Match Type          | Score |
+  |---------------------|-------|
+  | Exact title match   | 150   |
+  | Title starts-with   | 100   |
+  | Title contains      | 80    |
+  | Synonym title match | 50    |
+  | Speaker exact match | 60    |
+  | Tag match           | 30    |
+- Results sorted descending by score before pagination
+- Bilingual Hindi ↔ English synonym lookup preserved
+
+#### 📣 Public Feedback Marquee Ticker
+- New `FeedbackMarquee.jsx` component mounted globally in `Layout.jsx` below the header
+- Visible to **all users** — logged in or not
+- Scrolling ticker shows: 🎵 **Track Title** *(Speaker)* | **Username:** *"Short feedback"*
+- Fetches from public endpoint `GET /api/feedback/approved` (no auth required)
+- **Seamless infinite loop** — items rendered twice for smooth CSS `translateX(-50%)` animation
+- **Hover to pause** the scroll; **click any item** to navigate directly to that audio's detail page
+- Responsive — adapts text widths on mobile screens
+- CSS animation: `@keyframes marquee-scroll` in `index.css`
+
+#### 🛡️ Admin Feedback Approval System
+- New `approved` (Boolean, default `false`) and `shortFeedback` (String, max 150 chars) fields added to `Feedback` model
+- `PATCH /api/feedback/:id/approve` — admin-only endpoint to toggle approval & edit the short summary
+- `GET /api/feedback/approved` — public endpoint returning all approved feedbacks (populated with audio title, speaker, user name)
+- `FeedbackManagement.jsx` updated with:
+  - **"Approve for Ticker"** toggle button per feedback entry
+  - Inline editable **short summary** text field (auto-saves on blur)
+- `Details.jsx` updated with a **Short Feedback** input field in the review form (max 100 chars)
+
+#### ❤️ Favorites Bug Fix (Legacy Global Flag)
+- Fixed: Favoriting from Dashboard or AlbumDetails was incorrectly writing to the global `isFavorite` field on the `Audio` document
+- Fixed: `Dashboard.jsx` and `AlbumDetails.jsx` now call `toggleFavoriteTrack(id)` from `AudioContext` — fully user-specific
+
+---
 
 ### v2.0 — Production Enhancement (2026-07-10)
 

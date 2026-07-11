@@ -34,6 +34,16 @@ export default function FeedbackManagement() {
     }
   };
 
+  const handleUpdate = async (id, fields) => {
+    try {
+      const res = await api.patch(`/feedback/${id}/approve`, fields);
+      toast.success(res.data.message || 'Feedback updated');
+      setFeedbacks(prev => prev.map(f => f._id === id ? { ...f, ...res.data.feedback } : f));
+    } catch (err) {
+      toast.error('Failed to update feedback status');
+    }
+  };
+
   if (loading) {
     return (
       <div style={{ textAlign: 'center', padding: '40px 0' }}>
@@ -62,17 +72,17 @@ export default function FeedbackManagement() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '16px 0' }}>
           {feedbacks.map(f => (
             <div
-              key={f._id}
-              style={{
-                background: 'var(--card-bg, rgba(255,255,255,0.03))',
-                border: '1.5px solid var(--border)',
-                borderRadius: '14px',
-                padding: '18px 20px',
-                position: 'relative',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '8px'
-              }}
+               key={f._id}
+               style={{
+                 background: 'var(--card-bg, rgba(255,255,255,0.03))',
+                 border: '1.5px solid var(--border)',
+                 borderRadius: '14px',
+                 padding: '18px 20px',
+                 position: 'relative',
+                 display: 'flex',
+                 flexDirection: 'column',
+                 gap: '8px'
+               }}
             >
               {/* Delete Button */}
               <button
@@ -117,17 +127,72 @@ export default function FeedbackManagement() {
               )}
 
               {/* Target Audio association banner */}
-              <div style={{ fontSize: '0.82rem', padding: '6px 12px', background: 'var(--accent-bg, rgba(247,168,77,0.06))', border: '1px solid var(--border)', borderRadius: '8px', display: 'inline-flex', alignItems: 'center', gap: '6px', alignSelf: 'flex-start' }}>
-                <i className="fas fa-headphones" style={{ color: 'var(--saffron)' }} />
-                <span>
-                  {f.isGeneral || !f.audioId ? (
-                    <strong>General Catalog Feedback</strong>
-                  ) : (
-                    <>
-                      Track: <strong>{f.audioId?.title}</strong> by <em>{f.audioId?.speaker || 'Unknown'}</em>
-                    </>
-                  )}
-                </span>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+                <div style={{ fontSize: '0.82rem', padding: '6px 12px', background: 'var(--accent-bg, rgba(247,168,77,0.06))', border: '1px solid var(--border)', borderRadius: '8px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                  <i className="fas fa-headphones" style={{ color: 'var(--saffron)' }} />
+                  <span>
+                    {f.isGeneral || !f.audioId ? (
+                      <strong>General Catalog Feedback</strong>
+                    ) : (
+                      <>
+                        Track: <strong>{f.audioId?.title}</strong> by <em>{f.audioId?.speaker || 'Unknown'}</em>
+                      </>
+                    )}
+                  </span>
+                </div>
+
+                {/* Approval Action Toggle */}
+                <button
+                  onClick={() => handleUpdate(f._id, { approved: !f.approved })}
+                  style={{
+                    padding: '6px 12px',
+                    fontSize: '0.8rem',
+                    fontWeight: 700,
+                    borderRadius: '8px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    background: f.approved ? '#48bb78' : 'var(--saffron-pale)',
+                    border: f.approved ? '1px solid #38a169' : '1px solid var(--border-saffron)',
+                    color: f.approved ? '#fff' : 'var(--text-main)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  <i className={f.approved ? "fas fa-check-circle" : "far fa-circle"} />
+                  {f.approved ? 'Approved (Shown in Ticker)' : 'Approve for Ticker'}
+                </button>
+              </div>
+
+              {/* Short Ticker Input for edit */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '4px' }}>
+                <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                  Short feedback for scrolling marquee (max 100 characters):
+                </label>
+                <input
+                  type="text"
+                  key={`${f._id}-${f.shortFeedback}`}
+                  defaultValue={f.shortFeedback || ''}
+                  onBlur={async (e) => {
+                    const text = e.target.value;
+                    if (text !== (f.shortFeedback || '')) {
+                      await handleUpdate(f._id, { shortFeedback: text });
+                    }
+                  }}
+                  placeholder="Enter a brief summary (auto-saves on blur)"
+                  maxLength={100}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border)',
+                    background: 'var(--input-bg, transparent)',
+                    color: 'var(--text-main)',
+                    fontSize: '0.85rem',
+                    boxSizing: 'border-box'
+                  }}
+                />
               </div>
 
               {/* Message text */}

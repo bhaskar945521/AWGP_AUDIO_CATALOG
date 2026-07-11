@@ -109,6 +109,7 @@ router.get('/', async (req, res) => {
   if (!q) return res.json({ results: [] });
   
   const searchTerms = getAllSearchTerms(q);
+  const lowerQuery = q.toLowerCase();
   
   // Create regex for each search term and combine with OR
   const regexPattern = searchTerms.map(term => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
@@ -123,14 +124,14 @@ router.get('/', async (req, res) => {
           { description: regex },
           { tags: { $in: searchTerms.map(t => new RegExp(t, 'i')) } }
         ]
-      }).select('title speaker _id imageUrl audioUrl duration').lean(),
+      }).select('title speaker _id imageUrl audioUrl duration description tags').lean(),
       Album.find({
         $or: [
           { title: regex },
           { name: regex },
           { description: regex }
         ]
-      }).select('title name _id coverImage').lean(),
+      }).select('title name _id coverImage description').lean(),
       Category.find({
         $or: [
           { name: regex }
@@ -139,11 +140,96 @@ router.get('/', async (req, res) => {
     ]);
     
     const results = [];
-    audios.forEach(a => results.push({ type: 'audio', id: a._id, title: a.title, speaker: a.speaker, imageUrl: a.imageUrl, audioUrl: a.audioUrl, duration: a.duration }));
-    albums.forEach(a => results.push({ type: 'album', id: a._id, title: a.title || a.name, coverImage: a.coverImage }));
-    categories.forEach(c => results.push({ type: 'category', id: c._id, name: c.name, coverImage: c.coverImage }));
+
+    // Helper to calculate relevance score
+    const scoreItem = (titleOrName, speaker, tags = [], desc = '', type) => {
+      let score = 0;
+      const lowerName = (titleOrName || '').toLowerCase();
+      const lowerSpeaker = (speaker || '').toLowerCase();
+      const lowerDesc = (desc || '').toLowerCase();
+
+      // Title/Name Matches
+      if (lowerName === lowerQuery) {
+        score += 150;
+      } else if (lowerName.startsWith(lowerQuery)) {
+        score += 100;
+      } else if (lowerName.includes(lowerQuery)) {
+        score += 80;
+      } else {
+        // Check synonym matches
+        const matchesSynonym = searchTerms.some(term => lowerName.includes(term));
+        if (matchesSynonym) score += 50;
+      }
+
+      // Speaker Matches
+      if (type === 'audio') {
+        if (lowerSpeaker === lowerQuery) {
+          score += 60;
+        } else if (lowerSpeaker.includes(lowerQuery)) {
+          score += 40;
+        }
+      }
+
+      // Tags Matches
+      if (tags && tags.length > 0) {
+        const matchesTag = tags.some(tag => {
+          const t = tag.toLowerCase();
+          return t === lowerQuery || searchTerms.includes(t) || t.includes(lowerQuery);
+        });
+        if (matchesTag) score += 30;
+      }
+
+      // Description Matches
+      if (lowerDesc.includes(lowerQuery)) {
+        score += 10;
+      }
+
+      return score;
+    };
+
+    audios.forEach(a => {
+      const score = scoreItem(a.title, a.speaker, a.tags, a.description, 'audio');
+      results.push({
+        type: 'audio',
+        id: a._id,
+        title: a.title,
+        speaker: a.speaker,
+        imageUrl: a.imageUrl,
+        audioUrl: a.audioUrl,
+        duration: a.duration,
+        score
+      });
+    });
+
+    albums.forEach(a => {
+      const score = scoreItem(a.title || a.name, '', [], a.description, 'album');
+      results.push({
+        type: 'album',
+        id: a._id,
+        title: a.title || a.name,
+        coverImage: a.coverImage,
+        score
+      });
+    });
+
+    categories.forEach(c => {
+      const score = scoreItem(c.name, '', [], '', 'category');
+      results.push({
+        type: 'category',
+        id: c._id,
+        name: c.name,
+        coverImage: c.coverImage,
+        score
+      });
+    });
     
-    res.json({ results });
+    // Sort results by score descending (highest relevance first)
+    results.sort((a, b) => b.score - a.score);
+
+    // Remove score field from output for API cleanliness
+    const cleanedResults = results.map(({ score, ...rest }) => rest);
+    
+    res.json({ results: cleanedResults });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Search failed' });

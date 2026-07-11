@@ -27,6 +27,15 @@ const feedbackSchema = new mongoose.Schema({
   isGeneral: {
     type: Boolean,
     default: false
+  },
+  approved: {
+    type: Boolean,
+    default: false
+  },
+  shortFeedback: {
+    type: String,
+    maxlength: 150,
+    default: ''
   }
 }, { timestamps: true });
 

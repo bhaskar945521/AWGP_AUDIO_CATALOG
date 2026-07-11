@@ -107,7 +107,7 @@ const matchesSearch = (target, searchTerms) => {
 export default function Dashboard() {
   const navigate = useNavigate();
   const { searchQuery, setSearchQuery } = useOutletContext();
-  const { setCurrentAudio, setQueue } = useAudio();
+  const { setCurrentAudio, setQueue, toggleFavoriteTrack } = useAudio();
   const { isAdmin } = useAuth();
 
   const [audios, setAudios]         = useState([]);
@@ -159,8 +159,7 @@ export default function Dashboard() {
 
   const toggleFavorite = async (id) => {
     try {
-      const res = await api.patch(`/audios/${id}/favorite`);
-      setAudios(prev => prev.map(a => a._id === id ? { ...a, isFavorite: res.data.isFavorite } : a));
+      await toggleFavoriteTrack(id);
     } catch (err) {
       console.error('Failed to toggle favorite:', err);
     }

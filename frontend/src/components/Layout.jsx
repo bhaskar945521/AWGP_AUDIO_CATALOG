@@ -8,6 +8,7 @@ import Header from './Header';
 import { Outlet } from 'react-router-dom';
 import AudioPlayer from './AudioPlayer';
 import UploadAudioModal from './UploadAudioModal';
+import FeedbackMarquee from './FeedbackMarquee';
 
 /* ─── Mobile bottom navigation bar ─────────────────────── */
 function MobileBottomNav({ isAdmin, isUser, isOnlyUser }) {
@@ -261,6 +262,7 @@ export default function Layout() {
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
         />
+        <FeedbackMarquee />
 
         {/* Page content */}
         <div

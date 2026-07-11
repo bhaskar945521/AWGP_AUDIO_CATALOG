@@ -9,7 +9,7 @@ import Footer from './Footer';
 export default function AlbumDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { setCurrentAudio, setQueue } = useAudio();
+  const { setCurrentAudio, setQueue, toggleFavoriteTrack } = useAudio();
   const [album, setAlbum] = useState(null);
   const [audios, setAudios] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -29,24 +29,16 @@ export default function AlbumDetails() {
       const audioList = audiosRes.data.data || audiosRes.data;
       setAudios(audioList);
     } catch (err) {
-      // Detailed error logging for debugging
-      const status = err?.response?.status;
-      const data = err?.response?.data;
-      toast.error(`Failed to load album details (status: ${status || 'unknown'})`);
-      console.error('Album fetch error:', err);
-      if (data) console.error('Error payload:', data);
+      console.error('Failed to load album data', err);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    // Refetch when URL changes (e.g., after returning from album creation)
     fetchAlbumData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, location.key]);
+  }, [id]);
 
-  // Refetch when page becomes visible or window gains focus
   useEffect(() => {
     const handleVisibility = () => {
       if (document.visibilityState === 'visible') {
@@ -72,8 +64,7 @@ export default function AlbumDetails() {
 
   const toggleFavorite = async (audioId) => {
     try {
-      const res = await api.patch(`/audios/${audioId}/favorite`);
-      setAudios(prev => prev.map(a => a._id === audioId ? { ...a, isFavorite: res.data.isFavorite } : a));
+      await toggleFavoriteTrack(audioId);
     } catch (err) {
       console.error('Failed to toggle favorite:', err);
     }

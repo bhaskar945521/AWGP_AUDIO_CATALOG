@@ -198,8 +198,11 @@ router.get('/', async (req, res) => {
       filters.originalExtension = extension.toLowerCase();
     }
 
-    if (search) {
-      const searchTerms = getAllSearchTerms(search);
+    const searchActive = search && search.trim().length > 0;
+    const lowerQuery = searchActive ? search.trim().toLowerCase() : '';
+    let searchTerms = [];
+    if (searchActive) {
+      searchTerms = getAllSearchTerms(search.trim());
       const regexPattern = searchTerms.map(term => escapeRegExp(term)).join('|');
       const regex = new RegExp(regexPattern, 'i');
       filters.$or = [
@@ -219,14 +222,115 @@ router.get('/', async (req, res) => {
       const pageNum = Number(page) || 1;
       const limitNum = Number(limit) || 20;
       const skip = (pageNum - 1) * limitNum;
-      const [total, audios] = await Promise.all([
-        Audio.countDocuments(filters),
-        Audio.find(filters).populate('albumIds').sort(sortObj).skip(skip).limit(limitNum)
-      ]);
-      res.json({ data: audios, total, page: pageNum, limit: limitNum });
+
+      if (searchActive) {
+        // Fetch all matching records, score them in memory, sort by score, then paginate
+        const rawAudios = await Audio.find(filters).populate('albumIds').lean();
+        
+        const scoredAudios = rawAudios.map(audio => {
+          let score = 0;
+          const lowerTitle = (audio.title || '').toLowerCase();
+          const lowerSpeaker = (audio.speaker || '').toLowerCase();
+          const lowerDesc = (audio.description || '').toLowerCase();
+          const tags = audio.tags || [];
+
+          // Title Matches
+          if (lowerTitle === lowerQuery) {
+            score += 150;
+          } else if (lowerTitle.startsWith(lowerQuery)) {
+            score += 100;
+          } else if (lowerTitle.includes(lowerQuery)) {
+            score += 80;
+          } else {
+            const matchesSynonym = searchTerms.some(term => lowerTitle.includes(term));
+            if (matchesSynonym) score += 50;
+          }
+
+          // Speaker Matches
+          if (lowerSpeaker === lowerQuery) {
+            score += 60;
+          } else if (lowerSpeaker.includes(lowerQuery)) {
+            score += 40;
+          }
+
+          // Tags Matches
+          if (tags.length > 0) {
+            const matchesTag = tags.some(tag => {
+              const t = tag.toLowerCase();
+              return t === lowerQuery || searchTerms.includes(t) || t.includes(lowerQuery);
+            });
+            if (matchesTag) score += 30;
+          }
+
+          // Description Matches
+          if (lowerDesc.includes(lowerQuery)) {
+            score += 10;
+          }
+
+          return { ...audio, searchScore: score };
+        });
+
+        // Sort: primary by relevance score descending, secondary by createdAt descending
+        scoredAudios.sort((a, b) => {
+          if (b.searchScore !== a.searchScore) {
+            return b.searchScore - a.searchScore;
+          }
+          return new Date(b.createdAt) - new Date(a.createdAt);
+        });
+
+        const total = scoredAudios.length;
+        const paginated = scoredAudios.slice(skip, skip + limitNum);
+        
+        // Clean temporary searchScore properties before returning
+        const cleanedData = paginated.map(({ searchScore, ...rest }) => rest);
+        
+        res.json({ data: cleanedData, total, page: pageNum, limit: limitNum });
+      } else {
+        // Normal database pagination and sorting
+        const [total, audios] = await Promise.all([
+          Audio.countDocuments(filters),
+          Audio.find(filters).populate('albumIds').sort(sortObj).skip(skip).limit(limitNum)
+        ]);
+        res.json({ data: audios, total, page: pageNum, limit: limitNum });
+      }
     } else {
-      const audios = await Audio.find(filters).populate('albumIds').sort(sortObj);
-      res.json(audios);
+      if (searchActive) {
+        const rawAudios = await Audio.find(filters).populate('albumIds').lean();
+        const scoredAudios = rawAudios.map(audio => {
+          let score = 0;
+          const lowerTitle = (audio.title || '').toLowerCase();
+          const lowerSpeaker = (audio.speaker || '').toLowerCase();
+          const lowerDesc = (audio.description || '').toLowerCase();
+          const tags = audio.tags || [];
+
+          if (lowerTitle === lowerQuery) score += 150;
+          else if (lowerTitle.startsWith(lowerQuery)) score += 100;
+          else if (lowerTitle.includes(lowerQuery)) score += 80;
+          else if (searchTerms.some(term => lowerTitle.includes(term))) score += 50;
+
+          if (lowerSpeaker === lowerQuery) score += 60;
+          else if (lowerSpeaker.includes(lowerQuery)) score += 40;
+
+          if (tags.length > 0) {
+            const matchesTag = tags.some(tag => {
+              const t = tag.toLowerCase();
+              return t === lowerQuery || searchTerms.includes(t) || t.includes(lowerQuery);
+            });
+            if (matchesTag) score += 30;
+          }
+
+          if (lowerDesc.includes(lowerQuery)) score += 10;
+
+          return { ...audio, searchScore: score };
+        });
+
+        scoredAudios.sort((a, b) => b.searchScore - a.searchScore);
+        const cleanedData = scoredAudios.map(({ searchScore, ...rest }) => rest);
+        res.json(cleanedData);
+      } else {
+        const audios = await Audio.find(filters).populate('albumIds').sort(sortObj);
+        res.json(audios);
+      }
     }
   } catch (err) {
     res.status(500).json({ message: err.message });

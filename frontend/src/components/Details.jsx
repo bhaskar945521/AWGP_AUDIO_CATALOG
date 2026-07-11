@@ -23,6 +23,7 @@ export default function Details() {
   // Feedback state
   const [showFeedback, setShowFeedback] = useState(false);
   const [feedbackMsg, setFeedbackMsg]   = useState('');
+  const [shortFeedback, setShortFeedback] = useState('');
   const [feedbackRating, setFeedbackRating] = useState(0);
   const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
 
@@ -161,10 +162,12 @@ export default function Details() {
       await api.post(`/audio/${id}/feedback`, {
         message: feedbackMsg,
         rating: feedbackRating || null,
+        shortFeedback: shortFeedback,
       });
       toast.success('Feedback submitted! Thank you.');
       setFeedbackMsg('');
       setFeedbackRating(0);
+      setShortFeedback('');
       setShowFeedback(false);
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to submit feedback.');
@@ -395,6 +398,24 @@ export default function Details() {
                   </button>
                 ))}
               </div>
+
+              <input
+                type="text"
+                value={shortFeedback}
+                onChange={e => setShortFeedback(e.target.value)}
+                placeholder="Short feedback summary for public marquee (e.g., Very peaceful! - max 100 chars)"
+                maxLength={100}
+                style={{
+                  width: '100%',
+                  padding: '10px 14px',
+                  borderRadius: '10px',
+                  border: '1.5px solid var(--border)',
+                  background: 'var(--input-bg, transparent)',
+                  color: 'var(--text-main)',
+                  fontSize: '0.9rem',
+                  boxSizing: 'border-box',
+                }}
+              />
 
               <textarea
                 value={feedbackMsg}

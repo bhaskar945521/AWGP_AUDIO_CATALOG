@@ -144,7 +144,7 @@ router.get('/audio/:id/reactions', auth, async (req, res) => {
 
 // POST /api/feedback — Submit feedback (public users)
 router.post('/feedback', auth, async (req, res) => {
-  const { message, rating, audioId, isGeneral } = req.body;
+  const { message, rating, audioId, isGeneral, shortFeedback } = req.body;
   const userId = req.user._id;
   if (!message || message.trim().length === 0) {
     return res.status(400).json({ message: 'Feedback message is required' });
@@ -156,10 +156,26 @@ router.post('/feedback', auth, async (req, res) => {
       message: message.trim(),
       rating: rating || null,
       isGeneral: isGeneral || !audioId,
+      approved: false,
+      shortFeedback: shortFeedback ? shortFeedback.trim() : '',
     });
     res.status(201).json({ message: 'Feedback submitted', feedback });
   } catch (err) {
     console.error('Feedback submit error:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// GET /api/feedback/approved — Public marquee feedbacks (no authentication required)
+router.get('/feedback/approved', async (req, res) => {
+  try {
+    const feedbacks = await Feedback.find({ approved: true })
+      .populate('userId', 'fullName username')
+      .populate('audioId', 'title speaker')
+      .sort({ updatedAt: -1 });
+    res.json(feedbacks);
+  } catch (err) {
+    console.error('Approved feedback fetch error:', err);
     res.status(500).json({ message: err.message });
   }
 });
@@ -181,7 +197,7 @@ router.get('/feedback', auth, permissionCheck(['feedback_view']), async (req, re
 // POST /api/audio/:id/feedback — Submit feedback for a specific track
 router.post('/audio/:id/feedback', auth, async (req, res) => {
   const audioId = req.params.id;
-  const { message, rating } = req.body;
+  const { message, rating, shortFeedback } = req.body;
   const userId = req.user._id;
   if (!message || message.trim().length === 0) {
     return res.status(400).json({ message: 'Feedback message is required' });
@@ -193,10 +209,35 @@ router.post('/audio/:id/feedback', auth, async (req, res) => {
       message: message.trim(),
       rating: rating || null,
       isGeneral: false,
+      approved: false,
+      shortFeedback: shortFeedback ? shortFeedback.trim() : '',
     });
     res.status(201).json({ message: 'Feedback submitted', feedback });
   } catch (err) {
     console.error('Audio feedback submit error:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// PATCH /api/feedback/:id/approve — Toggle approval or update feedback details (admin/moderator only)
+router.patch('/feedback/:id/approve', auth, permissionCheck(['feedback_view']), async (req, res) => {
+  const { approved, shortFeedback } = req.body;
+  try {
+    const updateObj = {};
+    if (approved !== undefined) updateObj.approved = approved;
+    if (shortFeedback !== undefined) updateObj.shortFeedback = shortFeedback.trim();
+
+    const feedback = await Feedback.findByIdAndUpdate(
+      req.params.id,
+      { $set: updateObj },
+      { new: true }
+    ).populate('userId', 'fullName email username')
+     .populate('audioId', 'title speaker');
+
+    if (!feedback) return res.status(404).json({ message: 'Feedback not found' });
+    res.json({ message: 'Feedback approval status updated', feedback });
+  } catch (err) {
+    console.error('Approve feedback error:', err);
     res.status(500).json({ message: err.message });
   }
 });
