@@ -50,7 +50,7 @@ export default function Favorites() {
     <div>
       <div style={{ marginBottom: 28 }}>
         <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: 6 }}>
-          Your Favorites
+          My Favorites
         </h2>
         <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
           Your curated collection of inspirational spiritual audio tracks.

@@ -358,6 +358,45 @@ AWGP_AUDIO_CATLOG/
 
 ## 📝 Changelog
 
+### v2.3 — Enhanced UI/UX, Album Hero Makeover & My Favorites (2026-07-11)
+
+#### 🎵 Album Details Hero Section Makeover
+- **Eye-catching gradient background** with album cover texture overlay
+- Added decorative radial blur elements for visual depth
+- **3D perspective effect** on the album cover image
+- Beautiful gradient Play All button with hover lift effect
+- Stylish Back to Albums button with saffron hover
+- Track count badge with gradient styling
+- Removed the "Album" text label as requested
+
+#### ❤️ "Favorites" → "My Favorites"
+- Updated Sidebar navigation link from "Favorites" to "My Favorites"
+- Updated Favorites page header to "My Favorites"
+- Removed global favorites count from Dashboard (no longer relevant with user-specific system)
+
+#### 🎧 Enhanced Audio Card & Album Rows
+- **Beautiful hover effects** on Like/Dislike/Favorite/Comment buttons:
+  - Slight scale-up animation on hover
+  - Background color change (saffron for like, red for dislike)
+  - Better spacing between buttons
+- Improved button interaction with `e.currentTarget` to avoid child element styling issues
+- Album track rows now have enhanced hover effects (border color, shadow, slight lift)
+
+#### 📜 Listening History Page — Even More Prominent
+- Warm gradient background for the header section
+- Larger icon + bolder "Listening History" title
+- Improved Clear History button with hover effects
+- More prominent track count badge with saffron accent
+- Better-looking "Last Listened" tags on each audio card
+- Still shows only last 7 days of history
+
+#### 📱 Mobile-First Responsiveness
+- All new UI elements fully responsive
+- Album cover properly scaled on mobile screens
+- Buttons and spacing optimized for touch devices
+
+---
+
 ### v2.2 — Listening History, Enhanced Feedback Marquee & Public Counts (2026-07-11)
 
 #### 📜 Listening History Page

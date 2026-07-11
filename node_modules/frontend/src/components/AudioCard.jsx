@@ -123,72 +123,106 @@ export default function AudioCard({
           </span>
           {language && <span className="audio-lang">{language}</span>}
           
-          {/* Like count + button (button only if token exists) */}
+          {/* Like count + button (button only if token exists */}
           {token ? (
             <button
               onClick={handleLikeClick}
               style={{
-                background: 'transparent',
+                background: reactions.liked ? 'rgba(247,168,77,0.1)' : 'transparent',
                 border: 'none',
                 cursor: 'pointer',
-                padding: '4px',
+                padding: '8px 10px',
                 color: reactions.liked ? 'var(--saffron)' : 'var(--text-muted)',
-                fontSize: '0.9rem',
+                fontSize: '1rem',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '3px'
+                gap: '6px',
+                borderRadius: '8px',
+                transition: 'all 0.2s ease',
               }}
+              onMouseEnter={(e) => {
+                if (!reactions.liked) {
+                  e.currentTarget.style.color = 'var(--saffron)';
+                }
+                e.currentTarget.style.background = 'rgba(247,168,77,0.15)';
+                e.currentTarget.style.transform = 'scale(1.05)';
+              }}
+              onMouseLeave={(e) => {
+                if (!reactions.liked) {
+                  e.currentTarget.style.color = 'var(--text-muted)';
+                }
+                e.currentTarget.style.background = reactions.liked ? 'rgba(247,168,77,0.1)' : 'transparent';
+                e.currentTarget.style.transform = 'scale(1)';
+              }}
+              title="Like"
             >
               <i className={reactions.liked ? 'fas fa-thumbs-up' : 'far fa-thumbs-up'} />
-              {reactions.likeCount > 0 && <span style={{ fontSize: '0.75rem' }}>{reactions.likeCount}</span>}
+              {reactions.likeCount > 0 && <span style={{ fontSize: '0.8rem' }}>{reactions.likeCount}</span>}
             </button>
           ) : (
             reactions.likeCount > 0 && (
               <span style={{ 
-                padding: '4px', 
+                padding: '8px 10px', 
                 color: 'var(--text-muted)', 
-                fontSize: '0.9rem', 
+                fontSize: '1rem', 
                 display: 'flex', 
                 alignItems: 'center', 
-                gap: '3px' 
+                gap: '6px' 
               }}>
                 <i className="far fa-thumbs-up" />
-                <span style={{ fontSize: '0.75rem' }}>{reactions.likeCount}</span>
+                <span style={{ fontSize: '0.8rem' }}>{reactions.likeCount}</span>
               </span>
             )
           )}
           
-          {/* Dislike count + button (button only if token exists) */}
+          {/* Dislike count + button (button only if token exists */}
           {token ? (
             <button
               onClick={handleDislikeClick}
               style={{
-                background: 'transparent',
+                background: reactions.disliked ? 'rgba(229,62,62,0.1)' : 'transparent',
                 border: 'none',
                 cursor: 'pointer',
-                padding: '4px',
+                padding: '8px 10px',
                 color: reactions.disliked ? '#e53e3e' : 'var(--text-muted)',
-                fontSize: '0.9rem',
+                fontSize: '1rem',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '3px'
+                gap: '6px',
+                borderRadius: '8px',
+                transition: 'all 0.2s ease',
               }}
+              onMouseEnter={(e) => {
+                if (!reactions.disliked) {
+                  e.currentTarget.style.color = '#e53e3e';
+                }
+                e.currentTarget.style.background = 'rgba(229,62,62,0.15)';
+                e.currentTarget.style.transform = 'scale(1.05)';
+              }}
+              onMouseLeave={(e) => {
+                if (!reactions.disliked) {
+                  e.currentTarget.style.color = 'var(--text-muted)';
+                }
+                e.currentTarget.style.background = reactions.disliked ? 'rgba(229,62,62,0.1)' : 'transparent';
+                e.currentTarget.style.transform = 'scale(1)';
+              }}
+              title="Dislike"
             >
               <i className={reactions.disliked ? 'fas fa-thumbs-down' : 'far fa-thumbs-down'} />
-              {reactions.dislikeCount > 0 && <span style={{ fontSize: '0.75rem' }}>{reactions.dislikeCount}</span>}
+              {reactions.dislikeCount > 0 && <span style={{ fontSize: '0.8rem' }}>{reactions.dislikeCount}</span>}
             </button>
           ) : (
             reactions.dislikeCount > 0 && (
               <span style={{ 
-                padding: '4px', 
+                padding: '8px 10px', 
                 color: 'var(--text-muted)', 
-                fontSize: '0.9rem', 
+                fontSize: '1rem', 
                 display: 'flex', 
                 alignItems: 'center', 
-                gap: '3px' 
+                gap: '6px' 
               }}>
                 <i className="far fa-thumbs-down" />
-                <span style={{ fontSize: '0.75rem' }}>{reactions.dislikeCount}</span>
+                <span style={{ fontSize: '0.8rem' }}>{reactions.dislikeCount}</span>
               </span>
             )
           )}

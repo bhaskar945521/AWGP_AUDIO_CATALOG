@@ -41,11 +41,11 @@ function Sidebar({ onOpenUpload }) {
           </NavLink>
         )}
 
-        {isPublicUser && (
+        {token && (
           <>
             <NavLink to="/favorites" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
               <i className="fas fa-heart" />
-              <span>Favorites</span>
+              <span>My Favorites</span>
             </NavLink>
             <NavLink to="/history" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
               <i className="fas fa-history" />

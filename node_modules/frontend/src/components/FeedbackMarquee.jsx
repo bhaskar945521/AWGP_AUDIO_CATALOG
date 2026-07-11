@@ -87,8 +87,8 @@ export default function FeedbackMarquee() {
           textTransform: 'uppercase', zIndex: 10
         }}
       >
-        <i className="fas fa-heart" />
-        <span>USER LOVE</span>
+        <i className="fas fa-bullhorn" />
+        <span>REVIEWS</span>
       </div>
       
       <div

@@ -323,10 +323,7 @@ export default function Dashboard() {
                     <div className="hero-stat-number">{albums.length}</div>
                     <div className="hero-stat-label">Albums</div>
                   </div>
-                  <div className="hero-stat">
-                    <div className="hero-stat-number">{audios.filter(a => a.isFavorite).length}</div>
-                    <div className="hero-stat-label">Favorites</div>
-                  </div>
+
                 </div>
               )}
             </div>

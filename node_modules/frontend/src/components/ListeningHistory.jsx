@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import api from '../api';
-import AudioCard from './AudioCard';
 import { useAudio } from '../context/AudioContext';
-import toast from 'react-hot-toast';
+import { toast } from 'react-hot-toast';
+import AudioCard from './AudioCard';
 
 export default function ListeningHistory() {
   const [history, setHistory] = useState([]);
@@ -78,12 +78,13 @@ export default function ListeningHistory() {
 
   return (
     <div>
-      <div style={{ marginBottom: 28, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
+      <div style={{ marginBottom: 28, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px', padding: '20px', background: 'linear-gradient(135deg, #fff8e0 0%, #fff 100%)', borderRadius: '16px', border: '1px solid rgba(247,168,77,0.2)' }}>
         <div>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: 6 }}>
+          <h2 style={{ fontSize: '1.7rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: 8, display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <i style={{ color: 'var(--saffron)' }} className="fas fa-history" />
             Listening History
           </h2>
-          <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+          <p style={{ fontSize: '0.95rem', color: 'var(--text-muted)', margin: 0 }}>
             Your recently played spiritual audio tracks (last 7 days).
           </p>
         </div>
@@ -92,23 +93,27 @@ export default function ListeningHistory() {
             onClick={clearHistory}
             disabled={clearing}
             style={{
-              padding: '8px 16px', borderRadius: '8px', border: '1px solid #e53e3e',
-              background: 'transparent', color: '#e53e3e', cursor: clearing ? 'not-allowed' : 'pointer',
-              fontWeight: 600, fontSize: '0.85rem', opacity: clearing ? 0.6 : 1
+              padding: '10px 18px', borderRadius: '99px', border: '1.5px solid #e53e3e',
+              background: '#fff5f5', color: '#e53e3e', cursor: clearing ? 'not-allowed' : 'pointer',
+              fontWeight: 700, fontSize: '0.88rem', opacity: clearing ? 0.7 : 1,
+              display: 'flex', alignItems: 'center', gap: '6px', transition: 'all 0.2s ease'
             }}
+            onMouseEnter={(e) => { if (!clearing) { e.currentTarget.style.background = '#fee2e2'; }}}
+            onMouseLeave={(e) => { if (!clearing) { e.currentTarget.style.background = '#fff5f5'; }}}
           >
+            <i className="fas fa-trash-alt" />
             {clearing ? 'Clearing...' : 'Clear History'}
           </button>
         )}
       </div>
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '60px 0' }}>
-          <div style={{ display: 'inline-block', width: 40, height: 40, border: '3px solid rgba(247,168,77,0.2)', borderTopColor: 'var(--saffron)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+        <div style={{ textAlign: 'center', padding: '80px 0' }}>
+          <div style={{ display: 'inline-block', width: 50, height: 50, border: '4px solid rgba(247,168,77,0.2)', borderTopColor: 'var(--saffron)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
         </div>
       ) : uniqueTracks.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-icon"><i className="fas fa-history" /></div>
+        <div className="empty-state" style={{ background: 'linear-gradient(135deg, #fff 0%, #fff9e8 100%)', border: '1px dashed var(--saffron-border)' }}>
+          <div className="empty-icon" style={{ color: 'var(--saffron)' }}><i className="fas fa-history" /></div>
           <div className="empty-title">No listening history yet</div>
           <div className="empty-desc">
             Start playing audio tracks to build your listening history.
@@ -116,8 +121,9 @@ export default function ListeningHistory() {
         </div>
       ) : (
         <>
-          <div style={{ marginBottom: 16 }}>
-            <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)', background: 'var(--saffron-pale)', border: '1px solid var(--saffron-border)', padding: '4px 12px', borderRadius: 99 }}>
+          <div style={{ marginBottom: 24, display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '0.9rem', color: 'var(--text-main)', background: 'var(--saffron-pale)', border: '1.5px solid var(--saffron-border)', padding: '8px 16px', borderRadius: 99, fontWeight: 700 }}>
+              <i className="fas fa-music" style={{ marginRight: 6 }} />
               {uniqueTracks.length} unique {uniqueTracks.length === 1 ? 'track' : 'tracks'} played
             </span>
           </div>
@@ -131,11 +137,13 @@ export default function ListeningHistory() {
                   onToggleFavorite={() => toggleFavorite(audio._id)}
                 />
                 <div style={{
-                  position: 'absolute', bottom: 8, right: 8,
-                  fontSize: '0.7rem', color: 'var(--text-muted)',
-                  background: 'rgba(0,0,0,0.4)', padding: '2px 8px', borderRadius: 99
+                  position: 'absolute', bottom: 10, right: 10,
+                  fontSize: '0.72rem', color: '#fff',
+                  background: 'rgba(247,168,77,0.95)', padding: '6px 12px', borderRadius: 99,
+                  fontWeight: 600, letterSpacing: '0.02em', display: 'flex', alignItems: 'center', gap: '6px'
                 }}>
-                  Last: {formatDate(audio.lastListened)} • {formatDuration(audio.totalListened)}
+                  <i className="far fa-clock" />
+                  {formatDate(audio.lastListened)}
                 </div>
               </div>
             ))}

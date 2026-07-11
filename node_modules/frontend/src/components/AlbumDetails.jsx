@@ -114,37 +114,131 @@ export default function AlbumDetails() {
   return (
     <div className="album-details-page">
       {/* Album Header/Hero */}
-      <div className="hero-section album-hero">
-        <img
-          src={getImageSrc()}
-          alt={album.title}
-          className="album-hero-image"
-          onError={(e) => { e.target.src = '/placeholder.png'; }}
-        />
-        <div className="album-hero-content">
-          <span className="hero-eyebrow album-hero-eyebrow">
-            <i className="fas fa-compact-disc" style={{ marginRight: 6 }} /> Album
-          </span>
-          <h1 className="hero-title album-hero-title">
-            {album.title}
-          </h1>
-          {album.description && (
-            <p className="hero-subtitle album-hero-subtitle">
-              {album.description}
-            </p>
-          )}
-          <div className="album-hero-actions">
-            {audios.length > 0 && (
-              <button className="hero-cta" onClick={playAll}>
-                <i className="fas fa-play" style={{ marginRight: 8 }} /> Play All
-              </button>
+      <div className="hero-section album-hero" style={{ 
+        background: `linear-gradient(135deg, rgba(247,168,77,0.15) 0%, rgba(255,215,0,0.1) 50%, rgba(255,255,255,1) 100%), url('${getImageSrc()}') center/cover no-repeat`,
+        position: 'relative',
+        overflow: 'hidden'
+      }}>
+        {/* Decorative elements */}
+        <div style={{ 
+          position: 'absolute', 
+          top: '-60px', 
+          right: '-60px', 
+          width: '260px', 
+          height: '260px', 
+          background: 'radial-gradient(circle, rgba(255,152,0,0.15) 0%, transparent 60%)',
+          borderRadius: '50%'
+        }} />
+        <div style={{ 
+          position: 'absolute', 
+          bottom: '-40px', 
+          left: '-40px', 
+          width: '180px', 
+          height: '180px', 
+          background: 'radial-gradient(circle, rgba(180,157,25,0.1) 0%, transparent 60%)',
+          borderRadius: '50%'
+        }} />
+        
+        <div style={{ 
+          display: 'flex', 
+          flexWrap: 'wrap', 
+          gap: '40px', 
+          alignItems: 'flex-end',
+          zIndex: 1,
+          position: 'relative'
+        }}>
+          <div style={{ 
+            flexShrink: 0,
+            transform: 'perspective(1000px) rotateY(-5deg)',
+            transition: 'transform 0.3s ease',
+          }}>
+            <img
+              src={getImageSrc()}
+              alt={album.title}
+              className="album-hero-image"
+              onError={(e) => { e.currentTarget.src = '/placeholder.png'; }}
+              style={{ 
+                boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
+                borderRadius: '20px',
+                border: '4px solid white'
+              }}
+            />
+          </div>
+          
+          <div className="album-hero-content">
+            <h1 className="hero-title album-hero-title" style={{ 
+              fontSize: '2.8rem', 
+              fontWeight: 900, 
+              color: '#1a1a2e',
+              textShadow: '0 2px 4px rgba(0,0,0,0.05)'
+            }}>
+              {album.title}
+            </h1>
+            {album.description && (
+              <p className="hero-subtitle album-hero-subtitle" style={{ 
+                fontSize: '1.1rem', 
+                color: '#4a4a6a',
+                lineHeight: '1.6',
+                maxWidth: '600px',
+                marginTop: '12px',
+                marginBottom: '24px'
+              }}>
+                {album.description}
+              </p>
             )}
-            <button className="btn-secondary album-back-btn" onClick={() => navigate('/albums')}>
-              Back to Albums
-            </button>
-            <span className="track-count-box" style={{ display: 'inline-flex', alignItems: 'center', background: '#ff9800', color: '#fff', padding: '4px 8px', borderRadius: '6px', border: '1px solid var(--border)' }}>
+            <div className="album-hero-actions" style={{ gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
+              {audios.length > 0 && (
+                <button className="hero-cta" onClick={playAll} style={{ 
+                  background: 'linear-gradient(135deg, var(--saffron) 0%, var(--saffron-light) 100%)',
+                  boxShadow: '0 4px 20px rgba(247,168,77,0.4)',
+                  transform: 'translateY(0)',
+                  transition: 'all 0.3s ease'
+                }} onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-3px)';
+                  e.currentTarget.style.boxShadow = '0 8px 30px rgba(247,168,77,0.5)';
+                }} onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 4px 20px rgba(247,168,77,0.4)';
+                }}>
+                  <i className="fas fa-play" style={{ marginRight: 8 }} /> Play All
+                </button>
+              )}
+              <button className="btn-secondary album-back-btn" onClick={() => navigate('/albums')} style={{ 
+                padding: '12px 28px',
+                borderRadius: '99px',
+                border: '2px solid var(--border)',
+                background: 'white',
+                fontWeight: 600,
+                color: 'var(--text-muted)',
+                transition: 'all 0.2s ease',
+                cursor: 'pointer'
+              }} onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = 'var(--saffron)';
+                e.currentTarget.style.color = 'var(--saffron)';
+                e.currentTarget.style.background = 'var(--saffron-pale)';
+              }} onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'var(--border)';
+                e.currentTarget.style.color = 'var(--text-muted)';
+                e.currentTarget.style.background = 'white';
+              }}>
+                <i className="fas fa-arrow-left" style={{ marginRight: 8 }} /> Back to Albums
+              </button>
+              <span className="track-count-box" style={{ 
+                display: 'inline-flex', 
+                alignItems: 'center', 
+                background: 'linear-gradient(135deg, var(--saffron-pale) 0%, rgba(255,255,255,0.8) 100%)', 
+                color: 'var(--text-main)', 
+                padding: '10px 20px', 
+                borderRadius: '99px', 
+                border: '2px solid var(--saffron-border)',
+                fontWeight: 700,
+                fontSize: '0.95rem',
+                boxShadow: '0 2px 10px rgba(247,168,77,0.1)'
+              }}>
+                <i className="fas fa-music" style={{ marginRight: 8, color: 'var(--saffron)' }} />
                 {audios.length} {audios.length === 1 ? 'Track' : 'Tracks'}
-            </span>
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -180,27 +274,61 @@ export default function AlbumDetails() {
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    padding: '10px 12px',
+                    padding: '14px 18px',
                     background: 'var(--card-bg)',
-                    borderRadius: '10px',
+                    borderRadius: '16px',
                     cursor: 'pointer',
-                    gap: '12px',
+                    gap: '16px',
                     border: '1px solid var(--border)',
                     position: 'relative',
-                    transition: 'all 0.2s ease'
+                    transition: 'all 0.3s ease',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
                   }}
                   onClick={() => { setQueue(audios); setCurrentAudio(audio); }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--saffron)';
+                    e.currentTarget.style.boxShadow = '0 8px 24px rgba(247,168,77,0.15)';
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--border)';
+                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.03)';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                  }}
                 >
-                  <span style={{ width: '24px', fontWeight: '600' }}>{idx + 1}.</span>
+                  <span style={{ 
+                    width: '32px', 
+                    fontWeight: 800, 
+                    fontSize: '1.1rem',
+                    color: 'var(--text-muted)',
+                    textAlign: 'center'
+                  }}>{idx + 1}.</span>
                   <img
                     src={coverSrc}
                     alt={audio.title}
-                    style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '4px' }}
+                    style={{ 
+                      width: '56px', 
+                      height: '56px', 
+                      objectFit: 'cover', 
+                      borderRadius: '12px',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+                    }}
                     onError={e => { e.currentTarget.src = '/placeholder.png'; }}
                   />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: '500', color: 'var(--text-main)' }}>{audio.title}</div>
-                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ 
+                      fontWeight: 700, 
+                      color: 'var(--text-main)', 
+                      fontSize: '1rem',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis'
+                    }}>{audio.title}</div>
+                    <div style={{ 
+                      fontSize: '0.85rem', 
+                      color: 'var(--text-muted)',
+                      marginTop: '2px'
+                    }}>
                       {audio.speaker || 'Unknown Speaker'}
                     </div>
                   </div>
@@ -212,33 +340,51 @@ export default function AlbumDetails() {
                       <button
                         onClick={() => toggleLike(audio._id)}
                         style={{
-                          background: 'transparent',
+                          background: reactions.liked ? 'rgba(247,168,77,0.12)' : 'transparent',
                           border: 'none',
                           cursor: 'pointer',
-                          padding: '6px',
+                          padding: '10px 14px',
                           color: reactions.liked ? 'var(--saffron)' : 'var(--text-muted)',
-                          fontSize: '1rem',
+                          fontSize: '1.05rem',
                           display: 'flex',
                           alignItems: 'center',
-                          gap: '4px'
+                          gap: '8px',
+                          borderRadius: '99px',
+                          transition: 'all 0.2s ease',
+                          fontWeight: 600
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!reactions.liked) {
+                            e.currentTarget.style.color = 'var(--saffron)';
+                          }
+                          e.currentTarget.style.background = 'rgba(247,168,77,0.18)';
+                          e.currentTarget.style.transform = 'scale(1.05)';
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!reactions.liked) {
+                            e.currentTarget.style.color = 'var(--text-muted)';
+                          }
+                          e.currentTarget.style.background = reactions.liked ? 'rgba(247,168,77,0.12)' : 'transparent';
+                          e.currentTarget.style.transform = 'scale(1)';
                         }}
                         title="Like"
                       >
                         <i className={reactions.liked ? 'fas fa-thumbs-up' : 'far fa-thumbs-up'} />
-                        {reactions.likeCount > 0 && <span style={{ fontSize: '0.8rem' }}>{reactions.likeCount}</span>}
+                        {reactions.likeCount > 0 && <span style={{ fontSize: '0.85rem' }}>{reactions.likeCount}</span>}
                       </button>
                     ) : (
                       reactions.likeCount > 0 && (
                         <span style={{ 
-                          padding: '6px', 
+                          padding: '10px 14px', 
                           color: 'var(--text-muted)', 
-                          fontSize: '1rem', 
+                          fontSize: '1.05rem', 
                           display: 'flex', 
                           alignItems: 'center', 
-                          gap: '4px'
+                          gap: '8px',
+                          fontWeight: 600
                         }}>
                           <i className="far fa-thumbs-up" />
-                          <span style={{ fontSize: '0.8rem' }}>{reactions.likeCount}</span>
+                          <span style={{ fontSize: '0.85rem' }}>{reactions.likeCount}</span>
                         </span>
                       )
                     )}
@@ -248,33 +394,51 @@ export default function AlbumDetails() {
                       <button
                         onClick={() => toggleDislike(audio._id)}
                         style={{
-                          background: 'transparent',
+                          background: reactions.disliked ? 'rgba(229,62,62,0.1)' : 'transparent',
                           border: 'none',
                           cursor: 'pointer',
-                          padding: '6px',
+                          padding: '10px 14px',
                           color: reactions.disliked ? '#e53e3e' : 'var(--text-muted)',
-                          fontSize: '1rem',
+                          fontSize: '1.05rem',
                           display: 'flex',
                           alignItems: 'center',
-                          gap: '4px'
+                          gap: '8px',
+                          borderRadius: '99px',
+                          transition: 'all 0.2s ease',
+                          fontWeight: 600
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!reactions.disliked) {
+                            e.currentTarget.style.color = '#e53e3e';
+                          }
+                          e.currentTarget.style.background = 'rgba(229,62,62,0.15)';
+                          e.currentTarget.style.transform = 'scale(1.05)';
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!reactions.disliked) {
+                            e.currentTarget.style.color = 'var(--text-muted)';
+                          }
+                          e.currentTarget.style.background = reactions.disliked ? 'rgba(229,62,62,0.1)' : 'transparent';
+                          e.currentTarget.style.transform = 'scale(1)';
                         }}
                         title="Dislike"
                       >
                         <i className={reactions.disliked ? 'fas fa-thumbs-down' : 'far fa-thumbs-down'} />
-                        {reactions.dislikeCount > 0 && <span style={{ fontSize: '0.8rem' }}>{reactions.dislikeCount}</span>}
+                        {reactions.dislikeCount > 0 && <span style={{ fontSize: '0.85rem' }}>{reactions.dislikeCount}</span>}
                       </button>
                     ) : (
                       reactions.dislikeCount > 0 && (
                         <span style={{ 
-                          padding: '6px', 
+                          padding: '10px 14px', 
                           color: 'var(--text-muted)', 
-                          fontSize: '1rem', 
+                          fontSize: '1.05rem', 
                           display: 'flex', 
                           alignItems: 'center', 
-                          gap: '4px'
+                          gap: '8px',
+                          fontWeight: 600
                         }}>
                           <i className="far fa-thumbs-down" />
-                          <span style={{ fontSize: '0.8rem' }}>{reactions.dislikeCount}</span>
+                          <span style={{ fontSize: '0.85rem' }}>{reactions.dislikeCount}</span>
                         </span>
                       )
                     )}
@@ -284,12 +448,28 @@ export default function AlbumDetails() {
                       <button
                         onClick={() => toggleFavoriteTrack(audio._id)}
                         style={{
-                          background: 'transparent',
+                          background: isFav ? 'rgba(229,62,62,0.12)' : 'transparent',
                           border: 'none',
                           cursor: 'pointer',
-                          padding: '6px',
+                          padding: '10px 14px',
                           color: isFav ? '#e53e3e' : 'var(--text-muted)',
-                          fontSize: '1.1rem'
+                          fontSize: '1.15rem',
+                          borderRadius: '99px',
+                          transition: 'all 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!isFav) {
+                            e.currentTarget.style.color = '#e53e3e';
+                          }
+                          e.currentTarget.style.background = 'rgba(229,62,62,0.18)';
+                          e.currentTarget.style.transform = 'scale(1.05)';
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!isFav) {
+                            e.currentTarget.style.color = 'var(--text-muted)';
+                          }
+                          e.currentTarget.style.background = isFav ? 'rgba(229,62,62,0.12)' : 'transparent';
+                          e.currentTarget.style.transform = 'scale(1)';
                         }}
                         title={isFav ? "Remove from Favorites" : "Add to Favorites"}
                       >
@@ -305,9 +485,21 @@ export default function AlbumDetails() {
                           background: 'transparent',
                           border: 'none',
                           cursor: 'pointer',
-                          padding: '6px',
+                          padding: '10px 14px',
                           color: 'var(--text-muted)',
-                          fontSize: '1rem'
+                          fontSize: '1.05rem',
+                          borderRadius: '99px',
+                          transition: 'all 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.color = 'var(--saffron)';
+                          e.currentTarget.style.background = 'rgba(247,168,77,0.12)';
+                          e.currentTarget.style.transform = 'scale(1.05)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.color = 'var(--text-muted)';
+                          e.currentTarget.style.background = 'transparent';
+                          e.currentTarget.style.transform = 'scale(1)';
                         }}
                         title="Comment/Feedback"
                       >
@@ -326,8 +518,17 @@ export default function AlbumDetails() {
       <style>{`
         .audio-row:hover {
           border-color: var(--saffron) !important;
-          box-shadow: 0 2px 12px rgba(247,168,77,0.2) !important;
-          background: var(--card-bg);
+          box-shadow: 0 8px 24px rgba(247,168,77,0.15) !important;
+        }
+        @media (max-width: 768px) {
+          .album-hero-image {
+            width: 140px !important;
+            height: 140px !important;
+            border-radius: 12px !important;
+          }
+          .album-hero-title {
+            font-size: 1.8rem !important;
+          }
         }
       `}</style>
     </div>
