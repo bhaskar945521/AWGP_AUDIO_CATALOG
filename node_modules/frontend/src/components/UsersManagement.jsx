@@ -477,34 +477,58 @@ export default function UsersManagement() {
               </tr>
             </thead>
             <tbody>
-              {users.map(u => (
-                <tr key={u._id}>
-                  <td>{u.username}</td>
-                  <td>{u.fullName || '-'}</td>
-                  <td>{u.email || '-'}</td>
-                  <td>{u.role}</td>
-                  <td>{u.assignedWork || '-'}</td>
-                  <td>
-                    {u.permissions && u.permissions.length > 0 
-                      ? u.permissions.join(', ') 
-                      : 'None'}
-                  </td>
-                  <td style={{ textAlign: 'right' }}>
-                    <button className="admin-action-btn edit" onClick={() => startEdit(u)} title="Edit User">
-                      <i className="fas fa-edit" />
-                    </button>
-                    <button 
-                      className="admin-action-btn delete" 
-                      onClick={() => handleDelete(u._id)} 
-                      title={u.role === 'admin' ? 'Cannot delete admin accounts' : 'Delete User'}
-                      disabled={u.role === 'admin'}
-                      style={{ opacity: u.role === 'admin' ? 0.5 : 1, cursor: u.role === 'admin' ? 'not-allowed' : 'pointer' }}
-                    >
-                      <i className="fas fa-trash-alt" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {users.map(u => {
+                const adminCount = users.filter(x => x.role === 'admin').length;
+                const isLastAdmin = u.role === 'admin' && adminCount <= 1;
+                const canDeleteAdmin = u.role === 'admin' && adminCount >= 2;
+                const isDeleteable = u.role !== 'admin' || canDeleteAdmin;
+
+                return (
+                  <tr key={u._id}>
+                    <td>
+                      {u.username}
+                      {isLastAdmin && (
+                        <span
+                          title="Last admin — locked for safety"
+                          style={{ marginLeft: 6, color: '#f6ad55', fontSize: '0.85em' }}
+                        >
+                          <i className="fas fa-lock" />
+                        </span>
+                      )}
+                    </td>
+                    <td>{u.fullName || '-'}</td>
+                    <td>{u.email || '-'}</td>
+                    <td>{u.role}</td>
+                    <td>{u.assignedWork || '-'}</td>
+                    <td>
+                      {u.permissions && u.permissions.length > 0
+                        ? u.permissions.join(', ')
+                        : 'None'}
+                    </td>
+                    <td style={{ textAlign: 'right' }}>
+                      <button className="admin-action-btn edit" onClick={() => startEdit(u)} title="Edit User">
+                        <i className="fas fa-edit" />
+                      </button>
+                      <button
+                        className="admin-action-btn delete"
+                        onClick={() => isDeleteable ? handleDelete(u._id) : null}
+                        title={
+                          isLastAdmin
+                            ? '🔒 Last admin — create another admin first to delete this one'
+                            : 'Delete User'
+                        }
+                        disabled={!isDeleteable}
+                        style={{
+                          opacity: isDeleteable ? 1 : 0.45,
+                          cursor: isDeleteable ? 'pointer' : 'not-allowed'
+                        }}
+                      >
+                        <i className={isLastAdmin ? 'fas fa-lock' : 'fas fa-trash-alt'} />
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

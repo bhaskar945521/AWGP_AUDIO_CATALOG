@@ -79,18 +79,17 @@ router.delete('/:id', auth, roleCheck(['admin']), async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ message: 'User not found' });
-    
-    // Safety check 1: Don't allow deleting admin users
+
+    // Safety check: If deleting an admin, ensure at least 2 admins exist (so one remains)
     if (user.role === 'admin') {
-      return res.status(403).json({ message: 'Cannot delete admin accounts' });
+      const adminCount = await User.countDocuments({ role: 'admin' });
+      if (adminCount <= 1) {
+        return res.status(403).json({
+          message: 'Cannot delete the only remaining admin. Create another admin first.'
+        });
+      }
     }
-    
-    // Safety check 2: Ensure there's always at least one admin (redundant but extra layer)
-    const adminCount = await User.countDocuments({ role: 'admin' });
-    if (adminCount < 1) {
-      return res.status(403).json({ message: 'Must have at least one admin' });
-    }
-    
+
     await User.findByIdAndDelete(req.params.id);
     res.json({ message: 'User deleted' });
   } catch (err) {

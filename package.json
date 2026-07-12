@@ -7,7 +7,7 @@
         "backend"
     ],
     "scripts": {
-        "dev": "concurrently --names \"FRONTEND,BACKEND\" --prefix-colors \"cyan,green\" \"node frontend/node_modules/.bin/vite.js\" \"node_modules/.bin/nodemon backend/server.js\"",
+        "dev": "concurrently --names \"FRONTEND,BACKEND\" --prefix-colors \"cyan,green\" \"node frontend/node_modules/vite/bin/vite.js frontend\" \"node node_modules/nodemon/bin/nodemon.js backend/server.js\"",
         "build": "npm run build --prefix frontend",
         "start": "npm run dev",
         "backup": "cd scripts && powershell -ExecutionPolicy Bypass -File backup-windows.ps1",
