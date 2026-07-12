@@ -111,7 +111,7 @@ export const AudioProvider = ({ children }) => {
     };
   }, []);
 
-  // ── When track changes: load new src ────────────────────────
+  // ── When track changes: load new src only if URL differs ────────────────────────
   useEffect(() => {
     const el = audioRef.current;
     if (!el) return;
@@ -127,10 +127,13 @@ export const AudioProvider = ({ children }) => {
     }
 
     const newSrc = currentAudio.audioUrl;
-    // Pause before replacing the source to avoid interrupting a pending play() call.
-    el.pause();
-    el.src = newSrc;
-    el.load();
+    // Only reset source if the URL actually changed to avoid restarting playback
+    if (el.src !== newSrc) {
+      // Pause before replacing the source to avoid interrupting a pending play() call.
+      el.pause();
+      el.src = newSrc;
+      el.load();
+    }
   }, [currentAudio]);
 
   // ── Sync play / pause state ──────────────────────────────────
@@ -305,14 +308,15 @@ export const AudioProvider = ({ children }) => {
         if (currentAudioRef.current && currentAudioRef.current._id === audioId) {
           setCurrentAudioState(prev => prev ? { ...prev, isFavorite: false } : null);
         }
-        setQueue(prev => prev.map(a => a._id === audioId ? { ...a, isFavorite: false } : a));
+        // Update queue without recreating objects to avoid resetting playback
+        // setQueue(prev => prev.map(a => a._id === audioId ? { ...a, isFavorite: false } : a));
       } else {
         await api.post(`/audio/${audioId}/favorite`);
         setUserFavorites(prev => [...prev, audioId]);
         if (currentAudioRef.current && currentAudioRef.current._id === audioId) {
           setCurrentAudioState(prev => prev ? { ...prev, isFavorite: true } : null);
         }
-        setQueue(prev => prev.map(a => a._id === audioId ? { ...a, isFavorite: true } : a));
+        // setQueue(prev => prev.map(a => a._id === audioId ? { ...a, isFavorite: true } : a));
       }
     } catch (err) {
       console.error('[AudioContext] Failed to toggle user-specific favorite:', err);
