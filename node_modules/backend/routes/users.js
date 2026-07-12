@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
+const ListeningHistory = require('../models/ListeningHistory');
 const auth = require('../middleware/auth');
 const roleCheck = require('../middleware/roleCheck');
 const bcrypt = require('bcryptjs');
@@ -12,6 +13,35 @@ router.get('/', auth, roleCheck(['admin']), async (req, res) => {
     res.json(users);
   } catch (err) {
     console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// GET current user listening history (last 7 days)
+router.get('/user/history', auth, async (req, res) => {
+  try {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const history = await ListeningHistory.find({
+      userId: req.user._id,
+      sessionStart: { $gte: sevenDaysAgo }
+    })
+      .populate('audioId', '-audioFile')
+      .sort({ sessionStart: -1 });
+    res.json(history);
+  } catch (err) {
+    console.error('Get user history error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// DELETE current user's listening history (clear all)
+router.delete('/user/history', auth, async (req, res) => {
+  try {
+    await ListeningHistory.deleteMany({ userId: req.user._id });
+    res.json({ message: 'Listening history cleared' });
+  } catch (err) {
+    console.error('Clear history error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -74,26 +104,31 @@ router.put('/:id', auth, roleCheck(['admin']), async (req, res) => {
   }
 });
 
-// DELETE user (admin only)
-router.delete('/:id', auth, roleCheck(['admin']), async (req, res) => {
+// ADMIN: Get any user's listening history (last 7 days)
+router.get('/users/:id/history', auth, roleCheck(['admin']), async (req, res) => {
   try {
-    const user = await User.findById(req.params.id);
-    if (!user) return res.status(404).json({ message: 'User not found' });
-
-    // Safety check: If deleting an admin, ensure at least 2 admins exist (so one remains)
-    if (user.role === 'admin') {
-      const adminCount = await User.countDocuments({ role: 'admin' });
-      if (adminCount <= 1) {
-        return res.status(403).json({
-          message: 'Cannot delete the only remaining admin. Create another admin first.'
-        });
-      }
-    }
-
-    await User.findByIdAndDelete(req.params.id);
-    res.json({ message: 'User deleted' });
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const history = await ListeningHistory.find({
+      userId: req.params.id,
+      sessionStart: { $gte: sevenDaysAgo }
+    })
+      .populate('audioId', '-audioFile')
+      .sort({ sessionStart: -1 });
+    res.json(history);
   } catch (err) {
-    console.error(err);
+    console.error('Admin get history error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// ADMIN: Clear any user's listening history
+router.delete('/users/:id/history', auth, roleCheck(['admin']), async (req, res) => {
+  try {
+    await ListeningHistory.deleteMany({ userId: req.params.id });
+    res.json({ message: 'User listening history cleared' });
+  } catch (err) {
+    console.error('Admin clear history error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 });

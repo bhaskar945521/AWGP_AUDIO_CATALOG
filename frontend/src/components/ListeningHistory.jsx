@@ -13,7 +13,7 @@ export default function ListeningHistory() {
   const loadHistory = async () => {
     try {
       setLoading(true);
-      const res = await api.get('/user/history');
+      const res = await api.get('/users/user/history');
       setHistory(res.data);
     } catch (err) {
       console.error('Failed to load listening history', err);
@@ -53,7 +53,7 @@ export default function ListeningHistory() {
     if (!window.confirm('Are you sure you want to clear your entire listening history?')) return;
     try {
       setClearing(true);
-      await api.delete('/user/history');
+      await api.delete('/users/user/history');
       setHistory([]);
       toast.success('Listening history cleared successfully');
     } catch (err) {

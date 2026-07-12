@@ -243,6 +243,7 @@ export default function Header({ onToggleSidebar, onVoiceResult, searchQuery, on
             </div>
           </div>
           <NavLink to="/favorites" className={({ isActive }) => `nav-link-top${isActive ? ' active' : ''}`}>Favorites</NavLink>
+          <NavLink to="/history" className={({ isActive }) => `nav-link-top${isActive ? ' active' : ''}`}>History</NavLink>
           {(isAdmin || isOnlyUser) && <NavLink to="/admin" className={({ isActive }) => `nav-link-top${isActive ? ' active' : ''}`}>Admin</NavLink>}
         </nav>
         <VoiceSearch onResult={handleVoiceResult} />

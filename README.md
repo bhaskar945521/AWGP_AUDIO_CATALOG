@@ -567,6 +567,55 @@ AWGP_AUDIO_CATLOG/
 
 ---
 
+## 📚 Recent Updates
+
+- Added **per‑user listening history** endpoints (`GET /api/user/history`, `DELETE /api/user/history`) and UI page `ListeningHistory.jsx` accessible via the **History** link in Header & Sidebar.
+- Integrated **responsive design** across all new UI components (Header, Sidebar, History page, mobile bottom navigation) with media queries ensuring 100 % mobile & desktop compatibility.
+- Updated navigation to include **History** link for both admin and regular users.
+- Added CSS media queries and glass‑morphism styling for mobile‑first experience.
+
 <div align="center">
   Made with ❤️ for All World Gayatri Pariwar
 </div>
+
+## 🕑 Listening History Feature Details
+
+- **Backend Endpoints**:
+  - `GET /api/user/history` – Retrieves the logged‑in user's listening history (last 7 days).
+  - `DELETE /api/user/history` – Clears the user's entire listening history.
+- **Frontend**:
+  - New route `/history` rendered by `ListeningHistory.jsx`.
+  - Accessible via **History** link added to both Header and Sidebar (desktop) and bottom navigation (mobile).
+  - Shows unique tracks with last listened time, total listening duration and a **Clear History** button.
+- **Responsive Design**:
+  - Media queries ensure the History page layout adapts to mobile screens.
+  - Glass‑morphism styling matches the rest of the UI.
+- **Tech Stack** remains unchanged (React, Vite, Tailwind CSS, Node/Express, MongoDB).
+
+## ➕ Additional UI Components & Features
+
+- **Add to Album Modal** (`AddToAlbumModal.jsx`):
+  - Allows users to add selected audio tracks to an existing album.
+  - Supports searching within user's albums and creating a new album on the fly.
+  - Integrated with the per‑user permissions system (`album_edit`).
+
+- **User Profile Page** (`UserProfile.jsx`):
+  - Displays user's basic information, role, and assigned permissions.
+  - Provides a quick link to edit profile details (name, email) if permitted.
+  - Shows recent activity summary (favorite count, like/dislike totals).
+
+- **Audio Player Strip** (`AudioPlayer.jsx`):
+  - Persistent mini‑player fixed at the bottom on mobile devices.
+  - Shows current track title, play/pause, next/previous, and progress bar.
+  - Syncs with the global `AudioContext` for seamless session tracking.
+
+- **Footer** (`Footer.jsx`):
+  - Contains copyright notice, quick navigation links, and a link to the source repository.
+  - Styled with the same glass‑morphism effect as the Header.
+
+- **Upload Audio Modal** (`UploadAudioModal.jsx`):
+  - Rich modal for uploading new audio files with drag‑and‑drop support.
+  - Performs server‑side FFmpeg conversion to MP3 and metadata extraction.
+  - Validates file size, type, and required fields before submission.
+
+These components were introduced in versions **v2.3** and **v2.2** and are fully reflected in the UI across desktop and mobile layouts.
