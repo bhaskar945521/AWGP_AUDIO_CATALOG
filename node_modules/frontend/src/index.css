@@ -958,27 +958,25 @@ a {
 
 @media (min-width: 769px) {
   .hero-title {
-    flex-direction: row;
-    flex-wrap: nowrap;
-    justify-content: flex-end;
-    gap: 0.5rem;
-    white-space: nowrap;
-    align-items: flex-end;
-    /* left align inner spans */
-    text-align: right;
     display: flex;
-    /* override centering */
+    flex-direction: column;       /* stack lines vertically */
+    align-items: flex-end;        /* right-align both lines */
+    text-align: right;
+    white-space: normal;
+    gap: 0.15rem;                 /* tight gap between the two lines */
+    margin-top: -10px;
+    margin-bottom: 28px;
   }
 
   .hero-title-line {
     display: block;
+    text-align: right;
+    width: 100%;
   }
 
   .hero-eyebrow {
     margin-top: 12px;
-    /* increased space between badge and title */
-    margin-bottom: 16px;
-    /* more space below badge */
+    margin-bottom: 20px;          /* breathing room between badge and title */
   }
 }
 
