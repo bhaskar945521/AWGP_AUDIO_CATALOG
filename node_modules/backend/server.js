@@ -30,6 +30,8 @@ app.use(cors({
     if (!origin) return callback(null, true);
     if (allowedOrigins.includes(origin)) return callback(null, true);
     if (origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1')) return callback(null, true);
+    // Allow any LAN/private IP range for cross-machine access
+    if (/^http:\/\/(192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.|10\.)/.test(origin)) return callback(null, true);
     if (origin.startsWith('http://172.20.')) return callback(null, true);
     // For production safety, log disallowed origins but don't fail (or fail as needed)
     console.warn('[CORS] Disallowed origin:', origin);
@@ -38,7 +40,8 @@ app.use(cors({
     return callback(null, true); 
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Range'],
+  exposedHeaders: ['Content-Range', 'Accept-Ranges', 'Content-Length', 'Content-Type'],
   credentials: true,
 }));
 
@@ -57,23 +60,76 @@ const uploadsPath = getUploadsDir();
 console.log('[Server] Uploads directory:', uploadsPath);
 console.log('[Server] STORAGE_FOLDERS:', Object.entries(STORAGE_FOLDERS).map(([k, v]) => `${k}: ${v}`));
 
+// Audio MIME types map for proper browser playback
+const AUDIO_MIME_TYPES = {
+  '.mp3':  'audio/mpeg',
+  '.wav':  'audio/wav',
+  '.ogg':  'audio/ogg',
+  '.flac': 'audio/flac',
+  '.aac':  'audio/aac',
+  '.m4a':  'audio/mp4',
+  '.opus': 'audio/opus',
+  '.webm': 'audio/webm',
+};
+
 app.use('/uploads', (req, res, next) => {
   // Log uploads requests for production debugging
   console.log('[Uploads] Request:', req.method, req.path);
-  
-  // Check if file exists before serving
-  const requestedFile = path.join(uploadsPath, req.path.replace('/uploads', ''));
-  if (!fs.existsSync(requestedFile)) {
-    console.warn('[Uploads] File not found:', requestedFile);
-  } else {
-    console.log('[Uploads] Serving file:', requestedFile);
+
+  const filePath = path.join(uploadsPath, req.path);
+
+  if (!fs.existsSync(filePath)) {
+    console.warn('[Uploads] File not found:', filePath);
+    return next(); // fallthrough
   }
+
+  const ext = path.extname(req.path).toLowerCase();
+  const mimeType = AUDIO_MIME_TYPES[ext];
+
+  // ── Handle audio files with proper Range-request streaming ──
+  if (mimeType) {
+    const stat = fs.statSync(filePath);
+    const fileSize = stat.size;
+    const rangeHeader = req.headers['range'];
+
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Expose-Headers', 'Content-Range, Accept-Ranges, Content-Length');
+    res.setHeader('Accept-Ranges', 'bytes');
+    res.setHeader('Content-Type', mimeType);
+
+    if (rangeHeader) {
+      // Partial content (seek / stream)
+      const parts = rangeHeader.replace(/bytes=/, '').split('-');
+      const start = parseInt(parts[0], 10);
+      const end   = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+      const chunkSize = (end - start) + 1;
+
+      res.writeHead(206, {
+        'Content-Range':  `bytes ${start}-${end}/${fileSize}`,
+        'Accept-Ranges':  'bytes',
+        'Content-Length': chunkSize,
+        'Content-Type':   mimeType,
+      });
+      fs.createReadStream(filePath, { start, end }).pipe(res);
+    } else {
+      // Full file
+      res.writeHead(200, {
+        'Content-Length': fileSize,
+        'Content-Type':   mimeType,
+      });
+      fs.createReadStream(filePath).pipe(res);
+    }
+    return; // Response handled
+  }
+
+  // Non-audio files: serve normally
+  console.log('[Uploads] Serving file:', filePath);
   next();
 }, express.static(uploadsPath, {
-  maxAge: '30d',
-  etag: false,
+  maxAge: '7d',
+  etag: true,
   lastModified: true,
-  fallthrough: true, // Let next middleware handle 404s
+  fallthrough: true,
 }));
 
 // Serve frontend

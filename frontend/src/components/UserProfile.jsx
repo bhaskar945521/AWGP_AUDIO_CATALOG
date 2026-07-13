@@ -115,7 +115,7 @@ function InputField({ label, icon, ...props }) {
 /* ── Role Badge ──────────────────────────────────── */
 function getRoleBadge(role) {
   if (role === 'admin') return { label: 'Admin', color: '#f7a84d', bg: '#fff8ee', icon: 'fas fa-crown' };
-  if (role === 'onlyuser') return { label: 'Staff', color: '#4299e1', bg: '#eff8ff', icon: 'fas fa-user-shield' };
+  if (role === 'onlyuser') return { label: 'Operator', color: '#4299e1', bg: '#eff8ff', icon: 'fas fa-user-cog' };
   return { label: 'Catalog Listener', color: '#48bb78', bg: '#f0fff4', icon: 'fas fa-headphones' };
 }
 
