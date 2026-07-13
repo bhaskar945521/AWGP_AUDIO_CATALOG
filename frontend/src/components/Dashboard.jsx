@@ -298,7 +298,7 @@ export default function Dashboard() {
                 <i className="fas fa-headphones" /> AWGP Digital Archive
               </span>
               <h1 className="hero-title">
-                <span className="hero-title-line">Spiritual Knowledge,</span>
+                <span className="hero-title-line">Spiritual Knowledge</span>
                 <span className="hero-title-line hero-title-line--accent">Preserved Forever</span>
               </h1>
               <div className="hero-actions">
