@@ -73,17 +73,18 @@ const EMPTY_FORM = {
   selectedGroups: [], // holds selected groups for Onlyuser
 };
 
-// ── Permission picker used in both Create and Edit ───function PermissionPicker({ role, permissions, onChange, selectedOptions = [], onToggleOption }) {
+// ── Permission picker used in both Create and Edit ───────────────
+function PermissionPicker({ role, permissions, onChange, selectedOptions = [], onToggleOption }) {
   // For admin, pre-select all groups by default if none selected
-  const effectiveSelected = role === 'admin' && selectedOptions.length === 0 ? SINGLE_OPTIONS.map(o => o.name) : selectedOptions;
+  const effectiveSelected = role === 'admin' && selectedOptions.length === 0
+    ? SINGLE_OPTIONS.map(o => o.name)
+    : selectedOptions;
 
   const toggleOption = (opt) => {
     const newSelected = effectiveSelected.includes(opt.name)
       ? effectiveSelected.filter(name => name !== opt.name)
       : [...effectiveSelected, opt.name];
-    // Notify parent of new selection array
     if (onToggleOption) onToggleOption(newSelected);
-    // Compute combined permissions from chosen groups
     const combinedPerms = SINGLE_OPTIONS
       .filter(o => newSelected.includes(o.name))
       .flatMap(o => o.permissions);
@@ -91,7 +92,7 @@ const EMPTY_FORM = {
   };
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '12px' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '12px' }}>
       {SINGLE_OPTIONS.map(opt => (
         <label key={opt.name} style={{
           background: effectiveSelected.includes(opt.name) ? 'rgba(247,168,77,0.08)' : 'var(--card-bg, rgba(255,255,255,0.03))',
