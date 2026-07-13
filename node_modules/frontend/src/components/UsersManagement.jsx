@@ -356,13 +356,33 @@ export default function UsersManagement() {
           <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px' }}>
             Permissions
           </div>
-          <PermissionPicker
-            role={newUser.role}
-            permissions={newUser.permissions}
-            selectedOptions={newUser.selectedGroups}
-            onToggleOption={newSelected => setNewUser(p => ({ ...p, selectedGroups: newSelected }))}
-            onChange={perms => setNewUser(p => ({ ...p, permissions: perms }))}
-          />
+          {newUser.role === 'admin' ? (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: '12px',
+              padding: '14px 18px', borderRadius: '12px',
+              background: 'rgba(247,168,77,0.08)',
+              border: '2px solid rgba(247,168,77,0.35)',
+            }}>
+              <i className="fas fa-crown" style={{ color: '#f7a84d', fontSize: '1.1rem' }} />
+              <div>
+                <div style={{ fontWeight: 800, color: '#1a1a2e', fontSize: '0.9rem' }}>All Permissions Auto-Granted</div>
+                <div style={{ fontSize: '0.78rem', color: '#6b7280', marginTop: 2 }}>
+                  Admin role gets full access to all {ALL_PERMISSIONS.length} features automatically.
+                </div>
+              </div>
+              <span style={{ marginLeft: 'auto', padding: '4px 12px', borderRadius: '99px', background: '#f7a84d', color: '#fff', fontSize: '0.76rem', fontWeight: 800 }}>
+                {ALL_PERMISSIONS.length} Permissions
+              </span>
+            </div>
+          ) : (
+            <PermissionPicker
+              role={newUser.role}
+              permissions={newUser.permissions}
+              selectedOptions={newUser.selectedGroups}
+              onToggleOption={newSelected => setNewUser(p => ({ ...p, selectedGroups: newSelected }))}
+              onChange={perms => setNewUser(p => ({ ...p, permissions: perms }))}
+            />
+          )}
         </div>
 
         <button type="submit" disabled={creating} style={{
@@ -454,13 +474,33 @@ export default function UsersManagement() {
               {/* Permissions */}
               <div>
                 <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px' }}>Permissions</div>
-                <PermissionPicker
-                  role={editForm.role}
-                  permissions={editForm.permissions}
-                  selectedOption={editForm.selectedGroup}
-                  onOptionSelect={opt => setEditForm(p => ({ ...p, selectedGroup: opt }))}
-                  onChange={perms => setEditForm(p => ({ ...p, permissions: perms }))}
-                />
+                {editForm.role === 'admin' ? (
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: '12px',
+                    padding: '14px 18px', borderRadius: '12px',
+                    background: 'rgba(247,168,77,0.08)',
+                    border: '2px solid rgba(247,168,77,0.35)',
+                  }}>
+                    <i className="fas fa-crown" style={{ color: '#f7a84d', fontSize: '1.1rem' }} />
+                    <div>
+                      <div style={{ fontWeight: 800, color: '#1a1a2e', fontSize: '0.9rem' }}>All Permissions Auto-Granted</div>
+                      <div style={{ fontSize: '0.78rem', color: '#6b7280', marginTop: 2 }}>
+                        Admin role gets full access to all {ALL_PERMISSIONS.length} features automatically.
+                      </div>
+                    </div>
+                    <span style={{ marginLeft: 'auto', padding: '4px 12px', borderRadius: '99px', background: '#f7a84d', color: '#fff', fontSize: '0.76rem', fontWeight: 800 }}>
+                      {ALL_PERMISSIONS.length} Permissions
+                    </span>
+                  </div>
+                ) : (
+                  <PermissionPicker
+                    role={editForm.role}
+                    permissions={editForm.permissions}
+                    selectedOptions={editForm.selectedGroups || []}
+                    onToggleOption={newSelected => setEditForm(p => ({ ...p, selectedGroups: newSelected }))}
+                    onChange={perms => setEditForm(p => ({ ...p, permissions: perms }))}
+                  />
+                )}
               </div>
             </div>
             <div className="modal-actions" style={{ padding: '16px 20px', borderTop: '1px solid var(--border)', display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
