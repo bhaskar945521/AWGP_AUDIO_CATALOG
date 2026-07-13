@@ -5,6 +5,7 @@ import VoiceSearch from './VoiceSearch';
 import toast from 'react-hot-toast';
 import api from '../api';
 import { useAuth } from '../context/AuthContext';
+import { Link } from 'react-router-dom';
 
 function timeAgo(dateStr) {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -19,8 +20,10 @@ function timeAgo(dateStr) {
 export default function Header({ onToggleSidebar, onVoiceResult, searchQuery, onSearchChange }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { token, logout, isAdmin, isOnlyUser } = useAuth();
+  const { token, logout, isAdmin, isOnlyUser, user } = useAuth();
   const [categories, setCategories] = useState([]);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const profileRef = useRef(null);
   const [siteTitle, setSiteTitle] = useState('AWGP Audio Hub');
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifItems, setNotifItems] = useState([]);
@@ -103,6 +106,9 @@ export default function Header({ onToggleSidebar, onVoiceResult, searchQuery, on
       }
       if (categoriesRef.current && !categoriesRef.current.contains(e.target)) {
         setCategoriesOpen(false);
+      }
+      if (profileRef.current && !profileRef.current.contains(e.target)) {
+        setProfileOpen(false);
       }
     };
     document.addEventListener('mousedown', handler);
@@ -291,10 +297,65 @@ export default function Header({ onToggleSidebar, onVoiceResult, searchQuery, on
           )}
         </div>
         {token ? (
-          <button className="btn-logout" onClick={() => { logout(); navigate('/'); }}>
-            <i className="fas fa-sign-out-alt auth-btn-icon" />
-            Logout
-          </button>
+          <div className="user-avatar-wrapper" ref={profileRef} style={{ position: 'relative' }}>
+            <button
+              className="user-avatar-btn"
+              onClick={() => setProfileOpen(p => !p)}
+              title="My Account"
+              style={{
+                width: 38, height: 38, borderRadius: '50%',
+                background: 'linear-gradient(135deg, var(--saffron, #f7a84d), #f59e0b)',
+                border: '2px solid rgba(247,168,77,0.4)',
+                color: '#fff', fontWeight: 800, fontSize: '0.95rem',
+                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transition: 'box-shadow 0.2s',
+              }}
+            >
+              {(user?.fullName || user?.username || 'U').charAt(0).toUpperCase()}
+            </button>
+            {profileOpen && (
+              <div style={{
+                position: 'absolute', top: '48px', right: 0,
+                background: 'var(--card-bg, #1a1a2e)', border: '1.5px solid var(--border)',
+                borderRadius: '14px', padding: '8px', minWidth: '180px',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.22)', zIndex: 200,
+              }}>
+                <div style={{ padding: '10px 12px 8px', borderBottom: '1px solid var(--border)' }}>
+                  <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--text-main)' }}>
+                    {user?.fullName || user?.username || 'User'}
+                  </div>
+                  <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                    {user?.email || user?.role || ''}
+                  </div>
+                </div>
+                <button
+                  onClick={() => { setProfileOpen(false); navigate('/profile'); }}
+                  style={{
+                    width: '100%', padding: '9px 12px', borderRadius: '9px',
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', gap: '9px',
+                    color: 'var(--text-main)', fontSize: '0.86rem', fontWeight: 600,
+                    marginTop: '4px',
+                  }}
+                >
+                  <i className="fas fa-user-circle" style={{ color: 'var(--saffron, #f7a84d)' }} />
+                  My Profile
+                </button>
+                <button
+                  onClick={() => { setProfileOpen(false); logout(); navigate('/'); }}
+                  style={{
+                    width: '100%', padding: '9px 12px', borderRadius: '9px',
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', gap: '9px',
+                    color: '#e53e3e', fontSize: '0.86rem', fontWeight: 600,
+                  }}
+                >
+                  <i className="fas fa-sign-out-alt" />
+                  Sign Out
+                </button>
+              </div>
+            )}
+          </div>
         ) : null}
       </div>
     </header>

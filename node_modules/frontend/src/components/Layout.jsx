@@ -42,9 +42,9 @@ function MobileBottomNav({ isAdmin, isUser, isOnlyUser }) {
       </NavLink>
 
       {(isAdmin || isUser) && (
-        <NavLink to={showAdminPanel ? '/admin' : '/library'} className={({ isActive }) => `mobile-nav-item${isActive ? ' active' : ''}`}>
-          <i className={showAdminPanel ? 'fas fa-cog' : 'fas fa-user'} />
-          <span>{showAdminPanel ? 'Admin' : 'You'}</span>
+        <NavLink to={showAdminPanel ? '/admin' : '/profile'} className={({ isActive }) => `mobile-nav-item${isActive ? ' active' : ''}`}>
+          <i className={showAdminPanel ? 'fas fa-cog' : 'fas fa-user-circle'} />
+          <span>{showAdminPanel ? 'Admin' : 'Profile'}</span>
         </NavLink>
       )}
     </nav>

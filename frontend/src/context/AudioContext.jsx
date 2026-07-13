@@ -126,10 +126,25 @@ export const AudioProvider = ({ children }) => {
       return;
     }
 
-    const newSrc = currentAudio.audioUrl;
-    // Only reset source if the URL actually changed to avoid restarting playback
-    if (el.src !== newSrc) {
-      // Pause before replacing the source to avoid interrupting a pending play() call.
+    const newSrc = resolveUrl(currentAudio.audioUrl);
+    // Normalize both URLs for comparison (browser may return absolute URL in el.src)
+    // We compare the pathname+search portion to avoid http://host1 vs http://host2 mismatches
+    let currentSrc = '';
+    try {
+      const u = new URL(el.src);
+      currentSrc = u.pathname + u.search;
+    } catch (_) {
+      currentSrc = el.src;
+    }
+    let targetPath = '';
+    try {
+      const u = new URL(newSrc, window.location.href);
+      targetPath = u.pathname + u.search;
+    } catch (_) {
+      targetPath = newSrc;
+    }
+
+    if (currentSrc !== targetPath) {
       el.pause();
       el.src = newSrc;
       el.load();

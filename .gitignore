@@ -23,6 +23,3 @@ server.log
 *.swp
 *.swo
 
-# Uploaded files (except .gitkeep)
-backend/uploads/*
-!backend/uploads/.gitkeep

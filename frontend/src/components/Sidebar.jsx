@@ -54,8 +54,8 @@ function Sidebar({ onOpenUpload }) {
           </>
         )}
 
-        {/* Profile — public users only */}
-        {isPublicUser && (
+        {/* Profile — all logged-in users */}
+        {token && (
           <NavLink to="/profile" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
             <i className="fas fa-user-circle" />
             <span>My Profile</span>
