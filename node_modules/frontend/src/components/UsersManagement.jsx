@@ -70,46 +70,32 @@ const EMPTY_FORM = {
   email: '',
   permissions: [],
   assignedWork: '',
-  selectedGroup: '', // holds the name of chosen group for Onlyuser
+  selectedGroups: [], // holds selected groups for Onlyuser
 };
 
-// ── Permission picker used in both Create and Edit ──────────────
-function PermissionPicker({ role, permissions, onChange, selectedOption, onOptionSelect }) {
-  // Admin gets a static info block – all permissions are always enabled.
-  if (role === 'admin') {
-    return (
-      <div style={{
-        padding: '14px 18px',
-        background: 'rgba(247,168,77,0.08)',
-        border: '1.5px solid var(--saffron, #f7a84d)',
-        borderRadius: '12px',
-        display: 'flex', alignItems: 'center', gap: '10px',
-      }}>
-        <i className="fas fa-crown" style={{ color: 'var(--saffron, #f7a84d)', fontSize: '1.1rem' }} />
-        <div>
-          <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--saffron, #f7a84d)' }}>
-            Admin — All Features Enabled
-          </div>
-          <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', marginTop: 2 }}>
-            Admin users automatically have access to everything.
-          </div>
-        </div>
-      </div>
-    );
-  }
+// ── Permission picker used in both Create and Edit ───function PermissionPicker({ role, permissions, onChange, selectedOptions = [], onToggleOption }) {
+  // For admin, pre-select all groups by default if none selected
+  const effectiveSelected = role === 'admin' && selectedOptions.length === 0 ? SINGLE_OPTIONS.map(o => o.name) : selectedOptions;
 
-  // Onlyuser – single selectable option (radio buttons).
-  const handleSelect = (opt) => {
-    onOptionSelect(opt.name);
-    onChange(opt.permissions);
+  const toggleOption = (opt) => {
+    const newSelected = effectiveSelected.includes(opt.name)
+      ? effectiveSelected.filter(name => name !== opt.name)
+      : [...effectiveSelected, opt.name];
+    // Notify parent of new selection array
+    if (onToggleOption) onToggleOption(newSelected);
+    // Compute combined permissions from chosen groups
+    const combinedPerms = SINGLE_OPTIONS
+      .filter(o => newSelected.includes(o.name))
+      .flatMap(o => o.permissions);
+    if (onChange) onChange(combinedPerms);
   };
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '12px' }}>
       {SINGLE_OPTIONS.map(opt => (
         <label key={opt.name} style={{
-          background: selectedOption === opt.name ? 'rgba(247,168,77,0.08)' : 'var(--card-bg, rgba(255,255,255,0.03))',
-          border: `2px solid ${selectedOption === opt.name ? 'var(--saffron, #f7a84d)' : 'var(--border)'}`,
+          background: effectiveSelected.includes(opt.name) ? 'rgba(247,168,77,0.08)' : 'var(--card-bg, rgba(255,255,255,0.03))',
+          border: `2px solid ${effectiveSelected.includes(opt.name) ? 'var(--saffron, #f7a84d)' : 'var(--border)'}`,
           borderRadius: '12px',
           padding: '12px 16px',
           cursor: 'pointer',
@@ -117,13 +103,12 @@ function PermissionPicker({ role, permissions, onChange, selectedOption, onOptio
           transition: 'all 0.2s',
         }}>
           <input
-            type="radio"
-            name="onlyuserOption"
-            checked={selectedOption === opt.name}
-            onChange={() => handleSelect(opt)}
+            type="checkbox"
+            checked={effectiveSelected.includes(opt.name)}
+            onChange={() => toggleOption(opt)}
             style={{ display: 'none' }}
           />
-          <span style={{ fontWeight: 700, fontSize: '0.86rem', color: selectedOption === opt.name ? 'var(--text-main)' : 'var(--text-muted)' }}>
+          <span style={{ fontWeight: 700, fontSize: '0.86rem', color: effectiveSelected.includes(opt.name) ? 'var(--text-main)' : 'var(--text-muted)' }}>
             {opt.name}
           </span>
         </label>
@@ -191,14 +176,14 @@ export default function UsersManagement() {
         ...prev,
         role,
         permissions: role === 'admin' ? [...ALL_PERMISSIONS] : [],
-        selectedGroup: '',
+        selectedGroups: [], // reset groups for Onlyuser
       }));
     } else {
       setEditForm(prev => ({
         ...prev,
         role,
         permissions: role === 'admin' ? [...ALL_PERMISSIONS] : [],
-        selectedGroup: '',
+        selectedGroups: [], // reset groups for Onlyuser edit
       }));
     }
   };
@@ -373,8 +358,8 @@ export default function UsersManagement() {
           <PermissionPicker
             role={newUser.role}
             permissions={newUser.permissions}
-            selectedOption={newUser.selectedGroup}
-            onOptionSelect={opt => setNewUser(p => ({ ...p, selectedGroup: opt }))}
+            selectedOptions={newUser.selectedGroups}
+            onToggleOption={newSelected => setNewUser(p => ({ ...p, selectedGroups: newSelected }))}
             onChange={perms => setNewUser(p => ({ ...p, permissions: perms }))}
           />
         </div>

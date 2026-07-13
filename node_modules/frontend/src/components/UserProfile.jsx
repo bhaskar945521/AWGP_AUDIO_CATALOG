@@ -4,6 +4,8 @@ import { useAuth } from '../context/AuthContext';
 import { useAudio } from '../context/AudioContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
+import ProfileCard from './ProfileCard';
+import StatsBar from './StatsBar';
 
 /* ── Listening history item ─────────────────────── */
 function HistoryItem({ session, onPlay }) {
@@ -202,7 +204,7 @@ export default function UserProfile() {
   };
 
   return (
-    <div style={{ maxWidth: '860px', margin: '0 auto', padding: '24px 16px' }}>
+    <ProfileCard>
 
       {/* ── Profile Header Card ──────────────────────────────── */}
       <div style={{
@@ -329,23 +331,7 @@ export default function UserProfile() {
       </div>
 
       {/* ── Stats Row ───────────────────────────────────────── */}
-      <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', marginBottom: '24px' }}>
-        {[
-          { label: 'Tracks Played',    value: history.length, icon: 'fas fa-headphones', color: 'var(--saffron)' },
-          { label: 'Unique Tracks',    value: uniqueTracks,   icon: 'fas fa-music',       color: '#48bb78' },
-          { label: 'Minutes Listened', value: totalMinutes,   icon: 'far fa-clock',       color: '#4299e1' },
-        ].map(({ label, value, icon, color }) => (
-          <div key={label} style={{
-            flex: '1 1 140px', background: 'var(--card-bg, rgba(255,255,255,0.03))',
-            border: '1.5px solid var(--border)', borderRadius: '16px',
-            padding: '18px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center',
-          }}>
-            <i className={icon} style={{ fontSize: '1.4rem', color, marginBottom: '8px' }} />
-            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-main)' }}>{value}</div>
-            <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: 4, textAlign: 'center' }}>{label}</div>
-          </div>
-        ))}
-      </div>
+      <StatsBar minutes={totalMinutes} tracks={history.length} sessions={uniqueTracks} />
 
       {/* ── Tabs ────────────────────────────────────────────── */}
       <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', borderBottom: '1.5px solid var(--border)', paddingBottom: '0' }}>
@@ -494,6 +480,6 @@ export default function UserProfile() {
       )}
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-    </div>
+    </ProfileCard>
   );
 }
