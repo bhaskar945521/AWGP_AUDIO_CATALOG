@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import api from '../api';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
+import { resolveUrl } from '../api';
 
 function timeAgo(dateStr) {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -311,7 +312,10 @@ export default function Header({ onToggleSidebar, onVoiceResult, searchQuery, on
                 transition: 'box-shadow 0.2s',
               }}
             >
-              {(user?.fullName || user?.username || 'U').charAt(0).toUpperCase()}
+              {user?.avatarUrl
+                ? <img src={resolveUrl(user.avatarUrl)} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} onError={e => { e.target.style.display = 'none'; }} />
+                : (user?.fullName || user?.username || 'U').charAt(0).toUpperCase()
+              }
             </button>
             {profileOpen && (
               <div style={{

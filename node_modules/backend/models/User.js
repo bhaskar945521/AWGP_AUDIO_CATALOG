@@ -27,6 +27,7 @@ const UserSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   email: { type: String }, // Optional/unique for public users
   fullName: { type: String }, // Optional/for public users
+  avatarUrl: { type: String, default: '' }, // Profile photo URL
   passwordHash: { type: String, required: true },
   // Allow flexible role values (admin, user, onlyuser, public_user, etc.)
   role: { type: String, enum: ['admin', 'user', 'onlyuser', 'public_user'], default: 'public_user' },

@@ -81,7 +81,7 @@ export const AuthProvider = ({ children }) => {
     setToken(newToken);
     setRole(userRole);
     setPermissions(userPerms || []);
-    setUser({ username: userUsername, email: userEmail, fullName: userFullName, role: userRole, permissions: userPerms });
+    setUser({ username: userUsername, email: userEmail, fullName: userFullName, role: userRole, permissions: userPerms, avatarUrl: res.data?.avatarUrl || '' });
     setShowLogin(false);
     return true;
   };
