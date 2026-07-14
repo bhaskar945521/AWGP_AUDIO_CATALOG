@@ -45,7 +45,8 @@ router.post('/register', async (req, res) => {
       permissions: newUser.permissions || [],
       fullName: newUser.fullName,
       email: newUser.email,
-      username: newUser.username
+      username: newUser.username,
+      avatarUrl: newUser.avatarUrl || ''
     });
   } catch (err) {
     console.error('Registration error:', err);
@@ -88,7 +89,8 @@ router.post('/login', async (req, res) => {
       permissions: user.permissions || [],
       fullName: user.fullName,
       email: user.email,
-      username: user.username
+      username: user.username,
+      avatarUrl: user.avatarUrl || ''
     });
   } catch (err) {
     console.error('Login error:', err);

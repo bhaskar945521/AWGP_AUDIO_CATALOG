@@ -66,7 +66,8 @@ router.post('/login', async (req, res) => {
       permissions: user.permissions || [],
       username: user.username,
       email: user.email,
-      fullName: user.fullName
+      fullName: user.fullName,
+      avatarUrl: user.avatarUrl || ''
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
