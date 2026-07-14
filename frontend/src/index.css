@@ -62,12 +62,23 @@ body {
   border: 1.5px solid #f0e8d8;
   border-radius: 20px;
   box-shadow: 0 4px 20px rgba(247,168,77,0.10);
-  transition: background 0.3s, box-shadow 0.3s;
+  /* No background transition — avoids red flash from browser-default button hover */
+  transition: box-shadow 0.3s;
 }
 
 .avatar-btn:hover {
   transform: scale(1.08);
   transition: transform 0.2s;
+}
+
+/* Profile popup — Sign Out button hover (controlled soft red, no flash) */
+.profile-signout-btn:hover {
+  background: #fff5f5 !important;
+}
+
+/* Profile popup — My Profile button hover */
+.profile-link-btn:hover {
+  background: var(--saffron-pale) !important;
 }
 
 /* ============================================================
@@ -866,8 +877,8 @@ a {
     url('/hero.png') left center / cover no-repeat;
   border: 1px solid var(--border-saffron);
   border-radius: var(--radius-xl);
-  padding: 130px 40px 68px;
-  /* increased vertical padding for breathing room */
+  padding: 80px 40px 68px;
+  /* reduced top padding to allow content to sit higher */
   text-align: right;
   margin-bottom: 24px;
   position: relative;
@@ -875,7 +886,8 @@ a {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: center;
+  /* centered so content uses top space better */
   min-height: 700px;
   gap: 24px;
   /* space between hero children */
@@ -925,7 +937,7 @@ a {
 
 .hero-subtitle--spaced {
   margin-top: 0;
-  margin-bottom: 10px;
+  margin-bottom: 20px;           /* more breathing room before stats */
 }
 
 .hero-title {
@@ -964,8 +976,8 @@ a {
     text-align: right;
     white-space: normal;
     gap: 0.15rem;                 /* tight gap between the two lines */
-    margin-top: -10px;
-    margin-bottom: 28px;
+    margin-top: -5px;
+    margin-bottom: 40px;          /* more space below title */
   }
 
   .hero-title-line {
@@ -975,8 +987,8 @@ a {
   }
 
   .hero-eyebrow {
-    margin-top: 12px;
-    margin-bottom: 20px;          /* breathing room between badge and title */
+    margin-top: -15px;            /* shift badge upward */
+    margin-bottom: 26px;          /* breathing room between badge and title */
   }
 }
 
@@ -1359,6 +1371,7 @@ a {
   overflow: hidden;
   width: 100%;
   margin-bottom: 30px;
+  position: relative;
 }
 
 .categories-marquee-content {
@@ -1374,20 +1387,19 @@ a {
 
 @media (max-width: 768px) {
   .categories-marquee {
-    overflow-x: auto;
-    overflow-y: hidden;
-    -webkit-overflow-scrolling: touch;
-    padding-bottom: 12px;
+    overflow: hidden;              /* clip the transform-based marquee, no scrollbar track */
+    overflow-x: hidden;
+    padding-bottom: 0;
+    margin-bottom: 8px;
   }
 
   .categories-marquee-content {
-    animation: none;
+    animation: marquee 18s linear infinite;   /* keep running on mobile */
     gap: 12px;
   }
 
   .categories-marquee .category-card {
     min-width: 150px;
-    scroll-snap-align: start;
   }
 }
 
@@ -4402,6 +4414,7 @@ a {
     padding-bottom: calc(68px + 16px + env(safe-area-inset-bottom, 0));
     min-height: 100vh;
     width: 100%;
+    overflow-x: clip; /* clips horizontal overflow without blocking child scroll contexts */
   }
 
   /* Full-width page content */
@@ -4452,11 +4465,32 @@ a {
   }
 }
 
-/* ── Mobile audio grid — 2 columns ── */
+/* ── Mobile audio grid — single horizontal scroll row ── */
 @media (max-width: 768px) {
   .audios-grid {
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 12px;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    gap: 12px !important;
+    padding-bottom: 12px;
+    padding-left: 8px;
+    padding-right: 8px;
+    margin-left: -8px;
+    margin-right: -8px;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .audios-grid::-webkit-scrollbar {
+    display: none;
+  }
+
+  .audios-grid .audio-card {
+    flex: 0 0 200px !important;
+    min-width: 200px !important;
+    max-width: 200px !important;
+    scroll-snap-align: start;
   }
 
   .audio-thumbnail-container {
@@ -4477,12 +4511,13 @@ a {
 }
 
 @media (max-width: 400px) {
+  /* Keep horizontal scroll on very small screens too */
   .audios-grid {
-    grid-template-columns: 1fr !important;
+    /* inherits flex scroll from 768px rule */
   }
 
   .audio-thumbnail-container {
-    height: 160px;
+    height: 110px;
   }
 }
 
@@ -5071,24 +5106,26 @@ a {
   top: calc(100% + 10px);
   left: 0;
   min-width: 190px;
-  max-height: 320px; /* Approx 7 items */
-  overflow-y: auto;
+  max-height: 320px;
+  overflow-x: hidden;         /* clip horizontally at border-radius boundary */
+  overflow-y: auto;           /* allow vertical scroll for long category lists */
   background: var(--white);
   border: 1px solid var(--border);
   border-radius: 14px;
   box-shadow: var(--shadow-md);
-  padding: 8px;
+  padding: 8px 4px 8px 8px;  /* right padding reserves space for scrollbar */
   z-index: 150;
   scroll-behavior: smooth;
 }
 
-/* Custom scrollbar for dropdown */
+/* Custom scrollbar for dropdown — stays inside rounded box */
 .dropdown-content::-webkit-scrollbar {
-  width: 6px;
+  width: 5px;
 }
 
 .dropdown-content::-webkit-scrollbar-track {
   background: transparent;
+  margin: 6px;               /* top/bottom gap so scrollbar doesn't touch corners */
 }
 
 .dropdown-content::-webkit-scrollbar-thumb {
@@ -6407,35 +6444,7 @@ a {
   }
 }
 
-/* ============================================================
-   MOBILE MARQUEE — INFINITE LOOP FIX
-   ============================================================ */
-@media (max-width: 768px) {
-  .categories-marquee {
-    overflow: hidden !important;
-    width: 100% !important;
-    -webkit-overflow-scrolling: auto !important;
-    padding-bottom: 0 !important;
-  }
 
-  .categories-marquee-content {
-    display: flex !important;
-    gap: 12px !important;
-    /* Re-enable the transform animation on mobile */
-    animation: marquee 18s linear infinite !important;
-    animation-play-state: running !important;
-    will-change: transform !important;
-  }
-
-  .categories-marquee-content:hover {
-    animation-play-state: paused !important;
-  }
-
-  .categories-marquee .category-card {
-    min-width: 180px !important;
-    flex-shrink: 0 !important;
-  }
-}
 
 /* ============================================================
    DESKTOP AUDIO PLAYER — BRAND POLISH

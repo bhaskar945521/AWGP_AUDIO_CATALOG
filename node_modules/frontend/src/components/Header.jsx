@@ -334,6 +334,7 @@ export default function Header({ onToggleSidebar, onVoiceResult, searchQuery, on
                   </div>
                 </div>
                 <button
+                  className="profile-link-btn"
                   onClick={() => { setProfileOpen(false); navigate('/profile'); }}
                   style={{
                     width: '100%', padding: '9px 12px', borderRadius: '9px',
@@ -341,18 +342,21 @@ export default function Header({ onToggleSidebar, onVoiceResult, searchQuery, on
                     display: 'flex', alignItems: 'center', gap: '9px',
                     color: 'var(--text-main)', fontSize: '0.86rem', fontWeight: 600,
                     marginTop: '4px',
+                    transition: 'background 0.2s',
                   }}
                 >
                   <i className="fas fa-user-circle" style={{ color: 'var(--saffron, #f7a84d)' }} />
                   My Profile
                 </button>
                 <button
+                  className="profile-signout-btn"
                   onClick={() => { setProfileOpen(false); logout(); navigate('/'); }}
                   style={{
                     width: '100%', padding: '9px 12px', borderRadius: '9px',
                     background: 'none', border: 'none', cursor: 'pointer',
                     display: 'flex', alignItems: 'center', gap: '9px',
                     color: '#e53e3e', fontSize: '0.86rem', fontWeight: 600,
+                    transition: 'background 0.2s',
                   }}
                 >
                   <i className="fas fa-sign-out-alt" />
