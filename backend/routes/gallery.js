@@ -4,8 +4,9 @@ const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
 const auth = require('../middleware/auth');
-const roleCheck = require('../middleware/roleCheck');
+const permissionCheck = require('../middleware/permissionCheck');
 const { STORAGE_FOLDERS, generateUniqueFilename, deleteLocalFile } = require('../utils/localStorage');
+const GalleryImage = require('../models/GalleryImage');
 
 // Multer storage for gallery images
 const storage = multer.diskStorage({
@@ -31,43 +32,79 @@ const upload = multer({
   },
 });
 
-// In-memory gallery store (replace with MongoDB model if needed)
-let galleryItems = [];
-
 // GET /api/gallery
-router.get('/', (req, res) => {
-  res.json(galleryItems);
+router.get('/', async (req, res) => {
+  try {
+    const images = await GalleryImage.find().sort({ createdAt: -1 });
+    res.json(images);
+  } catch (err) {
+    console.error('[Gallery] GET error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
 });
 
-// POST /api/gallery — admin only
-router.post('/', auth, roleCheck(['admin']), upload.single('image'), (req, res) => {
+// POST /api/gallery — admin or users with edit/create permissions
+router.post('/', auth, permissionCheck(['album_create', 'album_edit', 'category_create', 'category_edit', 'audio_upload', 'audio_edit']), upload.single('image'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ message: 'No image file provided' });
   }
 
-  const item = {
-    _id: Date.now().toString(),
-    title: req.body.title || '',
-    description: req.body.description || '',
-    imageUrl: `/uploads/gallery/${req.file.filename}`,
-    createdAt: new Date().toISOString(),
-  };
-
-  galleryItems.unshift(item);
-  res.status(201).json(item);
+  try {
+    const url = `/uploads/gallery/${req.file.filename}`;
+    const newImage = new GalleryImage({
+      url,
+      title: req.body.title || req.file.originalname || '',
+    });
+    const saved = await newImage.save();
+    res.status(201).json(saved);
+  } catch (err) {
+    console.error('[Gallery] POST error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
 });
 
-// DELETE /api/gallery/:id — admin only
-router.delete('/:id', auth, roleCheck(['admin']), (req, res) => {
-  const idx = galleryItems.findIndex((g) => g._id === req.params.id);
-  if (idx === -1) {
-    return res.status(404).json({ message: 'Gallery item not found' });
+// POST /api/gallery/upload — upload multiple images to gallery
+router.post('/upload', auth, permissionCheck(['album_create', 'album_edit', 'category_create', 'category_edit', 'audio_upload', 'audio_edit']), upload.array('images'), async (req, res) => {
+  if (!req.files || req.files.length === 0) {
+    return res.status(400).json({ message: 'No image files provided' });
   }
 
-  const item = galleryItems[idx];
-  deleteLocalFile(item.imageUrl);
-  galleryItems.splice(idx, 1);
-  res.json({ message: 'Gallery item deleted' });
+  try {
+    const savedImages = [];
+    for (const file of req.files) {
+      const url = `/uploads/gallery/${file.filename}`;
+      const newImage = new GalleryImage({
+        url,
+        title: file.originalname || '',
+      });
+      const saved = await newImage.save();
+      savedImages.push(saved);
+    }
+    res.status(201).json(savedImages);
+  } catch (err) {
+    console.error('[Gallery] upload error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// DELETE /api/gallery/:id
+router.delete('/:id', auth, permissionCheck(['album_create', 'album_edit', 'category_create', 'category_edit', 'audio_upload', 'audio_edit']), async (req, res) => {
+  try {
+    const image = await GalleryImage.findById(req.params.id);
+    if (!image) {
+      return res.status(404).json({ message: 'Gallery item not found' });
+    }
+
+    // Delete from local storage
+    deleteLocalFile(image.url);
+
+    // Delete from DB
+    await GalleryImage.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Gallery item deleted' });
+  } catch (err) {
+    console.error('[Gallery] DELETE error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
 });
 
 module.exports = router;
