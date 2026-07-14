@@ -130,6 +130,7 @@ export default function UserProfile() {
   const [history, setHistory]             = useState([]);
   const [loading, setLoading]             = useState(true);
   const [avatarLoading, setAvatarLoading] = useState(false);
+  const [showFullImage, setShowFullImage] = useState(false);
 
   const [editName, setEditName]     = useState('');
   const [editEmail, setEditEmail]   = useState('');
@@ -270,15 +271,22 @@ export default function UserProfile() {
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '24px', flexWrap: 'wrap', position: 'relative' }}>
           {/* Avatar */}
           <div style={{ position: 'relative', flexShrink: 0 }}>
-            <div style={{
-              width: 100, height: 100, borderRadius: '50%',
-              background: 'linear-gradient(135deg, #f7a84d, #f59e0b)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '2.4rem', color: '#fff', fontWeight: 900,
-              overflow: 'hidden',
-              border: '4px solid #fff',
-              boxShadow: '0 6px 24px rgba(247,168,77,0.35)',
-            }}>
+            <div
+              onClick={() => avatarSrc && setShowFullImage(true)}
+              style={{
+                width: 100, height: 100, borderRadius: '50%',
+                background: 'linear-gradient(135deg, #f7a84d, #f59e0b)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '2.4rem', color: '#fff', fontWeight: 900,
+                overflow: 'hidden',
+                border: '4px solid #fff',
+                boxShadow: '0 6px 24px rgba(247,168,77,0.35)',
+                cursor: avatarSrc ? 'pointer' : 'default',
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={e => { if (avatarSrc) e.currentTarget.style.transform = 'scale(1.05)'; }}
+              onMouseLeave={e => { if (avatarSrc) e.currentTarget.style.transform = 'scale(1)'; }}
+            >
               {avatarSrc
                 ? <img src={avatarSrc} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     onError={e => { e.target.style.display = 'none'; }} />
@@ -549,11 +557,11 @@ export default function UserProfile() {
                   disabled={pwSaving}
                   style={{
                     padding: '12px 28px', borderRadius: '11px',
-                    background: pwSaving ? '#c7d2fe' : 'linear-gradient(135deg, #667eea, #764ba2)',
+                    background: pwSaving ? '#fde68a' : 'linear-gradient(135deg, #f7a84d, #f59e0b)',
                     border: 'none', color: '#fff', fontWeight: 800, fontSize: '0.92rem',
                     cursor: pwSaving ? 'not-allowed' : 'pointer',
                     display: 'flex', alignItems: 'center', gap: '8px',
-                    boxShadow: '0 4px 16px rgba(102,126,234,0.3)',
+                    boxShadow: '0 4px 16px rgba(247,168,77,0.3)',
                     transition: 'all 0.2s', width: 'fit-content',
                   }}
                 >
@@ -565,6 +573,79 @@ export default function UserProfile() {
 
         </div>
       </div>
+
+      {/* ── Image Modal Overlay ────────────────────────────────────── */}
+      {showFullImage && avatarSrc && (
+        <div
+          onClick={() => setShowFullImage(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            background: 'rgba(0, 0, 0, 0.85)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backdropFilter: 'blur(8px)',
+            animation: 'fadeIn 0.2s ease-out',
+          }}
+        >
+          {/* Close Button */}
+          <button
+            onClick={() => setShowFullImage(false)}
+            style={{
+              position: 'absolute',
+              top: '20px',
+              right: '20px',
+              background: 'rgba(255, 255, 255, 0.15)',
+              border: 'none',
+              borderRadius: '50%',
+              width: '44px',
+              height: '44px',
+              color: '#fff',
+              fontSize: '1.2rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.2s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)'}
+          >
+            <i className="fas fa-times" />
+          </button>
+
+          {/* Large Image Container */}
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              position: 'relative',
+              maxWidth: '90%',
+              maxHeight: '85%',
+              borderRadius: '16px',
+              overflow: 'hidden',
+              boxShadow: '0 12px 48px rgba(0,0,0,0.5)',
+              border: '4px solid rgba(255,255,255,0.1)',
+              background: '#000',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <img
+              src={avatarSrc}
+              alt="Profile Full View"
+              style={{
+                maxWidth: '100%',
+                maxHeight: '80vh',
+                objectFit: 'contain',
+                display: 'block',
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
