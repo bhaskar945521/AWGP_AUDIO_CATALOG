@@ -438,7 +438,7 @@ export default function UsersManagement() {
             <div className="modal-header">
               <h3 style={{ margin: 0 }}>
                 {convertMode
-                  ? <><i className="fas fa-exchange-alt" style={{ color: '#8b5cf6', marginRight: 8 }} />Convert to Operator — <span style={{ color: 'var(--saffron, #f7a84d)' }}>{editingUser.username}</span></>
+                  ? <><i className="fas fa-exchange-alt" style={{ color: 'var(--saffron, #f7a84d)', marginRight: 8 }} />Convert to Operator — <span style={{ color: 'var(--saffron, #f7a84d)' }}>{editingUser.username}</span></>
                   : <>Edit User — <span style={{ color: 'var(--saffron, #f7a84d)' }}>{editingUser.username}</span></>
                 }
               </h3>
@@ -450,8 +450,8 @@ export default function UsersManagement() {
               {/* ── PUBLIC USER: Show Convert Button (when NOT in convertMode) ── */}
               {isPublicUserEditing && !convertMode && (
                 <div style={{
-                  background: 'linear-gradient(135deg, rgba(139,92,246,0.12), rgba(109,40,217,0.08))',
-                  border: '2px solid rgba(139,92,246,0.4)',
+                  background: 'linear-gradient(135deg, rgba(247, 168, 77, 0.12), rgba(245, 158, 11, 0.08))',
+                  border: '2px solid rgba(247, 168, 77, 0.4)',
                   borderRadius: '14px',
                   padding: '18px 20px',
                   display: 'flex',
@@ -461,7 +461,7 @@ export default function UsersManagement() {
                 }}>
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: 4 }}>
-                      <i className="fas fa-user-circle" style={{ color: '#8b5cf6', fontSize: '1.2rem' }} />
+                      <i className="fas fa-user-circle" style={{ color: 'var(--saffron, #f7a84d)', fontSize: '1.2rem' }} />
                       <span style={{ fontWeight: 800, color: 'var(--text-main)', fontSize: '0.95rem' }}>Public User Account</span>
                     </div>
                     <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
@@ -470,7 +470,7 @@ export default function UsersManagement() {
                     </div>
                     {editingUser.fullName && (
                       <div style={{ marginTop: 8, fontSize: '0.82rem', color: 'var(--text-main)' }}>
-                        <i className="fas fa-id-card" style={{ marginRight: 6, color: '#8b5cf6' }} />
+                        <i className="fas fa-id-card" style={{ marginRight: 6, color: 'var(--saffron, #f7a84d)' }} />
                         {editingUser.fullName}
                         {editingUser.email && <span style={{ marginLeft: 10, color: 'var(--text-muted)' }}>{editingUser.email}</span>}
                       </div>
