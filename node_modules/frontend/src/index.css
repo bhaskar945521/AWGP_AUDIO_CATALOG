@@ -4510,11 +4510,6 @@ a {
 }
 
 @media (max-width: 400px) {
-  /* Keep horizontal scroll on very small screens too */
-  .audios-grid {
-    /* inherits flex scroll from 768px rule */
-  }
-
   .audio-thumbnail-container {
     height: 110px;
   }
