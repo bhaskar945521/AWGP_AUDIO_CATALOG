@@ -310,12 +310,13 @@ export default function Header({ onToggleSidebar, onVoiceResult, searchQuery, on
                 color: '#fff', fontWeight: 800, fontSize: '0.95rem',
                 cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
                 transition: 'box-shadow 0.2s',
+                position: 'relative', overflow: 'hidden',
               }}
             >
-              {user?.avatarUrl
-                ? <img src={resolveUrl(user.avatarUrl)} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} onError={e => { e.target.style.display = 'none'; }} />
-                : (user?.fullName || user?.username || 'U').charAt(0).toUpperCase()
-              }
+              <span>{(user?.fullName || user?.username || 'U').charAt(0).toUpperCase()}</span>
+              {user?.avatarUrl && (
+                <img src={resolveUrl(user.avatarUrl)} alt="avatar" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} onError={e => { e.target.style.display = 'none'; }} />
+              )}
             </button>
             {profileOpen && (
               <div style={{

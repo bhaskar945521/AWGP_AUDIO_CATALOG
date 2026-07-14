@@ -136,6 +136,7 @@ export const AuthProvider = ({ children }) => {
         role,
         permissions,
         user,
+        setUser,
         isAdmin,
         isOnlyUser,
         isUser,

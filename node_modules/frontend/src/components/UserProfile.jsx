@@ -121,7 +121,7 @@ function getRoleBadge(role) {
 
 /* ── Main UserProfile Component ─────────────────── */
 export default function UserProfile() {
-  const { token, logout, user: authUser } = useAuth();
+  const { token, logout, user: authUser, setUser } = useAuth();
   const { setCurrentAudio } = useAudio();
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
@@ -175,6 +175,9 @@ export default function UserProfile() {
     try {
       const res = await api.post('/auth/me/avatar', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
       setFullUser(prev => ({ ...prev, avatarUrl: res.data.avatarUrl }));
+      if (setUser) {
+        setUser(prev => prev ? { ...prev, avatarUrl: res.data.avatarUrl } : null);
+      }
       toast.success('Profile photo updated!');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Upload failed');
@@ -190,6 +193,9 @@ export default function UserProfile() {
     try {
       await api.delete('/auth/me/avatar');
       setFullUser(prev => ({ ...prev, avatarUrl: '' }));
+      if (setUser) {
+        setUser(prev => prev ? { ...prev, avatarUrl: '' } : null);
+      }
       toast.success('Profile photo removed');
     } catch { toast.error('Could not remove photo'); }
     finally { setAvatarLoading(false); }
@@ -200,6 +206,9 @@ export default function UserProfile() {
     try {
       const res = await api.patch('/auth/me', { fullName: editName, email: editEmail });
       setFullUser(res.data);
+      if (setUser) {
+        setUser(res.data);
+      }
       toast.success('Profile updated!');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Update failed');
@@ -283,14 +292,16 @@ export default function UserProfile() {
                 boxShadow: '0 6px 24px rgba(247,168,77,0.35)',
                 cursor: avatarSrc ? 'pointer' : 'default',
                 transition: 'all 0.2s',
+                position: 'relative',
               }}
               onMouseEnter={e => { if (avatarSrc) e.currentTarget.style.transform = 'scale(1.05)'; }}
               onMouseLeave={e => { if (avatarSrc) e.currentTarget.style.transform = 'scale(1)'; }}
             >
-              {avatarSrc
-                ? <img src={avatarSrc} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              <span>{displayInitial}</span>
+              {avatarSrc && (
+                <img src={avatarSrc} alt="avatar" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
                     onError={e => { e.target.style.display = 'none'; }} />
-                : displayInitial}
+              )}
               {avatarLoading && (
                 <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%' }}>
                   <div style={{ width: 26, height: 26, border: '3px solid #fff', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />

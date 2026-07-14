@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import api from '../api';
+import api, { resolveUrl } from '../api';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 
@@ -480,11 +480,11 @@ export default function UsersManagement() {
                     onClick={activateConvertMode}
                     style={{
                       padding: '10px 20px', borderRadius: '10px',
-                      background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)',
+                      background: 'linear-gradient(135deg, var(--saffron, #f7a84d), #f59e0b)',
                       border: 'none', color: '#fff', fontWeight: 700, fontSize: '0.88rem',
                       cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px',
                       whiteSpace: 'nowrap', flexShrink: 0,
-                      boxShadow: '0 4px 15px rgba(139,92,246,0.35)',
+                      boxShadow: '0 4px 15px rgba(247, 168, 77, 0.35)',
                       transition: 'all 0.2s',
                     }}
                   >
@@ -639,10 +639,10 @@ export default function UsersManagement() {
                     onClick={handleEdit}
                     style={{
                       padding: '10px 22px', borderRadius: '10px',
-                      background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)',
+                      background: 'linear-gradient(135deg, var(--saffron, #f7a84d), #f59e0b)',
                       border: 'none', color: '#fff', fontWeight: 700, fontSize: '0.9rem',
                       cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px',
-                      boxShadow: '0 4px 15px rgba(139,92,246,0.3)',
+                      boxShadow: '0 4px 15px rgba(247, 168, 77, 0.3)',
                     }}
                   >
                     <i className="fas fa-exchange-alt" /> Change to Operator
@@ -692,8 +692,12 @@ export default function UsersManagement() {
                     : 'linear-gradient(135deg, #4299e1, #3182ce)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: '1rem', fontWeight: 800, color: '#fff',
+                  position: 'relative', overflow: 'hidden',
                 }}>
-                  {(u.fullName || u.username || '?').charAt(0).toUpperCase()}
+                  <span>{(u.fullName || u.username || '?').charAt(0).toUpperCase()}</span>
+                  {u.avatarUrl && (
+                    <img src={resolveUrl(u.avatarUrl)} alt="avatar" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { e.target.style.display = 'none'; }} />
+                  )}
                 </div>
 
                 {/* Info */}
@@ -756,7 +760,7 @@ export default function UsersManagement() {
                 {/* Actions */}
                 <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
                   <button onClick={() => startEdit(u)} className="admin-action-btn edit" title={isPublic ? 'Convert to Operator' : 'Edit User'}
-                    style={isPublic ? { background: 'rgba(139,92,246,0.15)', borderColor: 'rgba(139,92,246,0.4)', color: '#8b5cf6' } : {}}>
+                    style={isPublic ? { background: 'var(--saffron-pale, #fff3e0)', borderColor: 'var(--saffron-border, rgba(255, 152, 0, 0.22))', color: 'var(--saffron, #f7a84d)' } : {}}>
                     <i className={isPublic ? 'fas fa-exchange-alt' : 'fas fa-edit'} />
                   </button>
                   <button
