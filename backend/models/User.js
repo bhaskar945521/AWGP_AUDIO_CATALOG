@@ -29,16 +29,21 @@ const UserSchema = new mongoose.Schema({
   fullName: { type: String }, // Optional/for public users
   avatarUrl: { type: String, default: '' }, // Profile photo URL
   passwordHash: { type: String, required: true },
-  // Allow flexible role values (admin, user, onlyuser, public_user, etc.)
-  role: { type: String, enum: ['admin', 'user', 'onlyuser', 'public_user'], default: 'public_user' },
+  // Allow flexible role values dynamically mapped
+  role: { type: String, default: 'public_user' },
   // Simple work assignment – can be a free‑form description or list of audio IDs
   assignedWork: { type: String, default: '' },
   // Dynamic permissions array
   permissions: {
     type: [String],
-    enum: ALL_PERMISSIONS,
     default: []
-  }
+  },
+  activityScore: { type: Number, default: 0 },
+  createCount: { type: Number, default: 0 },
+  updateCount: { type: Number, default: 0 },
+  deleteCount: { type: Number, default: 0 },
+  lastActivity: { type: Date },
+  status: { type: String, default: 'Active' }
 });
 
 // Helper to set password

@@ -4,20 +4,22 @@ import api from '../api';
 import { useAuth } from '../context/AuthContext';
 import { useAudio } from '../context/AudioContext';
 import { resolveUrl } from '../api';
+import { toast } from 'react-hot-toast';
 
 export default function AudioCard({
   _id, title, speaker, category, language, duration,
-  isFavorite, image, imageUrl,
+  isFavorite, image, imageUrl, audioUrl,
   onPlay, onToggleFavorite, onDelete, onAddToAlbum
 }) {
   const { isAdmin, hasPermission, token } = useAuth();
   const { userFavorites, toggleFavoriteTrack, userReactions, fetchReactions, toggleLike, toggleDislike } = useAudio();
   const navigate = useNavigate();
   
-  const canEditAudio = isAdmin || hasPermission('audio_edit');
+  const canEditAudio   = isAdmin || hasPermission('audio_edit');
   const canDeleteAudio = isAdmin || hasPermission('audio_delete');
-  const canAddToAlbum = isAdmin || hasPermission('album_edit');
-  const showAdminOptions = canEditAudio || canDeleteAudio || canAddToAlbum;
+  const canAddToAlbum  = isAdmin || hasPermission('album_edit');
+  const canDownload    = isAdmin || hasPermission('audios_download');
+  const showAdminOptions = canEditAudio || canDeleteAudio || canAddToAlbum || canDownload;
 
   const finalIsFavorite = userFavorites.includes(_id);
   const reactions = userReactions[_id] || { liked: false, disliked: false, likeCount: 0, dislikeCount: 0 };
@@ -41,6 +43,29 @@ export default function AudioCard({
   const handleDislikeClick = (e) => {
     e.stopPropagation();
     toggleDislike(_id);
+  };
+
+  const handleShareClick = (e) => {
+    e.stopPropagation();
+    const shareUrl = `${window.location.origin}/details/${_id}`;
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      toast.success('Share link copied to clipboard!');
+    }).catch(() => {
+      toast.error('Failed to copy link');
+    });
+  };
+
+  const handleDownloadClick = (e) => {
+    e.stopPropagation();
+    if (!audioUrl) return toast.error('Audio file not available');
+    const url = resolveUrl(audioUrl);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${title || 'audio'}.mp3`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    toast.success('Download started!');
   };
 
   const displayImage = image && image !== '/placeholder.png'
@@ -84,6 +109,17 @@ export default function AudioCard({
                 style={{ color: '#f7a84d' }}
               >
                 <i className="fas fa-folder-plus" />
+              </button>
+            )}
+            {/* Download */}
+            {canDownload && (
+              <button
+                className="audio-option-btn"
+                title="Download Audio"
+                onClick={handleDownloadClick}
+                style={{ color: '#10b981' }}
+              >
+                <i className="fas fa-download" />
               </button>
             )}
             {canDeleteAudio && (
@@ -227,6 +263,32 @@ export default function AudioCard({
             )
           )}
           
+          <button
+            onClick={handleShareClick}
+            title="Share Track"
+            style={{
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '8px 10px',
+              color: 'var(--text-muted)',
+              fontSize: '1rem',
+              display: 'flex',
+              alignItems: 'center',
+              transition: 'all 0.2s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = 'var(--saffron)';
+              e.currentTarget.style.transform = 'scale(1.1)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = 'var(--text-muted)';
+              e.currentTarget.style.transform = 'scale(1)';
+            }}
+          >
+            <i className="fas fa-share-alt" />
+          </button>
+
           <button
             className={`favorite-btn${finalIsFavorite ? ' active' : ''}`}
             onClick={handleFavoriteClick}

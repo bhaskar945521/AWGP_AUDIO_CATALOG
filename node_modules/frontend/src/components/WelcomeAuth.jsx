@@ -53,6 +53,9 @@ export default function WelcomeAuth() {
       const success = await publicLogin(loginEmail, loginPassword);
       if (success) {
         toast.success('Signed in successfully!');
+        const returnUrl = sessionStorage.getItem('redirectUrl') || '/';
+        sessionStorage.removeItem('redirectUrl');
+        navigate(returnUrl);
       } else {
         setError('Login failed. Please verify credentials.');
       }
@@ -71,6 +74,9 @@ export default function WelcomeAuth() {
       const success = await login(adminUsername, adminPassword);
       if (success) {
         toast.success('Admin authenticated successfully!');
+        const returnUrl = sessionStorage.getItem('redirectUrl') || '/';
+        sessionStorage.removeItem('redirectUrl');
+        navigate(returnUrl);
       } else {
         setError('Login failed. Please check admin credentials.');
       }
@@ -93,6 +99,9 @@ export default function WelcomeAuth() {
       const success = await publicRegister(registerName, registerEmail, registerPassword);
       if (success) {
         toast.success('Account created successfully!');
+        const returnUrl = sessionStorage.getItem('redirectUrl') || '/';
+        sessionStorage.removeItem('redirectUrl');
+        navigate(returnUrl);
       } else {
         setError('Registration failed.');
       }

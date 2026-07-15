@@ -65,6 +65,7 @@ const EMPTY_FORM = {
   email: '',
   permissions: [],
   assignedWork: '',
+  status: 'Active',
   selectedGroups: [],
 };
 
@@ -139,6 +140,7 @@ export default function UsersManagement() {
   const authConfig = () => ({ headers: { Authorization: `Bearer ${token || localStorage.getItem('token')}` } });
 
   const [users, setUsers]           = useState([]);
+  const [dynamicRoles, setDynamicRoles] = useState([]);
   const [loading, setLoading]       = useState(true);
   const [creating, setCreating]     = useState(false);
   const [newUser, setNewUser]       = useState(EMPTY_FORM);
@@ -153,21 +155,22 @@ export default function UsersManagement() {
   // Convert public user flow state
   const [convertMode, setConvertMode]   = useState(false);
 
-  const fetchUsers = async () => {
+  const fetchUsersAndRoles = async () => {
     try {
-      const res = await api.get('/users', authConfig());
-      // Show admin, onlyuser (Operator), and public_user in the table
-      setUsers(res.data.filter(u =>
-        u.role === 'admin' || u.role === 'onlyuser' || u.role === 'public_user'
-      ));
+      const [usersRes, rolesRes] = await Promise.all([
+        api.get('/users', authConfig()),
+        api.get('/roles', authConfig())
+      ]);
+      setUsers(usersRes.data);
+      setDynamicRoles(rolesRes.data.filter(r => r.enabled || r.name === 'admin'));
     } catch {
-      toast.error('Unable to load users');
+      toast.error('Unable to load data');
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { fetchUsers(); }, []); // eslint-disable-line
+  useEffect(() => { fetchUsersAndRoles(); }, []); // eslint-disable-line
 
   // When role changes in new user form — auto-set permissions
   const handleRoleChange = (role, target = 'new') => {
@@ -204,10 +207,11 @@ export default function UsersManagement() {
         email: newUser.email,
         permissions: newUser.role === 'admin' ? ALL_PERMISSIONS : newUser.permissions,
         assignedWork: newUser.assignedWork,
+        status: newUser.status,
       }, authConfig());
-      toast.success('Operator created successfully!');
+      toast.success('User created successfully!');
       setNewUser(EMPTY_FORM);
-      fetchUsers();
+      fetchUsersAndRoles();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to create operator');
     } finally {
@@ -226,6 +230,7 @@ export default function UsersManagement() {
       password: '',
       confirmPassword: '',
       assignedWork: user.assignedWork || '',
+      status: user.status || 'Active',
       selectedGroups: [],
     });
   };
@@ -241,6 +246,7 @@ export default function UsersManagement() {
       permissions: [],
       selectedGroups: [],
       assignedWork: '',
+      status: 'Active',
       password: '',
       confirmPassword: '',
     }));
@@ -257,6 +263,7 @@ export default function UsersManagement() {
         email: editForm.email,
         permissions: editForm.role === 'admin' ? ALL_PERMISSIONS : editForm.permissions,
         assignedWork: editForm.assignedWork,
+        status: editForm.status,
         ...(editForm.password ? { password: editForm.password } : {}),
       }, authConfig());
 
@@ -266,7 +273,7 @@ export default function UsersManagement() {
       toast.success(successMsg);
       setEditingUser(null);
       setConvertMode(false);
-      fetchUsers();
+      fetchUsersAndRoles();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to update user');
     }
@@ -277,7 +284,7 @@ export default function UsersManagement() {
     try {
       await api.delete(`/users/${userId}`, authConfig());
       toast.success('User deleted');
-      fetchUsers();
+      fetchUsersAndRoles();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to delete user');
     }
@@ -333,6 +340,11 @@ export default function UsersManagement() {
             onChange={e => setNewUser(p => ({ ...p, email: e.target.value }))} />
           <input style={inputStyle} type="text" placeholder="Assigned Work" value={newUser.assignedWork}
             onChange={e => setNewUser(p => ({ ...p, assignedWork: e.target.value }))} />
+          <select style={inputStyle} value={newUser.status} onChange={e => setNewUser(p => ({ ...p, status: e.target.value }))}>
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+            <option value="Suspended">Suspended</option>
+          </select>
 
           {/* Password */}
           <div style={{ position: 'relative' }}>
@@ -362,27 +374,42 @@ export default function UsersManagement() {
           <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '10px' }}>
             Role
           </div>
-          <div style={{ display: 'flex', gap: '12px' }}>
-            {[
-              { val: 'onlyuser', label: 'Operator', icon: 'fas fa-user-cog', desc: 'Customizable permissions' },
-              { val: 'admin',    label: 'Admin',    icon: 'fas fa-crown',    desc: 'Full access to everything' },
-            ].map(r => (
-              <label key={r.val} style={{
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '12px' }}>
+            {dynamicRoles.map(r => (
+              <label key={r.name} style={{
                 display: 'flex', alignItems: 'center', gap: '12px',
                 padding: '12px 16px', borderRadius: '12px', cursor: 'pointer',
-                border: `2px solid ${newUser.role === r.val ? 'var(--saffron, #f7a84d)' : 'var(--border)'}`,
-                background: newUser.role === r.val ? 'rgba(247,168,77,0.08)' : 'transparent',
+                border: `2px solid ${newUser.role === r.name ? 'var(--saffron, #f7a84d)' : 'var(--border)'}`,
+                background: newUser.role === r.name ? 'rgba(247,168,77,0.08)' : 'transparent',
                 flex: 1, transition: 'all 0.2s', userSelect: 'none',
               }}>
-                <input type="radio" name="newRole" value={r.val} checked={newUser.role === r.val}
-                  onChange={() => handleRoleChange(r.val, 'new')} style={{ display: 'none' }} />
-                <i className={r.icon} style={{ fontSize: '1.1rem', color: newUser.role === r.val ? 'var(--saffron, #f7a84d)' : 'var(--text-muted)' }} />
+                <input type="radio" name="newRole" value={r.name} checked={newUser.role === r.name}
+                  onChange={() => handleRoleChange(r.name, 'new')} style={{ display: 'none' }} />
+                <i className={r.isSystem ? 'fas fa-shield-alt' : 'fas fa-user-tag'} style={{ fontSize: '1.1rem', color: newUser.role === r.name ? 'var(--saffron, #f7a84d)' : 'var(--text-muted)' }} />
                 <div>
-                  <div style={{ fontWeight: 700, fontSize: '0.88rem', color: newUser.role === r.val ? 'var(--text-main)' : 'var(--text-muted)' }}>{r.label}</div>
-                  <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>{r.desc}</div>
+                  <div style={{ fontWeight: 700, fontSize: '0.88rem', color: newUser.role === r.name ? 'var(--text-main)' : 'var(--text-muted)' }}>{r.displayName}</div>
+                  <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>{r.permissions.length} permissions</div>
                 </div>
               </label>
             ))}
+            {/* Fallback operator role if not in DB */}
+            {!dynamicRoles.find(r => r.name === 'onlyuser') && (
+              <label style={{
+                display: 'flex', alignItems: 'center', gap: '12px',
+                padding: '12px 16px', borderRadius: '12px', cursor: 'pointer',
+                border: `2px solid ${newUser.role === 'onlyuser' ? 'var(--saffron, #f7a84d)' : 'var(--border)'}`,
+                background: newUser.role === 'onlyuser' ? 'rgba(247,168,77,0.08)' : 'transparent',
+                flex: 1, transition: 'all 0.2s', userSelect: 'none',
+              }}>
+                <input type="radio" name="newRole" value="onlyuser" checked={newUser.role === 'onlyuser'}
+                  onChange={() => handleRoleChange('onlyuser', 'new')} style={{ display: 'none' }} />
+                <i className="fas fa-user-cog" style={{ fontSize: '1.1rem', color: newUser.role === 'onlyuser' ? 'var(--saffron, #f7a84d)' : 'var(--text-muted)' }} />
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: '0.88rem', color: newUser.role === 'onlyuser' ? 'var(--text-main)' : 'var(--text-muted)' }}>Operator</div>
+                  <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>Legacy custom</div>
+                </div>
+              </label>
+            )}
           </div>
         </div>
 
@@ -535,6 +562,11 @@ export default function UsersManagement() {
                     <input style={{ ...inputStyle, gridColumn: '1/-1' }} type="text" placeholder="Assigned Work"
                       value={editForm.assignedWork}
                       onChange={e => setEditForm(p => ({ ...p, assignedWork: e.target.value }))} />
+                    <select style={{ ...inputStyle, gridColumn: '1/-1' }} value={editForm.status} onChange={e => setEditForm(p => ({ ...p, status: e.target.value }))}>
+                      <option value="Active">Active</option>
+                      <option value="Inactive">Inactive</option>
+                      <option value="Suspended">Suspended</option>
+                    </select>
 
                     {/* Password */}
                     <div style={{ position: 'relative' }}>
@@ -561,26 +593,23 @@ export default function UsersManagement() {
                   {!convertMode && (
                     <div>
                       <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '10px' }}>Role</div>
-                      <div style={{ display: 'flex', gap: '12px' }}>
-                        {[
-                          { val: 'onlyuser', label: 'Operator', icon: 'fas fa-user-cog' },
-                          { val: 'admin',    label: 'Admin',    icon: 'fas fa-crown' },
-                        ].map(r => {
-                          const isLastAdmin = editingUser.role === 'admin' && adminCount <= 1 && r.val !== 'admin';
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '12px' }}>
+                        {dynamicRoles.map(r => {
+                          const isLastAdmin = editingUser.role === 'admin' && adminCount <= 1 && r.name !== 'admin';
                           return (
-                            <label key={r.val} style={{
+                            <label key={r.name} style={{
                               display: 'flex', alignItems: 'center', gap: '10px',
                               padding: '10px 16px', borderRadius: '12px',
                               cursor: isLastAdmin ? 'not-allowed' : 'pointer',
-                              border: `2px solid ${editForm.role === r.val ? 'var(--saffron, #f7a84d)' : 'var(--border)'}`,
-                              background: editForm.role === r.val ? 'rgba(247,168,77,0.08)' : 'transparent',
+                              border: `2px solid ${editForm.role === r.name ? 'var(--saffron, #f7a84d)' : 'var(--border)'}`,
+                              background: editForm.role === r.name ? 'rgba(247,168,77,0.08)' : 'transparent',
                               flex: 1, transition: 'all 0.2s', userSelect: 'none',
                               opacity: isLastAdmin ? 0.5 : 1,
                             }}>
-                              <input type="radio" checked={editForm.role === r.val} disabled={isLastAdmin}
-                                onChange={() => !isLastAdmin && handleRoleChange(r.val, 'edit')} style={{ display: 'none' }} />
-                              <i className={r.icon} style={{ color: editForm.role === r.val ? 'var(--saffron, #f7a84d)' : 'var(--text-muted)' }} />
-                              <span style={{ fontWeight: 700, fontSize: '0.86rem', color: editForm.role === r.val ? 'var(--text-main)' : 'var(--text-muted)' }}>{r.label}</span>
+                              <input type="radio" checked={editForm.role === r.name} disabled={isLastAdmin}
+                                onChange={() => !isLastAdmin && handleRoleChange(r.name, 'edit')} style={{ display: 'none' }} />
+                              <i className={r.isSystem ? 'fas fa-shield-alt' : 'fas fa-user-tag'} style={{ color: editForm.role === r.name ? 'var(--saffron, #f7a84d)' : 'var(--text-muted)' }} />
+                              <span style={{ fontWeight: 700, fontSize: '0.86rem', color: editForm.role === r.name ? 'var(--text-main)' : 'var(--text-muted)' }}>{r.displayName}</span>
                             </label>
                           );
                         })}
@@ -705,6 +734,16 @@ export default function UsersManagement() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                     <span style={{ fontWeight: 700, fontSize: '0.92rem', color: 'var(--text-main)' }}>{u.username}</span>
                     <RoleBadge role={u.role} />
+                    <span style={{
+                      fontSize: '0.72rem',
+                      padding: '2px 8px',
+                      borderRadius: '99px',
+                      fontWeight: 600,
+                      background: (!u.status || u.status === 'Active') ? 'rgba(16,185,129,0.15)' : u.status === 'Suspended' ? 'rgba(229,62,62,0.15)' : 'rgba(160,160,160,0.15)',
+                      color: (!u.status || u.status === 'Active') ? '#10b981' : u.status === 'Suspended' ? '#e53e3e' : '#a0aec0'
+                    }}>
+                      {u.status || 'Active'}
+                    </span>
                     {isLastAdmin && (
                       <span style={{ fontSize: '0.72rem', color: '#f6ad55' }}>
                         <i className="fas fa-lock" style={{ marginRight: 3 }} />Last admin

@@ -16,16 +16,42 @@ export const AuthProvider = ({ children }) => {
   const isManager = role === 'manager';
   const isPublicUser = role?.toLowerCase() === 'public_user';
 
+  // Backward compatibility map for UI components using legacy strings
+  const permissionMap = {
+    'audio_upload': 'audios_create',
+    'audio_edit': 'audios_update',
+    'audio_delete': 'audios_delete',
+    'audio_view': 'audios_read',
+    'category_create': 'categories_create',
+    'category_edit': 'categories_update',
+    'category_delete': 'categories_delete',
+    'category_view': 'categories_read',
+    'album_create': 'albums_create',
+    'album_edit': 'albums_update',
+    'album_delete': 'albums_delete',
+    'album_view': 'albums_read',
+    'feedback_view': 'feedback_read',
+    'feedback_delete': 'feedback_delete'
+  };
+
   // Check if user has a specific permission (admin always has all permissions)
   const hasPermission = (perm) => {
     if (isAdmin) return true;
-    return permissions.includes(perm);
+    if (permissions.includes(perm)) return true;
+    
+    const standardPerm = permissionMap[perm];
+    if (standardPerm && permissions.includes(standardPerm)) return true;
+    
+    const legacyPerm = Object.keys(permissionMap).find(key => permissionMap[key] === perm);
+    if (legacyPerm && permissions.includes(legacyPerm)) return true;
+
+    return false;
   };
 
   // Check if user has any of the provided permissions
   const hasAnyPermission = (perms) => {
     if (isAdmin) return true;
-    return perms.some(perm => permissions.includes(perm));
+    return perms.some(perm => hasPermission(perm));
   };
 
   // Load token from localStorage on mount

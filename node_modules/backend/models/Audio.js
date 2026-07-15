@@ -19,6 +19,10 @@ const AudioSchema = new mongoose.Schema(
     playCount: { type: Number, default: 0 },
     likeCount: { type: Number, default: 0 },
     dislikeCount: { type: Number, default: 0 },
+    // Soft-delete (Trash) fields
+    isDeleted: { type: Boolean, default: false },
+    deletedAt: { type: Date, default: null },
+    deletedBy: { type: String, default: null },
   },
   { timestamps: true }
 );

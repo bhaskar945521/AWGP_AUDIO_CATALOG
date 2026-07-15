@@ -10,7 +10,10 @@ export default function Details() {
   const navigate = useNavigate();
   const { setCurrentAudio, currentAudio, isPlaying, setIsPlaying,
           toggleFavoriteTrack, userFavorites, userReactions, fetchReactions, toggleLike, toggleDislike } = useAudio();
-  const { token } = useAuth();
+  const { token, isAdmin, hasPermission } = useAuth();
+
+  const canDownload = isAdmin || hasPermission('audios_download');
+  const canPrint = isAdmin || hasPermission('audios_print');
 
   const [audio, setAudio]       = useState(null);
   const [loading, setLoading]   = useState(true);
@@ -57,6 +60,74 @@ export default function Details() {
   };
 
   const isFav = userFavorites.includes(audio?._id);
+
+  // ─── Handle Share ───────────────────────────────────────────
+  const handleShareClick = () => {
+    const shareUrl = `${window.location.origin}/details/${id}`;
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      toast.success('Share link copied to clipboard!');
+    }).catch(() => {
+      toast.error('Failed to copy link');
+    });
+  };
+
+  // ─── Handle Download ────────────────────────────────────
+  const handleDownload = () => {
+    if (!audio?.audioUrl) return toast.error('Audio file not available');
+    const url = resolveUrl(audio.audioUrl);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${audio.title || 'audio'}.mp3`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    toast.success('Download started!');
+  };
+
+  // ─── Handle Print ────────────────────────────────────────
+  const handlePrint = () => {
+    if (!audio) return;
+    const printWindow = window.open('', '_blank', 'width=700,height=900');
+    const imgSrc = audio.imageUrl ? resolveUrl(audio.imageUrl) : '';
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>AWGP Audio - ${audio.title}</title>
+          <style>
+            body { font-family: 'Segoe UI', sans-serif; padding: 40px; color: #1a1a1a; max-width: 600px; margin: auto; }
+            .header { display: flex; gap: 24px; align-items: center; border-bottom: 2px solid #f7a84d; padding-bottom: 20px; margin-bottom: 24px; }
+            .cover { width: 120px; height: 120px; object-fit: cover; border-radius: 12px; }
+            .cover-placeholder { width: 120px; height: 120px; background: #f7a84d22; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 3rem; }
+            h1 { font-size: 1.6rem; margin: 0 0 8px; color: #1a1a1a; }
+            .meta { font-size: 0.9rem; color: #555; margin: 4px 0; }
+            .label { font-weight: 700; color: #f7a84d; font-size: 0.8rem; text-transform: uppercase; margin-top: 20px; margin-bottom: 6px; }
+            .desc { font-size: 0.95rem; line-height: 1.6; color: #333; }
+            .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+            .tag { background: #f7a84d22; color: #c47f00; padding: 4px 10px; border-radius: 99px; font-size: 0.8rem; font-weight: 600; }
+            .footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid #ddd; font-size: 0.78rem; color: #999; text-align: center; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            ${imgSrc ? `<img src="${imgSrc}" class="cover" alt="Cover" />` : '<div class="cover-placeholder">🎵</div>'}
+            <div>
+              <h1>${audio.title || 'Untitled'}</h1>
+              <p class="meta">🎤 ${audio.speaker || 'Unknown Speaker'}</p>
+              <p class="meta">⏱ ${audio.duration || '—'}</p>
+              <p class="meta">📅 ${new Date(audio.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
+            </div>
+          </div>
+          ${audio.description ? `<div class="label">Description</div><div class="desc">${audio.description}</div>` : ''}
+          ${audio.tags?.length ? `<div class="label">Tags</div><div class="tags">${audio.tags.map(t => `<span class="tag">${t}</span>`).join('')}</div>` : ''}
+          <div class="footer">Printed from AWGP Audio Archive — ${window.location.origin}</div>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => { printWindow.print(); printWindow.close(); }, 500);
+  };
 
   // ─── Handle play / pause ────────────────────────────────────
   const handlePlay = () => {
@@ -202,6 +273,37 @@ export default function Details() {
               <i className={isFav ? 'fas fa-heart' : 'far fa-heart'} />
               {isFav ? 'Favorited' : 'Add to Favorites'}
             </button>
+
+            <button
+              type="button"
+              onClick={handleShareClick}
+              className="details-secondary-btn"
+            >
+              <i className="fas fa-share-alt" />
+              Share
+            </button>
+
+            {canDownload && (
+              <button
+                type="button"
+                onClick={handleDownload}
+                className="details-secondary-btn details-action-saffron"
+              >
+                <i className="fas fa-download" />
+                Download
+              </button>
+            )}
+
+            {canPrint && (
+              <button
+                type="button"
+                onClick={handlePrint}
+                className="details-secondary-btn details-action-saffron"
+              >
+                <i className="fas fa-print" />
+                Print
+              </button>
+            )}
           </div>
 
           {/* ── Like / Dislike / Feedback row ─────────────────── */}

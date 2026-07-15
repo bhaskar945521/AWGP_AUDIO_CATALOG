@@ -154,6 +154,8 @@ const albumRoutes = require('./routes/albums');
 const userRoutes = require('./routes/users');
 const galleryRoutes = require('./routes/gallery');
 const searchRoutes = require('./routes/search');
+const roleRoutes = require('./routes/roles');
+const reportRoutes = require('./routes/reports');
 
 app.use('/api/search', searchRoutes);
 app.use('/api/auth', authRoutes);
@@ -165,6 +167,8 @@ app.use('/api/settings', settingsRoutes);
 app.use('/api/albums', albumRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/gallery', galleryRoutes);
+app.use('/api/roles', roleRoutes);
+app.use('/api/reports', reportRoutes);
 
 // --------------------------
 // HEALTH CHECK & DIAGNOSTICS
@@ -214,9 +218,27 @@ app.use((req, res, next) => {
 // DATABASE
 // --------------------------
 const User = require('./models/User');
+const Role = require('./models/Role');
 mongoose.connect(process.env.MONGODB_URI)
   .then(async () => {
     console.log('[DB] Connected to MongoDB');
+    
+    // Seed default roles
+    const defaultRoles = [
+      { name: 'admin', displayName: 'Admin', permissions: ['admin'], enabled: true, isSystem: true },
+      { name: 'public_user', displayName: 'Public User', permissions: ['audios_read', 'albums_read', 'categories_read'], enabled: true, isSystem: true },
+      { name: 'onlyuser', displayName: 'Operator', permissions: ['audios_read', 'audios_create', 'audios_update', 'audios_delete', 'albums_read', 'categories_read'], enabled: true, isSystem: true }
+    ];
+
+    for (const defRole of defaultRoles) {
+      let roleDoc = await Role.findOne({ name: defRole.name });
+      if (!roleDoc) {
+        roleDoc = new Role(defRole);
+        await roleDoc.save();
+        console.log(`[DB] Seeded default role: ${defRole.name}`);
+      }
+    }
+
     const adminUsername = process.env.ADMIN_USERNAME || 'shantikunjadmin';
     const adminPassword = process.env.ADMIN_PASSWORD || 'Shantikunj2026';
     let admin = await User.findOne({ username: adminUsername });

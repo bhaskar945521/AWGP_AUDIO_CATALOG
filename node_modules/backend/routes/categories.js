@@ -7,6 +7,7 @@ const Album = require('../models/Album');
 const auth = require('../middleware/auth');
 const roleCheck = require('../middleware/roleCheck');
 const permissionCheck = require('../middleware/permissionCheck');
+const { logAudit } = require('../utils/auditLogger');
 const multer = require('multer');
 const { STORAGE_FOLDERS, generateUniqueFilename, deleteLocalFile } = require('../utils/localStorage');
 
@@ -24,8 +25,8 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB limit for images
 });
 
-// GET all categories (public – needed by upload modal and dashboard)
-router.get('/', async (req, res) => {
+// GET all categories (requires categories_read)
+router.get('/', auth, permissionCheck(['categories_read', 'category_view']), async (req, res) => {
   try {
     const categories = await Category.aggregate([
       { $lookup: { from: 'albums', localField: '_id', foreignField: 'categoryId', as: 'albums' } },
@@ -40,7 +41,7 @@ router.get('/', async (req, res) => {
 });
 
 // POST create new category
-router.post('/', auth, permissionCheck(['category_create']), upload.single('coverImage'), async (req, res) => {
+router.post('/', auth, permissionCheck(['categories_create', 'category_create']), upload.single('coverImage'), async (req, res) => {
   try {
     const { name } = req.body;
     const existing = await Category.findOne({ name });
@@ -49,12 +50,19 @@ router.post('/', auth, permissionCheck(['category_create']), upload.single('cove
     let coverImageUrl = req.body.coverImageUrl || '';
 
     if (req.file) {
-      // Use local disk storage
       coverImageUrl = `/uploads/categories/${req.file.filename}`;
     }
 
     const newCat = new Category({ name, coverImageUrl });
     const saved = await newCat.save();
+
+    await logAudit(req, {
+      module: 'categories',
+      action: 'create',
+      previousData: null,
+      updatedData: saved
+    });
+
     res.status(201).json(saved);
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -62,26 +70,34 @@ router.post('/', auth, permissionCheck(['category_create']), upload.single('cove
 });
 
 // PATCH rename / update cover image of a category
-router.patch('/:id', auth, permissionCheck(['category_edit']), upload.single('coverImage'), async (req, res) => {
+router.patch('/:id', auth, permissionCheck(['categories_update', 'category_edit']), upload.single('coverImage'), async (req, res) => {
   try {
     const { name } = req.body;
     const cat = await Category.findById(req.params.id);
     if (!cat) return res.status(404).json({ message: 'Category not found' });
 
+    const previousData = cat.toObject();
+
     if (name) cat.name = name;
 
     if (req.file) {
-      // Delete the old cover image from local storage (if it exists)
       if (cat.coverImageUrl) {
         deleteLocalFile(cat.coverImageUrl);
       }
-      // Save new cover image to local storage
       cat.coverImageUrl = `/uploads/categories/${req.file.filename}`;
     } else if (req.body.coverImageUrl !== undefined) {
       cat.coverImageUrl = req.body.coverImageUrl;
     }
 
     const saved = await cat.save();
+
+    await logAudit(req, {
+      module: 'categories',
+      action: 'update',
+      previousData,
+      updatedData: saved
+    });
+
     res.json(saved);
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -89,17 +105,18 @@ router.patch('/:id', auth, permissionCheck(['category_edit']), upload.single('co
 });
 
 // DELETE category
-router.delete('/:id', auth, permissionCheck(['category_delete']), async (req, res) => {
+router.delete('/:id', auth, permissionCheck(['categories_delete', 'category_delete']), async (req, res) => {
   try {
-    const cat = await Category.findByIdAndDelete(req.params.id);
+    const cat = await Category.findById(req.params.id);
     if (!cat) return res.status(404).json({ message: 'Category not found' });
 
-    // Delete cover image from local storage
+    const previousData = cat.toObject();
+    await Category.findByIdAndDelete(req.params.id);
+
     if (cat.coverImageUrl) {
       deleteLocalFile(cat.coverImageUrl);
     }
 
-    // Clean up category references in Audio and Album
     await Promise.all([
       Audio.updateMany(
         { categoryIds: req.params.id },
@@ -110,6 +127,13 @@ router.delete('/:id', auth, permissionCheck(['category_delete']), async (req, re
         { $pull: { categoryIds: req.params.id } }
       )
     ]);
+
+    await logAudit(req, {
+      module: 'categories',
+      action: 'delete',
+      previousData,
+      updatedData: null
+    });
 
     res.json({ message: 'Category deleted' });
   } catch (err) {

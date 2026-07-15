@@ -3,11 +3,12 @@ const router = express.Router();
 const User = require('../models/User');
 const ListeningHistory = require('../models/ListeningHistory');
 const auth = require('../middleware/auth');
-const roleCheck = require('../middleware/roleCheck');
+const permissionCheck = require('../middleware/permissionCheck');
+const logAudit = require('../utils/auditLogger');
 const bcrypt = require('bcryptjs');
 
-// GET all users (admin only) – omit passwordHash
-router.get('/', auth, roleCheck(['admin']), async (req, res) => {
+// GET all users (requires users_read) – omit passwordHash
+router.get('/', auth, permissionCheck(['users_read']), async (req, res) => {
   try {
     const users = await User.find().select('-passwordHash');
     res.json(users);
@@ -46,9 +47,9 @@ router.delete('/user/history', auth, async (req, res) => {
   }
 });
 
-// CREATE new user (admin only)
-router.post('/', auth, roleCheck(['admin']), async (req, res) => {
-  const { username, password, role, fullName, email, permissions, assignedWork } = req.body;
+// CREATE new user (requires users_create)
+router.post('/', auth, permissionCheck(['users_create']), async (req, res) => {
+  const { username, password, role, fullName, email, permissions, assignedWork, status } = req.body;
   if (!username || !password) return res.status(400).json({ message: 'Username and password required' });
   try {
     const existing = await User.findOne({ username });
@@ -59,12 +60,21 @@ router.post('/', auth, roleCheck(['admin']), async (req, res) => {
       fullName: fullName || '',
       email: email || '',
       permissions: permissions || [],
-      assignedWork: assignedWork || ''
+      assignedWork: assignedWork || '',
+      status: status || 'Active'
     });
     await user.setPassword(password);
     await user.save();
     const userObj = user.toObject();
     delete userObj.passwordHash;
+
+    await logAudit(req, {
+      module: 'users',
+      action: 'create',
+      previousData: null,
+      updatedData: userObj
+    });
+
     res.status(201).json(userObj);
   } catch (err) {
     console.error(err);
@@ -72,13 +82,16 @@ router.post('/', auth, roleCheck(['admin']), async (req, res) => {
   }
 });
 
-// UPDATE user (admin only) – allow role change, password reset, and permissions update
-router.put('/:id', auth, roleCheck(['admin']), async (req, res) => {
-  const { role, password, fullName, email, permissions, assignedWork } = req.body;
+// UPDATE user (requires users_update) – allow role change, password reset, and permissions update
+router.put('/:id', auth, permissionCheck(['users_update']), async (req, res) => {
+  const { role, password, fullName, email, permissions, assignedWork, status } = req.body;
   try {
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ message: 'User not found' });
     
+    const previousData = user.toObject();
+    delete previousData.passwordHash;
+
     // Safety check: Don't allow changing last admin's role to non-admin
     if (user.role === 'admin' && role && role !== 'admin') {
       const adminCount = await User.countDocuments({ role: 'admin' });
@@ -93,10 +106,19 @@ router.put('/:id', auth, roleCheck(['admin']), async (req, res) => {
     if (email !== undefined) user.email = email;
     if (permissions !== undefined) user.permissions = permissions;
     if (assignedWork !== undefined) user.assignedWork = assignedWork;
+    if (status !== undefined) user.status = status;
     
     await user.save();
     const userObj = user.toObject();
     delete userObj.passwordHash;
+
+    await logAudit(req, {
+      module: 'users',
+      action: 'update',
+      previousData,
+      updatedData: userObj
+    });
+
     res.json(userObj);
   } catch (err) {
     console.error(err);
@@ -105,7 +127,7 @@ router.put('/:id', auth, roleCheck(['admin']), async (req, res) => {
 });
 
 // ADMIN: Get any user's listening history (last 7 days)
-router.get('/users/:id/history', auth, roleCheck(['admin']), async (req, res) => {
+router.get('/users/:id/history', auth, permissionCheck(['users_read']), async (req, res) => {
   try {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
@@ -123,12 +145,45 @@ router.get('/users/:id/history', auth, roleCheck(['admin']), async (req, res) =>
 });
 
 // ADMIN: Clear any user's listening history
-router.delete('/users/:id/history', auth, roleCheck(['admin']), async (req, res) => {
+router.delete('/users/:id/history', auth, permissionCheck(['users_delete']), async (req, res) => {
   try {
     await ListeningHistory.deleteMany({ userId: req.params.id });
     res.json({ message: 'User listening history cleared' });
   } catch (err) {
     console.error('Admin clear history error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// DELETE user (requires users_delete)
+router.delete('/:id', auth, permissionCheck(['users_delete']), async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    // Prevent deleting the last admin
+    if (user.role === 'admin') {
+      const adminCount = await User.countDocuments({ role: 'admin' });
+      if (adminCount <= 1) {
+        return res.status(403).json({ message: 'Cannot delete the last admin' });
+      }
+    }
+
+    const previousData = user.toObject();
+    delete previousData.passwordHash;
+
+    await User.findByIdAndDelete(req.params.id);
+
+    await logAudit(req, {
+      module: 'users',
+      action: 'delete',
+      previousData,
+      updatedData: null
+    });
+
+    res.json({ message: 'User deleted successfully' });
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ message: 'Server error' });
   }
 });

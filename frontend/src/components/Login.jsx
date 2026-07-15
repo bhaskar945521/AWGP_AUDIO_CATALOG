@@ -23,7 +23,9 @@ export default function Login() {
     try {
       const success = await login(username, password);
       if (success) {
-        navigate('/');
+        const returnUrl = sessionStorage.getItem('redirectUrl') || '/';
+        sessionStorage.removeItem('redirectUrl');
+        navigate(returnUrl);
       } else {
         setError('Login failed. Please check your credentials.');
       }

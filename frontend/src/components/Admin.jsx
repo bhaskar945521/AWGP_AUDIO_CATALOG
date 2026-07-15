@@ -7,6 +7,10 @@ import UsersManagement from './UsersManagement';
 import AlbumsManagement from './AlbumsManagement';
 import FeedbackManagement from './FeedbackManagement';
 import AnalyticsDashboard from './AnalyticsDashboard';
+import RolesManagement from './RolesManagement';
+import AuditLogs from './AuditLogs';
+import Exports from './Exports';
+import TrashManagement from './TrashManagement';
 
 export default function Admin() {
   const { token, isAdmin, hasPermission, hasAnyPermission } = useAuth();
@@ -80,9 +84,13 @@ export default function Admin() {
     availableTabs.push({ id: 'analytics', label: 'Analytics Dashboard', icon: 'fas fa-chart-bar' });
   }
 
-  // Only admin sees Users tab
+  // Only admin sees Users, Roles, Audit, Exports tabs
   if (isAdmin) {
     availableTabs.push({ id: 'users', label: 'Users', icon: 'fas fa-users' });
+    availableTabs.push({ id: 'roles', label: 'Roles & Permissions', icon: 'fas fa-user-shield' });
+    availableTabs.push({ id: 'audit', label: 'Audit Logs', icon: 'fas fa-history' });
+    availableTabs.push({ id: 'exports', label: 'Data Exports', icon: 'fas fa-download' });
+    availableTabs.push({ id: 'trash', label: 'Trash', icon: 'fas fa-trash-alt' });
   }
 
   // Default to first available tab or library if no tabs
@@ -465,6 +473,18 @@ export default function Admin() {
 
        {/* Users Tab */}
        {activeTab === 'users' && isAdmin && <UsersManagement />}
+
+       {/* Roles Tab */}
+       {activeTab === 'roles' && isAdmin && <RolesManagement />}
+
+       {/* Audit Logs Tab */}
+       {activeTab === 'audit' && isAdmin && <AuditLogs />}
+
+       {/* Exports Tab */}
+       {activeTab === 'exports' && isAdmin && <Exports />}
+
+       {/* Trash Tab */}
+       {activeTab === 'trash' && isAdmin && <TrashManagement />}
 
        {/* Albums Tab */}
        {activeTab === 'albums' && <AlbumsManagement key={albumRefreshKey} />}

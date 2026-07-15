@@ -6,6 +6,7 @@ const Audio = require('../models/Audio');
 const auth = require('../middleware/auth');
 const roleCheck = require('../middleware/roleCheck');
 const permissionCheck = require('../middleware/permissionCheck');
+const { logAudit } = require('../utils/auditLogger');
 const { STORAGE_FOLDERS, generateUniqueFilename, deleteLocalFile } = require('../utils/localStorage');
 
 // Multer storage setup for album covers
@@ -36,8 +37,8 @@ function parseArrayField(field) {
   return [field];
 }
 
-  // GET all albums (public)
-  router.get('/', async (req, res) => {
+  // GET all albums (requires albums_read)
+  router.get('/', auth, permissionCheck(['albums_read', 'album_view']), async (req, res) => {
     try {
       const albums = await Album.find().populate('categoryId').sort({ createdAt: -1 });
       res.json(albums);
@@ -47,8 +48,8 @@ function parseArrayField(field) {
     }
   });
 
-  // GET single album by ID (public)
-  router.get('/:id', async (req, res) => {
+  // GET single album by ID (requires albums_read)
+  router.get('/:id', auth, permissionCheck(['albums_read', 'album_view']), async (req, res) => {
     try {
       const album = await Album.findById(req.params.id).populate('categoryId');
       if (!album) return res.status(404).json({ message: 'Album not found' });
@@ -60,18 +61,26 @@ function parseArrayField(field) {
   });
 
   // CREATE new album with optional cover image
-  router.post('/', auth, permissionCheck(['album_create']), upload.single('coverImage'), async (req, res) => {
+  router.post('/', auth, permissionCheck(['albums_create', 'album_create']), upload.single('coverImage'), async (req, res) => {
     try {
       const { name, title, description, categoryId, audioIds } = req.body;
-    let coverImage = req.body.coverImage || '/album_placeholder.png';
-    
-    if (req.file) {
-      coverImage = `/uploads/album-covers/${req.file.filename}`;
-    }
+      let coverImage = req.body.coverImage || '/album_placeholder.png';
+      
+      if (req.file) {
+        coverImage = `/uploads/album-covers/${req.file.filename}`;
+      }
 
-    const newAlbum = new Album({ name, title, description, coverImage, categoryId, audioIds });
-    await newAlbum.save();
-    res.status(201).json(newAlbum);
+      const newAlbum = new Album({ name, title, description, coverImage, categoryId, audioIds });
+      await newAlbum.save();
+
+      await logAudit(req, {
+        module: 'albums',
+        action: 'create',
+        previousData: null,
+        updatedData: newAlbum
+      });
+
+      res.status(201).json(newAlbum);
     } catch (err) {
       console.error(err);
       if (err.code === 11000) {
@@ -82,29 +91,38 @@ function parseArrayField(field) {
   });
 
   // UPDATE album with optional cover image
-  router.put('/:id', auth, permissionCheck(['album_edit']), upload.single('coverImage'), async (req, res) => {
+  router.put('/:id', auth, permissionCheck(['albums_update', 'album_edit']), upload.single('coverImage'), async (req, res) => {
     try {
       const { name, title, description, categoryId, audioIds } = req.body;
-    const album = await Album.findById(req.params.id);
-    if (!album) return res.status(404).json({ message: 'Album not found' });
-    if (name !== undefined) album.name = name;
-    if (title !== undefined) album.title = title;
-    if (description !== undefined) album.description = description;
-    if (categoryId !== undefined) album.categoryId = categoryId;
-    if (audioIds !== undefined) album.audioIds = audioIds;
+      const album = await Album.findById(req.params.id);
+      if (!album) return res.status(404).json({ message: 'Album not found' });
+
+      const previousData = album.toObject();
+
+      if (name !== undefined) album.name = name;
+      if (title !== undefined) album.title = title;
+      if (description !== undefined) album.description = description;
+      if (categoryId !== undefined) album.categoryId = categoryId;
+      if (audioIds !== undefined) album.audioIds = audioIds;
 
       if (req.file) {
-        // Delete old cover image if it exists and is not placeholder
         if (album.coverImage && album.coverImage !== '/album_placeholder.png' && !album.coverImage.startsWith('http') && album.coverImage !== req.body.coverImage) {
           deleteLocalFile(album.coverImage);
         }
-        // Set new cover image
         album.coverImage = `/uploads/album-covers/${req.file.filename}`;
       } else if (req.body.coverImage !== undefined) {
         album.coverImage = req.body.coverImage;
       }
 
-    await album.save();
+      await album.save();
+
+      await logAudit(req, {
+        module: 'albums',
+        action: 'update',
+        previousData,
+        updatedData: album
+      });
+
       res.json(album);
     } catch (err) {
       console.error(err);
@@ -115,31 +133,39 @@ function parseArrayField(field) {
     }
   });
 
-// DELETE album
-router.delete('/:id', auth, permissionCheck(['album_delete']), async (req, res) => {
-  try {
-    const album = await Album.findByIdAndDelete(req.params.id);
-    if (!album) return res.status(404).json({ message: 'Album not found' });
+  // DELETE album
+  router.delete('/:id', auth, permissionCheck(['albums_delete', 'album_delete']), async (req, res) => {
+    try {
+      const album = await Album.findById(req.params.id);
+      if (!album) return res.status(404).json({ message: 'Album not found' });
 
-    // Delete cover image from local storage if it's not the placeholder
-    if (album.coverImage && album.coverImage !== '/album_placeholder.png') {
-      deleteLocalFile(album.coverImage);
+      const previousData = album.toObject();
+      await Album.findByIdAndDelete(req.params.id);
+
+      if (album.coverImage && album.coverImage !== '/album_placeholder.png') {
+        deleteLocalFile(album.coverImage);
+      }
+
+      await Audio.updateMany(
+        { albumIds: req.params.id },
+        { $pull: { albumIds: req.params.id } }
+      );
+
+      await logAudit(req, {
+        module: 'albums',
+        action: 'delete',
+        previousData,
+        updatedData: null
+      });
+
+      res.json({ message: 'Album deleted' });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: 'Server error' });
     }
-
-    // Clean up references in Audio (remove this album from audio albumIds)
-    await Audio.updateMany(
-      { albumIds: req.params.id },
-      { $pull: { albumIds: req.params.id } }
-    );
-
-    res.json({ message: 'Album deleted' });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
+  });
 // New endpoint: Create Album from selected Audios (existing) with optional cover image
-router.post('/from-selection', auth, permissionCheck(['album_create']), upload.single('coverImage'), async (req, res) => {
+router.post('/from-selection', auth, permissionCheck(['albums_create', 'album_create']), upload.single('coverImage'), async (req, res) => {
   try {
     const { albumName, title, description, categoryId, audioIds } = req.body;
     let coverImage = req.body.coverImage || '/album_placeholder.png';
@@ -176,6 +202,14 @@ router.post('/from-selection', auth, permissionCheck(['album_create']), upload.s
       await Audio.updateMany({ _id: { $in: validAudioIds } }, { $addToSet: { albumIds: newAlbum._id } });
     }
     await Album.updateMany({ _id: { $ne: newAlbum._id }, audioIds: { $in: validAudioIds } }, { $pull: { audioIds: { $in: validAudioIds } } });
+
+    await logAudit(req, {
+      module: 'albums',
+      action: 'create',
+      previousData: null,
+      updatedData: newAlbum
+    });
+
     res.status(201).json(newAlbum);
   } catch (err) {
     console.error(err);
@@ -187,7 +221,7 @@ router.post('/from-selection', auth, permissionCheck(['album_create']), upload.s
 });
 
 // New endpoint: Create Album from selected Audios with optional audio edits and optional cover image
-router.post('/from-selection-with-edits', auth, permissionCheck(['album_create']), upload.single('coverImage'), async (req, res) => {
+router.post('/from-selection-with-edits', auth, permissionCheck(['albums_create', 'album_create']), upload.single('coverImage'), async (req, res) => {
   try {
     const { albumName, title, description, categoryId, audioIds, audioUpdates } = req.body;
     let coverImage = req.body.coverImage || '/album_placeholder.png';
@@ -218,12 +252,19 @@ router.post('/from-selection-with-edits', auth, permissionCheck(['album_create']
         const { audioId, title, speaker, description, tags } = upd;
         const audio = await Audio.findById(audioId);
         if (!audio) continue;
+        const prevAud = audio.toObject();
         if (title !== undefined) audio.title = title;
         if (speaker !== undefined) audio.speaker = speaker;
         if (description !== undefined) audio.description = description;
         if (Array.isArray(tags)) audio.tags = tags;
         await audio.save();
         updatedAudios.push(audio);
+        await logAudit(req, {
+          module: 'audios',
+          action: 'update',
+          previousData: prevAud,
+          updatedData: audio
+        });
       }
     }
     const newAlbum = new Album({
@@ -239,6 +280,14 @@ router.post('/from-selection-with-edits', auth, permissionCheck(['album_create']
       await Audio.updateMany({ _id: { $in: validAudioIds } }, { $addToSet: { albumIds: newAlbum._id } });
     }
     await Album.updateMany({ _id: { $ne: newAlbum._id }, audioIds: { $in: validAudioIds } }, { $pull: { audioIds: { $in: validAudioIds } } });
+
+    await logAudit(req, {
+      module: 'albums',
+      action: 'create',
+      previousData: null,
+      updatedData: newAlbum
+    });
+
     res.status(201).json({ album: newAlbum, updatedAudios });
   } catch (err) {
     console.error(err);
@@ -248,9 +297,10 @@ router.post('/from-selection-with-edits', auth, permissionCheck(['album_create']
     res.status(500).json({ error: err.message });
   }
 });
+
 // ─── PATCH /api/albums/:albumId/add-audios ───────────────────────────────────
 // Associate one or more audios to an existing album
-router.patch('/:albumId/add-audios', auth, permissionCheck(['album_edit']), async (req, res) => {
+router.patch('/:albumId/add-audios', auth, permissionCheck(['albums_update', 'album_edit']), async (req, res) => {
   try {
     let { audioIds, audioUpdates } = req.body;
 
@@ -268,6 +318,8 @@ router.patch('/:albumId/add-audios', auth, permissionCheck(['album_edit']), asyn
 
     const album = await Album.findById(req.params.albumId);
     if (!album) return res.status(404).json({ error: 'Album not found' });
+
+    const previousData = album.toObject();
 
     // Verify all audio IDs exist
     const found = await Audio.find({ _id: { $in: audioIds } }).select('_id');
@@ -287,12 +339,19 @@ router.patch('/:albumId/add-audios', auth, permissionCheck(['album_edit']), asyn
           const { audioId, title, speaker, description, tags } = upd;
           const audio = await Audio.findById(audioId);
           if (!audio) continue;
+          const prevAud = audio.toObject();
           if (title !== undefined) audio.title = title;
           if (speaker !== undefined) audio.speaker = speaker;
           if (description !== undefined) audio.description = description;
           if (Array.isArray(tags)) audio.tags = tags;
           await audio.save();
           updatedAudios.push(audio);
+          await logAudit(req, {
+            module: 'audios',
+            action: 'update',
+            previousData: prevAud,
+            updatedData: audio
+          });
         }
       }
     }
@@ -310,6 +369,14 @@ router.patch('/:albumId/add-audios', auth, permissionCheck(['album_edit']), asyn
     );
 
     const updated = await Album.findById(album._id).populate('categoryId');
+
+    await logAudit(req, {
+      module: 'albums',
+      action: 'update',
+      previousData,
+      updatedData: updated
+    });
+
     res.json({ message: 'Audios associated successfully', album: updated, updatedAudios });
   } catch (err) {
     console.error('[add-audios]', err);

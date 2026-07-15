@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Layout from './components/Layout';
 import { useAuth } from './context/AuthContext';
@@ -71,6 +71,14 @@ function PermissionRoute({ children, requiredPermissions }) {
 
 function AppContent() {
   const { token } = useAuth();
+  const location = useLocation();
+
+  React.useEffect(() => {
+    // If not logged in and trying to access a specific path, save it
+    if (!token && location.pathname !== '/' && location.pathname !== '/login') {
+      sessionStorage.setItem('redirectUrl', location.pathname);
+    }
+  }, [token, location.pathname]);
 
   return (
     <Suspense fallback={<PageLoader />}>
@@ -80,12 +88,12 @@ function AppContent() {
           <Route path="/" element={<Layout />}>
             <Route index element={<Dashboard />} />
             <Route path="library" element={<Library />} />
-          <Route path="albums" element={<Albums />} />
-          <Route path="albums/:id" element={<AlbumDetails />} />
-          <Route path="favorites" element={<Favorites />} />
-          <Route path="history" element={<ListeningHistory />} />
-          <Route path="profile" element={<UserProfile />} />
-          <Route path="details/:id" element={<Details />} />
+            <Route path="albums" element={<Albums />} />
+            <Route path="albums/:id" element={<AlbumDetails />} />
+            <Route path="favorites" element={<Favorites />} />
+            <Route path="history" element={<ListeningHistory />} />
+            <Route path="profile" element={<UserProfile />} />
+            <Route path="details/:id" element={<PermissionRoute requiredPermissions={['audios_read', 'audio_view']}><Details /></PermissionRoute>} />
             <Route path="admin" element={<PermissionRoute requiredPermissions={['analytics_view', 'feedback_view', 'feedback_delete', 'audio_view', 'category_view', 'album_view']}><Admin /></PermissionRoute>} />
             <Route path="users" element={<AdminRoute><UsersManagement /></AdminRoute>} />
             {/* Catch-all redirects back to Home */}

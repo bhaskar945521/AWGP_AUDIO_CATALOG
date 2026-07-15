@@ -14,6 +14,7 @@ const auth = require('../middleware/auth');
 const roleCheck = require('../middleware/roleCheck');
 const permissionCheck = require('../middleware/permissionCheck');
 const { STORAGE_FOLDERS, generateUniqueFilename, deleteLocalFile } = require('../utils/localStorage');
+const logAudit = require('../utils/auditLogger');
 
 function escapeRegExp(value) {
   return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -169,10 +170,10 @@ async function buildDuplicateResponse(existing) {
 }
 
 // ─── GET /api/audios ────────────────────────────────────────────────────────
-router.get('/', async (req, res) => {
+router.get('/', auth, permissionCheck(['audios_read', 'audio_view']), async (req, res) => {
   try {
     const { page, limit, sort = '-createdAt', album, extension, category, search } = req.query;
-    const filters = {};
+    const filters = { isDeleted: { $ne: true } };
 
     if (album) {
       filters.albumIds = { $in: [album] };
@@ -338,11 +339,11 @@ router.get('/', async (req, res) => {
 });
 
 // ─── GET /api/audios/recent/count ───────────────────────────────────────────
-router.get('/recent/count', async (req, res) => {
+router.get('/recent/count', auth, permissionCheck(['audios_read', 'audio_view']), async (req, res) => {
   try {
     const hours = Number(req.query.hours) || 24;
     const sinceDate = new Date(Date.now() - hours * 60 * 60 * 1000);
-    const items = await Audio.find({ createdAt: { $gte: sinceDate } })
+    const items = await Audio.find({ createdAt: { $gte: sinceDate }, isDeleted: { $ne: true } })
       .populate('albumIds')
       .sort({ createdAt: -1 });
     res.json({ items });
@@ -352,9 +353,9 @@ router.get('/recent/count', async (req, res) => {
 });
 
 // ─── GET /api/audios/:id ─────────────────────────────────────────────────────
-router.get('/:id', async (req, res) => {
+router.get('/:id', auth, permissionCheck(['audios_read', 'audio_view']), async (req, res) => {
   try {
-    const audio = await Audio.findById(req.params.id).populate('albumIds');
+    const audio = await Audio.findOne({ _id: req.params.id, isDeleted: { $ne: true } }).populate('albumIds');
     if (!audio) return res.status(404).json({ message: 'Audio not found' });
     res.json(audio);
   } catch (err) {
@@ -366,7 +367,7 @@ router.get('/:id', async (req, res) => {
 router.post(
   '/',
   auth,
-  permissionCheck(['audio_upload']),
+  permissionCheck(['audios_create', 'audio_upload']),
   upload.fields([
     { name: 'audioFile', maxCount: 1 },
     { name: 'imageFile', maxCount: 1 }
@@ -463,6 +464,14 @@ router.post(
         originalExtension: originalExt
       });
       const saved = await newAudio.save();
+
+      await logAudit(req, {
+        module: 'audios',
+        action: 'create',
+        previousData: null,
+        updatedData: saved
+      });
+
       res.status(201).json(saved);
 
     } catch (err) {
@@ -475,7 +484,7 @@ router.post(
 );
 
 // ─── PUT /api/audios/:id ─────────────────────────────────────────────────────
-router.put('/:id', auth, permissionCheck(['audio_edit']), upload.single('imageFile'), rejectCategoryFields, async (req, res) => {
+router.put('/:id', auth, permissionCheck(['audios_update', 'audio_edit']), upload.single('imageFile'), rejectCategoryFields, async (req, res) => {
   try {
     const { title, speaker, duration, description, albumIds, tags, imageUrl } = req.body;
     const audio = await Audio.findById(req.params.id);
@@ -483,6 +492,8 @@ router.put('/:id', auth, permissionCheck(['audio_edit']), upload.single('imageFi
       if (req.file) deleteLocalFile(`/uploads/audio-images/${req.file.filename}`);
       return res.status(404).json({ message: 'Audio not found' });
     }
+
+    const previousData = audio.toObject();
     
     if (title) audio.title = title;
     if (speaker !== undefined) audio.speaker = speaker;
@@ -507,6 +518,13 @@ router.put('/:id', auth, permissionCheck(['audio_edit']), upload.single('imageFi
 
     const saved = await audio.save();
 
+    await logAudit(req, {
+      module: 'audios',
+      action: 'update',
+      previousData,
+      updatedData: saved
+    });
+
     // Delete old local image ONLY after successful DB save, if it's not a placeholder
     if (oldImageUrl && oldImageUrl !== '/placeholder.png' && !oldImageUrl.startsWith('http')) {
       if (oldImageUrl !== newImageUrl) {
@@ -524,22 +542,75 @@ router.put('/:id', auth, permissionCheck(['audio_edit']), upload.single('imageFi
 });
 
 // ─── DELETE /api/audios/:id ──────────────────────────────────────────────────
-router.delete('/:id', auth, permissionCheck(['audio_delete']), async (req, res) => {
+router.delete('/:id', auth, permissionCheck(['audios_delete', 'audio_delete']), async (req, res) => {
   try {
-    const audio = await Audio.findById(req.params.id);
+    const audio = await Audio.findOne({ _id: req.params.id, isDeleted: { $ne: true } });
     if (!audio) return res.status(404).json({ message: 'Audio not found' });
 
-    // Delete audio file from local storage
-    if (audio.audioUrl) {
-      deleteLocalFile(audio.audioUrl);
-    }
-    // Delete thumbnail image from local storage
-    if (audio.imageUrl && audio.imageUrl !== '/placeholder.png') {
-      deleteLocalFile(audio.imageUrl);
-    }
+    const previousData = audio.toObject();
 
+    if (req.user.role === 'admin') {
+      // Admin = permanent delete
+      if (audio.audioUrl) deleteLocalFile(audio.audioUrl);
+      if (audio.imageUrl && audio.imageUrl !== '/placeholder.png') deleteLocalFile(audio.imageUrl);
+      await Audio.findByIdAndDelete(req.params.id);
+      await logAudit(req, { module: 'audios', action: 'delete', previousData, updatedData: null });
+      return res.json({ message: 'Audio permanently deleted' });
+    } else {
+      // Non-admin = soft delete (move to Trash)
+      audio.isDeleted = true;
+      audio.deletedAt = new Date();
+      audio.deletedBy = req.user.username;
+      await audio.save();
+      await logAudit(req, { module: 'audios', action: 'soft_delete', previousData, updatedData: audio });
+      return res.json({ message: 'Audio moved to trash' });
+    }
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// ─── GET /api/audios/trash  (Admin only) ─────────────────────────────────────
+router.get('/trash/list', auth, permissionCheck(['audios_delete']), async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ message: 'Admin only' });
+    const trashed = await Audio.find({ isDeleted: true }).sort({ deletedAt: -1 });
+    res.json(trashed);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// ─── PATCH /api/audios/:id/restore  (Admin only) ─────────────────────────────
+router.patch('/:id/restore', auth, permissionCheck(['audios_delete']), async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ message: 'Admin only' });
+    const audio = await Audio.findOne({ _id: req.params.id, isDeleted: true });
+    if (!audio) return res.status(404).json({ message: 'Audio not found in trash' });
+    const previousData = audio.toObject();
+    audio.isDeleted = false;
+    audio.deletedAt = null;
+    audio.deletedBy = null;
+    await audio.save();
+    await logAudit(req, { module: 'audios', action: 'restore', previousData, updatedData: audio });
+    res.json({ message: 'Audio restored successfully', audio });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// ─── DELETE /api/audios/:id/permanent  (Admin only — permanent delete from trash) ─
+router.delete('/:id/permanent', auth, permissionCheck(['audios_delete']), async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ message: 'Admin only' });
+    const audio = await Audio.findById(req.params.id);
+    if (!audio) return res.status(404).json({ message: 'Audio not found' });
+    const previousData = audio.toObject();
+    if (audio.audioUrl) deleteLocalFile(audio.audioUrl);
+    if (audio.imageUrl && audio.imageUrl !== '/placeholder.png') deleteLocalFile(audio.imageUrl);
     await Audio.findByIdAndDelete(req.params.id);
-    res.json({ message: 'Audio deleted successfully' });
+    await logAudit(req, { module: 'audios', action: 'permanent_delete', previousData, updatedData: null });
+    res.json({ message: 'Audio permanently deleted from trash' });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

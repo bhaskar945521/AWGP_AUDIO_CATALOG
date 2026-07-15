@@ -1,8 +1,36 @@
+function mapPermission(oldPermission) {
+  const mapping = {
+    'audio_view': 'audios_read',
+    'audio_upload': 'audios_create',
+    'audio_edit': 'audios_update',
+    'audio_delete': 'audios_delete',
+    
+    'category_view': 'categories_read',
+    'category_create': 'categories_create',
+    'category_edit': 'categories_update',
+    'category_delete': 'categories_delete',
+    
+    'album_view': 'albums_read',
+    'album_create': 'albums_create',
+    'album_edit': 'albums_update',
+    'album_delete': 'albums_delete',
+    
+    'feedback_view': 'feedback_read',
+    'feedback_delete': 'feedback_delete',
+    
+    'analytics_view': 'logs_read',
+    'users_manage': 'users_read',
+    'settings_manage': 'settings_update',
+    'admin_settings_manage': 'settings_update'
+  };
+  return mapping[oldPermission] || oldPermission;
+}
+
 // Check if user has the required permission(s)
 module.exports = function (requiredPermissions) {
   return (req, res, next) => {
     // Admin always has full access
-    if (req.user.role === 'admin') {
+    if (req.user && req.user.role === 'admin') {
       return next();
     }
 
@@ -11,9 +39,14 @@ module.exports = function (requiredPermissions) {
       return next();
     }
 
-    // Check if user has any of the required permissions
+    if (!req.user || !req.user.permissions) {
+      return res.status(403).json({ message: 'Access denied: insufficient permissions' });
+    }
+
+    // Check if user has any of the required permissions (directly or mapped)
     const hasPermission = requiredPermissions.some(permission => 
-      req.user.permissions && req.user.permissions.includes(permission)
+      req.user.permissions.includes(permission) ||
+      req.user.permissions.includes(mapPermission(permission))
     );
 
     if (hasPermission) {
