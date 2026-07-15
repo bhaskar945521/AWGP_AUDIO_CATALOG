@@ -42,10 +42,14 @@
   - Upload & manage audio files (with auto-conversion to MP3)
   - **Smart Relevance Search** — results sorted by score (Exact > Starts-With > Contains > Speaker > Tags)
   - Hindi/English bilingual synonym support + Voice search
+  - **Advanced Filters**: Search, Category, Format (MP3/WAV/M4A/AAC/OGG)
+  - **Grid/List View Toggle** for flexible browsing
+  - **Share Audio Links**: Copy shareable audio link to clipboard (works for all users)
 - 🗂️ **Category & Album Management**:
   - Create/edit/delete categories (with cover images)
   - Create/edit/delete albums with cover images
   - Add audio tracks to albums
+  - Share links available on album audio rows
 - ❤️ **Favorites System** (User-Specific):
   - Completely per-user favorites — each account has its own playlist
   - Works for all roles: Admin, OnlyUser, Public User
@@ -84,6 +88,9 @@
 - 🎵 **Listening Session Tracking**:
   - Automatically records when a user starts/stops listening
   - Session duration stored in database for analytics
+- 🔗 **Public Audio Access**:
+  - Audio details page accessible without login (via share links)
+  - Unregistered users see details, but login/register required to interact
 
 ---
 
@@ -357,6 +364,43 @@ AWGP_AUDIO_CATLOG/
 ---
 
 ## 📝 Changelog
+
+### v2.4 — Advanced Audio Filters, Grid/List Toggle & Share Everywhere (2026-07-16)
+
+#### 🔧 Backend Audio Filter Engine Rewrite
+- Fixed critical bug where category and search filters were overwriting each other
+- Now all filters (search, category, extension, album) are combined using **AND logic**
+- Extended extension filter to check: `originalExtension`, `fileExtension`, and `audioUrl`
+- Improved filter stability and predictability
+
+#### 🎵 Public Library Enhancements
+- Added **Format Filter** dropdown (MP3, WAV, M4A, AAC, OGG)
+- Added **Grid/List View Toggle** for browsing flexibility
+  - Grid view: Same as before, perfect for visual browsing
+  - List view: Compact rows with cover, title, speaker, category, and quick actions
+- Kept existing category chips and search functionality
+- Updated pagination handling
+
+#### 🎵 Admin Audio Catalog Overhaul
+- Added **Search Input** directly in the admin library panel
+- Replaced client-side filtering with **server-side filtering** using the same robust API
+- Updated filter row with all three controls: Search, Format, Category
+- Added clear button to reset all filters at once
+- Better performance with backend-driven results
+
+#### 🔗 Share Button Everywhere
+- Added share button to AlbumDetails audio rows (for all users)
+- Share copies direct audio link to clipboard (like `https://yoursite.com/details/123`)
+- Kept share buttons in AudioCard and Details page (already existed)
+- Hover effect on share button for better UX
+
+#### 🔐 Audio Details Page Accessible Without Login
+- Modified backend `GET /api/audios/:id` to be public (no auth required)
+- Added public route in frontend App.jsx for `/details/:id`
+- Shared links work for everyone: users click → see audio → login/register if needed
+- If unauthenticated user tries to play/like/comment, they're redirected to login
+
+---
 
 ### v2.3 — Enhanced UI/UX, Album Hero Makeover & My Favorites (2026-07-11)
 

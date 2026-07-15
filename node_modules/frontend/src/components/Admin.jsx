@@ -109,6 +109,8 @@ export default function Admin() {
   const [activeTab, setActiveTab] = useState(defaultTab);
   const [filterExt, setFilterExt] = useState('');
   const [filterCat, setFilterCat] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [totalTracks, setTotalTracks] = useState(0);
 
   // Get unique extensions from audios (fallback: extract from URL for old data)
   // Render Admin panel for all logged-in users; feature restrictions handled via tabs
@@ -153,8 +155,20 @@ export default function Admin() {
   const fetchAudios = async () => {
     try {
       setLoading(true);
-      const res = await api.get('/audios');
-      setAudios(res.data);
+      const params = {};
+      if (searchQuery) params.search = searchQuery;
+      if (filterCat) params.category = filterCat;
+      if (filterExt) params.extension = filterExt;
+      
+      const res = await api.get('/audios', { params });
+      // Handle both paginated response (data + total) and direct list
+      if (res.data && res.data.data) {
+        setAudios(res.data.data);
+        setTotalTracks(res.data.total);
+      } else {
+        setAudios(res.data);
+        setTotalTracks(res.data.length);
+      }
     } catch (err) {
       console.error('Failed to fetch audios for admin', err);
     } finally {
@@ -167,6 +181,11 @@ export default function Admin() {
     fetchCategories();
     fetchAlbums();
   }, [uploadRefresh]);
+
+  // Fetch audios when filters or search change
+  useEffect(() => {
+    fetchAudios();
+  }, [searchQuery, filterCat, filterExt]);
 
   useEffect(() => {
     if (showGallery) {
@@ -263,39 +282,39 @@ export default function Admin() {
   };
 
   const handleAddCategory = async () => {
-  if (!newCategory.trim()) return;
-  setAddingCategory(true);
-  try {
-    const token = localStorage.getItem('token');
-    if (categoryCoverFile) {
-      const formData = new FormData();
-      formData.append('name', newCategory.trim());
-      formData.append('coverImage', categoryCoverFile);
-      await api.post('/categories', formData, {
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' },
-      });
-    } else {
-      const payload = { name: newCategory.trim() };
-      if (categoryCoverPreview && !categoryCoverPreview.startsWith('blob:')) {
-        payload.coverImageUrl = categoryCoverPreview;
+    if (!newCategory.trim()) return;
+    setAddingCategory(true);
+    try {
+      const token = localStorage.getItem('token');
+      if (categoryCoverFile) {
+        const formData = new FormData();
+        formData.append('name', newCategory.trim());
+        formData.append('coverImage', categoryCoverFile);
+        await api.post('/categories', formData, {
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' },
+        });
+      } else {
+        const payload = { name: newCategory.trim() };
+        if (categoryCoverPreview && !categoryCoverPreview.startsWith('blob:')) {
+          payload.coverImageUrl = categoryCoverPreview;
+        }
+        await api.post('/categories', payload, { headers: { Authorization: `Bearer ${token}` } });
       }
-      await api.post('/categories', payload, { headers: { Authorization: `Bearer ${token}` } });
+      // After successful addition, navigate to Albums tab and trigger refresh
+      setActiveTab('albums');
+      setAlbumRefreshKey(prev => prev + 1);
+      setNewCategory('');
+      setCategoryCoverFile(null);
+      setCategoryCoverPreview(null);
+      fetchCategories();
+      window.dispatchEvent(new Event('categoriesUpdated'));
+      toast.success('Category added');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to add category');
+    } finally {
+      setAddingCategory(false);
     }
-    // After successful addition, navigate to Albums tab and trigger refresh
-    setActiveTab('albums');
-    setAlbumRefreshKey(prev => prev + 1);
-    setNewCategory('');
-    setCategoryCoverFile(null);
-    setCategoryCoverPreview(null);
-    fetchCategories();
-    window.dispatchEvent(new Event('categoriesUpdated'));
-    toast.success('Category added');
-  } catch (err) {
-    toast.error(err.response?.data?.message || 'Failed to add category');
-  } finally {
-    setAddingCategory(false);
-  }
-};
+  };
 
   const handleModalCoverUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -391,7 +410,7 @@ export default function Admin() {
     }
   };
 
-  const totalTracks = audios.length;
+  const totalTrack = audios.length;  
   const totalFavorites = audios.filter(a => a.isFavorite).length;
   const totalCategories = categories.length;
   // Non-admin users can access admin panel (restricted features handled via tabs)
@@ -515,46 +534,46 @@ export default function Admin() {
             <span className="admin-panel-count">{totalTracks} tracks</span>
           </div>
 
-          {/* Extension + Category filter row */}
-          {audios.length > 0 && (
-            <div className="admin-filter-row">
-              <select
-                className="filter-select"
-                value={filterExt}
-                onChange={e => setFilterExt(e.target.value)}
-                style={{ maxWidth: 150 }}
-              >
-                <option value="">All Formats</option>
-                {uniqueExts.map(ext => (
-                  <option key={ext} value={ext}>{`.${ext.toUpperCase()}`}</option>
-                ))}
-              </select>
-              <select
-                className="filter-select"
-                value={filterCat}
-                onChange={e => setFilterCat(e.target.value)}
-                style={{ maxWidth: 180 }}
-              >
-                <option value="">All Categories</option>
-                {categories.map(c => (
-                  <option key={c._id} value={c.name}>{c.name}</option>
-                ))}
-              </select>
-              {(filterExt || filterCat) && (
-                <button className="filter-chip" onClick={() => { setFilterExt(''); setFilterCat(''); }}>
-                  <i className="fas fa-times" /> Clear
-                </button>
-              )}
-              <span className="admin-filter-summary">
-                Showing {audios.filter(a => {
-                  const ext = getExt(a);
-                  const matchExt = !filterExt || ext === filterExt;
-                  const matchCat = !filterCat || a.category === filterCat;
-                  return matchExt && matchCat;
-                }).length} tracks
-              </span>
-            </div>
-          )}
+          {/* Search + Extension + Category filter row */}
+          <div className="admin-filter-row">
+            <input
+              type="text"
+              placeholder="Search tracks..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              style={{ padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--border)', flex: 1 }}
+            />
+            <select
+              className="filter-select"
+              value={filterExt}
+              onChange={e => setFilterExt(e.target.value)}
+              style={{ maxWidth: 150 }}
+            >
+              <option value="">All Formats</option>
+              {['mp3', 'wav', 'm4a', 'aac', 'ogg'].map(ext => (
+                <option key={ext} value={ext}>{`.${ext.toUpperCase()}`}</option>
+              ))}
+            </select>
+            <select
+              className="filter-select"
+              value={filterCat}
+              onChange={e => setFilterCat(e.target.value)}
+              style={{ maxWidth: 180 }}
+            >
+              <option value="">All Categories</option>
+              {categories.map(c => (
+                <option key={c._id} value={c.name}>{c.name}</option>
+              ))}
+            </select>
+            {(filterExt || filterCat || searchQuery) && (
+              <button className="filter-chip" onClick={() => { setFilterExt(''); setFilterCat(''); setSearchQuery(''); }}>
+                <i className="fas fa-times" /> Clear
+              </button>
+            )}
+            <span className="admin-filter-summary">
+              Showing {audios.length} tracks
+            </span>
+          </div>
 
           {selectedAudioIds.length > 0 && (
             <div className="admin-bulk-actions">
@@ -606,14 +625,7 @@ export default function Admin() {
                   </tr>
                 </thead>
                 <tbody>
-                  {audios
-                    .filter(a => {
-                      const ext = getExt(a);
-                      const matchExt = !filterExt || ext === filterExt;
-                      const matchCat = !filterCat || a.category === filterCat;
-                      return matchExt && matchCat;
-                    })
-                    .map(audio => (
+                  {audios.map(audio => (
                     <tr key={audio._id}>
                       <td>
                          <input

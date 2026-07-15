@@ -175,8 +175,11 @@ router.get('/', auth, permissionCheck(['audios_read', 'audio_view']), async (req
     const { page, limit, sort = '-createdAt', album, extension, category, search } = req.query;
     const filters = { isDeleted: { $ne: true } };
 
+    // All filters are combined with AND logic
+    const conditions = [];
+
     if (album) {
-      filters.albumIds = { $in: [album] };
+      conditions.push({ albumIds: { $in: [album] } });
     }
 
     if (category) {
@@ -192,11 +195,19 @@ router.get('/', auth, permissionCheck(['audios_read', 'audio_view']), async (req
         if (albumIds.length > 0) categoryOr.push({ albumIds: { $in: albumIds } });
       }
       categoryOr.push({ category: categoryRegex });
-      filters.$or = categoryOr;
+      conditions.push({ $or: categoryOr });
     }
 
     if (extension) {
-      filters.originalExtension = extension.toLowerCase();
+      // Support both originalExtension and fall back to checking audioUrl extension
+      const extLower = extension.toLowerCase();
+      conditions.push({
+        $or: [
+          { originalExtension: extLower },
+          { fileExtension: extLower },
+          { audioUrl: { $regex: new RegExp(`\\.${escapeRegExp(extLower)}$`, 'i') } }
+        ]
+      });
     }
 
     const searchActive = search && search.trim().length > 0;
@@ -206,12 +217,19 @@ router.get('/', auth, permissionCheck(['audios_read', 'audio_view']), async (req
       searchTerms = getAllSearchTerms(search.trim());
       const regexPattern = searchTerms.map(term => escapeRegExp(term)).join('|');
       const regex = new RegExp(regexPattern, 'i');
-      filters.$or = [
-        { title: regex },
-        { speaker: regex },
-        { description: regex },
-        { tags: { $in: searchTerms.map(t => new RegExp(t, 'i')) } }
-      ];
+      conditions.push({
+        $or: [
+          { title: regex },
+          { speaker: regex },
+          { description: regex },
+          { tags: { $in: searchTerms.map(t => new RegExp(t, 'i')) } }
+        ]
+      });
+    }
+
+    // Combine all conditions
+    if (conditions.length > 0) {
+      filters.$and = conditions;
     }
 
     const sortObj = {};

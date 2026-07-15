@@ -14,6 +14,7 @@ export default function Library() {
 
   const [audios, setAudios] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [extensions, setExtensions] = useState(['mp3', 'wav', 'm4a', 'aac', 'ogg']);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
@@ -21,6 +22,8 @@ export default function Library() {
 
   const urlCategory = searchParams.get('category') || '';
   const [filterCategory, setFilterCategory] = useState(urlCategory);
+  const [filterExtension, setFilterExtension] = useState('');
+  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
 
   // Sync URL category param
   useEffect(() => {
@@ -56,6 +59,7 @@ export default function Library() {
         };
         if (searchQuery) params.search = searchQuery;
         if (filterCategory) params.category = filterCategory;
+        if (filterExtension) params.extension = filterExtension;
 
         const res = await api.get('/audios', { params });
         const audioList = res.data.data || res.data;
@@ -75,7 +79,7 @@ export default function Library() {
       }
     };
     fetchFilteredAudios();
-  }, [searchQuery, filterCategory, currentPage]);
+  }, [searchQuery, filterCategory, filterExtension, currentPage]);
 
   const toggleFavorite = (id) => {
     toggleFavoriteTrack(id);
@@ -86,14 +90,14 @@ export default function Library() {
     setTotalCount(t => t - 1);
   };
 
-  // Reset page when search or category changes
+  // Reset page when search, category, or extension changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, filterCategory]);
+  }, [searchQuery, filterCategory, filterExtension]);
 
   const handleCategoryFilter = (catVal) => {
     setFilterCategory(catVal);
-    setSearchParams({ category: catVal });
+    setSearchParams(catVal ? { category: catVal } : {});
   };
 
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
@@ -105,17 +109,64 @@ export default function Library() {
         <h2 className="page-title">
           Audio Library
         </h2>
-        <p className="page-subtitle">
-          Browse all spiritual discourses, bhajans, and pravachans with advanced filters.
-        </p>
-        {/* Global Search */}
-        <input
-          type="text"
-          placeholder="Search library"
-          value={searchQuery}
-          onChange={e => setSearchQuery(e.target.value)}
-          className="library-search-input"
-        />
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+          <p className="page-subtitle" style={{ margin: 0 }}>
+            Browse all spiritual discourses, bhajans, and pravachans with advanced filters.
+          </p>
+          {/* View mode toggle */}
+          <div className="view-toggle" style={{ display: 'flex', gap: '8px', background: 'var(--surface)', padding: '4px', borderRadius: '8px' }}>
+            <button
+              onClick={() => setViewMode('grid')}
+              style={{
+                padding: '8px 14px',
+                border: 'none',
+                borderRadius: '6px',
+                background: viewMode === 'grid' ? 'var(--saffron)' : 'transparent',
+                color: viewMode === 'grid' ? 'white' : 'var(--text-muted)',
+                cursor: 'pointer',
+                fontWeight: '500'
+              }}
+            >
+              <i className="fas fa-th" style={{ marginRight: '6px' }} /> Grid
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              style={{
+                padding: '8px 14px',
+                border: 'none',
+                borderRadius: '6px',
+                background: viewMode === 'list' ? 'var(--saffron)' : 'transparent',
+                color: viewMode === 'list' ? 'white' : 'var(--text-muted)',
+                cursor: 'pointer',
+                fontWeight: '500'
+              }}
+            >
+              <i className="fas fa-list" style={{ marginRight: '6px' }} /> List
+            </button>
+          </div>
+        </div>
+        {/* Global Search and Extension Filter */}
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginTop: '16px' }}>
+          <input
+            type="text"
+            placeholder="Search library"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            className="library-search-input"
+            style={{ flex: 1 }}
+          />
+          <select
+            value={filterExtension}
+            onChange={(e) => setFilterExtension(e.target.value)}
+            style={{
+              padding: '12px 16px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: '1rem' }}
+          >
+            <option value="">All Formats</option>
+            {extensions.map(ext => (
+              <option key={ext} value={ext}>{ext.toUpperCase()}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {/* Category chips row */}
@@ -142,7 +193,7 @@ export default function Library() {
         </div>
       )}
 
-      {/* Grid */}
+      {/* Results */}
       {loading ? (
         <div style={{ textAlign: 'center', padding: '60px 0' }}>
           <div style={{ display: 'inline-block', width: 40, height: 40, border: '3px solid rgba(247,168,77,0.2)', borderTopColor: 'var(--saffron)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
@@ -157,6 +208,7 @@ export default function Library() {
         </div>
       ) : (
         <>
+          {viewMode === 'grid' ? (
           <div className="audios-grid">
             {audios.map(audio => (
               <AudioCard
@@ -169,6 +221,63 @@ export default function Library() {
               />
             ))}
           </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {audios.map(audio => (
+              <div
+                key={audio._id}
+                className="audios-list-item"
+                style={{
+                  display: 'flex',
+                alignItems: 'center',
+                padding: '16px',
+                background: 'var(--surface)',
+                borderRadius: '12px',
+                gap: '16px',
+                cursor: 'pointer'
+              }}
+              onClick={() => { setQueue(audios); setCurrentAudio(audio); }}
+            >
+                <img
+                  src={audio.coverUrl || audio.artworkUrl || '/default-cover.png'}
+                  style={{ width: '60px', height: '60px', borderRadius: '8px', objectFit: 'cover' }}
+                  alt={audio.title}
+                />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: '600', marginBottom: '4px' }}>{audio.title}</div>
+                  <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                    {audio.speaker || 'Unknown'} • {audio.category || 'Uncategorized'} • {audio.durationText || ''}
+                  </div>
+                </div>
+                <div className="engagement-buttons" style={{ display: 'flex', gap: '8px' }} onClick={(e) => e.stopPropagation()}>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleFavorite(audio._id);
+                    }}
+                    style={{
+                      padding: '8px', borderRadius: '8px', border: 'none', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}
+                    >
+                    <i className={`${audio.isFavorite ? 'fas fa-heart' : 'far fa-heart'}`} style={{ color: audio.isFavorite ? '#e74c3c' : 'inherit' }} />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const shareUrl = `${window.location.origin}/details/${audio._id}`;
+                      navigator.clipboard.writeText(shareUrl).then(() => {
+                        console.log('Share link copied');
+                      });
+                    }}
+                    style={{
+                      padding: '8px', borderRadius: '8px', border: 'none', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}
+                  >
+                    <i className="fas fa-share-alt" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
           {/* Pagination */}
           {totalPages > 1 && (

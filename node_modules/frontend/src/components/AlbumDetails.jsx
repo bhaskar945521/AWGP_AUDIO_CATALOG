@@ -413,6 +413,42 @@ export default function AlbumDetails() {
                       </button>
                     )}
                     
+                    {/* Share button (for all users) */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const shareUrl = `${window.location.origin}/details/${audio._id}`;
+                        navigator.clipboard.writeText(shareUrl).then(() => {
+                          toast.success('Share link copied to clipboard!');
+                        }).catch(() => {
+                          toast.error('Failed to copy link');
+                        });
+                      }}
+                      title="Share Track"
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: '10px 14px',
+                        color: 'var(--text-muted)',
+                        fontSize: '1.05rem',
+                        borderRadius: '99px',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.color = 'var(--saffron)';
+                        e.currentTarget.style.background = 'rgba(247,168,77,0.12)';
+                        e.currentTarget.style.transform = 'scale(1.05)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.color = 'var(--text-muted)';
+                        e.currentTarget.style.background = 'transparent';
+                        e.currentTarget.style.transform = 'scale(1)';
+                      }}
+                    >
+                      <i className="fas fa-share-alt" />
+                    </button>
+
                     {/* Comment button (only if logged in) */}
                     {token && (
                       <button
