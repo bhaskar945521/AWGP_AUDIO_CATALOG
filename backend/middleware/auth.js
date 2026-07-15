@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const Role = require('../models/Role');
+const { expandPermissions } = require('./permissionCheck');
 
 module.exports = async function (req, res, next) {
   const authHeader = req.headers['authorization'];
@@ -25,18 +26,24 @@ module.exports = async function (req, res, next) {
       return res.status(403).json({ message: `Your account is ${user.status}. Access denied.` });
     }
 
-    // Resolve permissions from Role document
+    // Resolve permissions:
+    // If role is admin, they have admin role bypass.
+    // Otherwise, check if role doc is enabled (Access Denied if disabled).
+    // Use user.permissions as source of truth. Fallback to roleDoc permissions if user.permissions is uninitialized.
     let permissions = [];
     if (user.role === 'admin') {
       permissions = ['admin'];
     } else {
       const roleDoc = await Role.findOne({ name: user.role });
-      if (!roleDoc) {
-        permissions = user.permissions || [];
-      } else if (!roleDoc.enabled) {
+      if (roleDoc && !roleDoc.enabled) {
         return res.status(403).json({ message: 'Role is disabled. Access denied.' });
-      } else {
+      }
+      if (user.permissions && user.permissions.length > 0) {
+        permissions = user.permissions;
+      } else if (roleDoc) {
         permissions = roleDoc.permissions || [];
+      } else {
+        permissions = user.permissions || [];
       }
     }
 
@@ -44,7 +51,7 @@ module.exports = async function (req, res, next) {
       _id: user._id,
       username: user.username,
       role: user.role,
-      permissions: permissions,
+      permissions: expandPermissions(permissions),
     };
     next();
   } catch (err) {

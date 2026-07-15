@@ -22,14 +22,17 @@ export const AuthProvider = ({ children }) => {
     'audio_edit': 'audios_update',
     'audio_delete': 'audios_delete',
     'audio_view': 'audios_read',
+    'audios_view': 'audios_read',
     'category_create': 'categories_create',
     'category_edit': 'categories_update',
     'category_delete': 'categories_delete',
     'category_view': 'categories_read',
+    'categories_view': 'categories_read',
     'album_create': 'albums_create',
     'album_edit': 'albums_update',
     'album_delete': 'albums_delete',
     'album_view': 'albums_read',
+    'albums_view': 'albums_read',
     'feedback_view': 'feedback_read',
     'feedback_delete': 'feedback_delete'
   };

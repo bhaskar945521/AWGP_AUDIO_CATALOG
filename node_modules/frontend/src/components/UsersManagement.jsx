@@ -3,55 +3,76 @@ import api, { resolveUrl } from '../api';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 
-// All available permissions grouped
+// All available permissions grouped (standardized)
 const PERMISSION_GROUPS = [
   {
     name: 'Audio Library',
     icon: 'fas fa-music',
     permissions: [
-      { value: 'audio_view',   label: 'View Audios' },
-      { value: 'audio_upload', label: 'Upload Audio' },
-      { value: 'audio_edit',   label: 'Edit Audio' },
-      { value: 'audio_delete', label: 'Delete Audio' },
+      { value: 'audios_read',     label: 'View / Listen' },
+      { value: 'audios_create',   label: 'Upload Audio' },
+      { value: 'audios_update',   label: 'Edit Audio' },
+      { value: 'audios_delete',   label: 'Delete Audio' },
+      { value: 'audios_download', label: 'Download Audio' },
+      { value: 'audios_print',    label: 'Print Details' },
     ],
   },
   {
     name: 'Category Management',
     icon: 'fas fa-tags',
     permissions: [
-      { value: 'category_view',   label: 'View' },
-      { value: 'category_create', label: 'Create' },
-      { value: 'category_edit',   label: 'Edit' },
-      { value: 'category_delete', label: 'Delete' },
+      { value: 'categories_read',   label: 'View Categories' },
+      { value: 'categories_create', label: 'Create Category' },
+      { value: 'categories_update', label: 'Edit Category' },
+      { value: 'categories_delete', label: 'Delete Category' },
     ],
   },
   {
     name: 'Album Management',
     icon: 'fas fa-compact-disc',
     permissions: [
-      { value: 'album_view',   label: 'View' },
-      { value: 'album_create', label: 'Create' },
-      { value: 'album_edit',   label: 'Edit' },
-      { value: 'album_delete', label: 'Delete' },
+      { value: 'albums_read',   label: 'View Albums' },
+      { value: 'albums_create', label: 'Create Album' },
+      { value: 'albums_update', label: 'Edit Album' },
+      { value: 'albums_delete', label: 'Delete Album' },
     ],
   },
   {
     name: 'Feedback',
     icon: 'fas fa-comments',
     permissions: [
-      { value: 'feedback_view',   label: 'View' },
-      { value: 'feedback_delete', label: 'Delete' },
+      { value: 'feedback_read',   label: 'View Feedback' },
+      { value: 'feedback_delete', label: 'Delete Feedback' },
     ],
   },
-];
-// Single‑select options for Operator role (only one may be chosen)
-const SINGLE_OPTIONS = [
-  { name: 'Audio Library', permissions: ['audio_view','audio_upload','audio_edit','audio_delete'] },
-  { name: 'Category Management', permissions: ['category_view','category_create','category_edit','category_delete'] },
-  { name: 'Album Management', permissions: ['album_view','album_create','album_edit','album_delete'] },
-  { name: 'Upload Audio', permissions: ['audio_upload'] },
-  { name: 'Feedback Management', permissions: ['feedback_view','feedback_delete'] },
-  { name: 'Analytics Dashboard', permissions: ['analytics_view'] },
+  {
+    name: 'Users Management',
+    icon: 'fas fa-users',
+    permissions: [
+      { value: 'users_read',   label: 'View Users' },
+      { value: 'users_create', label: 'Create User' },
+      { value: 'users_update', label: 'Edit User' },
+      { value: 'users_delete', label: 'Delete User' },
+    ],
+  },
+  {
+    name: 'Roles Management',
+    icon: 'fas fa-user-shield',
+    permissions: [
+      { value: 'roles_read',   label: 'View Roles' },
+      { value: 'roles_create', label: 'Create Role' },
+      { value: 'roles_update', label: 'Edit Role' },
+      { value: 'roles_delete', label: 'Delete Role' },
+    ],
+  },
+  {
+    name: 'System & Analytics',
+    icon: 'fas fa-cogs',
+    permissions: [
+      { value: 'logs_read',       label: 'Audit Logs' },
+      { value: 'analytics_view',   label: 'Analytics' },
+    ],
+  },
 ];
 
 const ALL_PERMISSIONS = PERMISSION_GROUPS.flatMap(g => g.permissions.map(p => p.value));
@@ -66,49 +87,81 @@ const EMPTY_FORM = {
   permissions: [],
   assignedWork: '',
   status: 'Active',
-  selectedGroups: [],
 };
 
 // ── Permission picker ────────────────────────────────────────────
-function PermissionPicker({ role, permissions, onChange, selectedOptions = [], onToggleOption }) {
-  const effectiveSelected = role === 'admin' && selectedOptions.length === 0
-    ? SINGLE_OPTIONS.map(o => o.name)
-    : selectedOptions;
+function PermissionPicker({ permissions = [], onChange }) {
+  const handleToggle = (val) => {
+    const newPerms = permissions.includes(val)
+      ? permissions.filter(p => p !== val)
+      : [...permissions, val];
+    if (onChange) onChange(newPerms);
+  };
 
-  const toggleOption = (opt) => {
-    const newSelected = effectiveSelected.includes(opt.name)
-      ? effectiveSelected.filter(name => name !== opt.name)
-      : [...effectiveSelected, opt.name];
-    if (onToggleOption) onToggleOption(newSelected);
-    const combinedPerms = SINGLE_OPTIONS
-      .filter(o => newSelected.includes(o.name))
-      .flatMap(o => o.permissions);
-    if (onChange) onChange(combinedPerms);
+  const handleSelectAll = (groupPerms, all) => {
+    let newPerms = [...permissions];
+    if (all) {
+      groupPerms.forEach(p => {
+        if (!newPerms.includes(p)) newPerms.push(p);
+      });
+    } else {
+      newPerms = newPerms.filter(p => !groupPerms.includes(p));
+    }
+    if (onChange) onChange(newPerms);
   };
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '12px' }}>
-      {SINGLE_OPTIONS.map(opt => (
-        <label key={opt.name} style={{
-          background: effectiveSelected.includes(opt.name) ? 'rgba(247,168,77,0.08)' : 'var(--card-bg, rgba(255,255,255,0.03))',
-          border: `2px solid ${effectiveSelected.includes(opt.name) ? 'var(--saffron, #f7a84d)' : 'var(--border)'}`,
-          borderRadius: '12px',
-          padding: '12px 16px',
-          cursor: 'pointer',
-          userSelect: 'none',
-          transition: 'all 0.2s',
-        }}>
-          <input
-            type="checkbox"
-            checked={effectiveSelected.includes(opt.name)}
-            onChange={() => toggleOption(opt)}
-            style={{ display: 'none' }}
-          />
-          <span style={{ fontWeight: 700, fontSize: '0.86rem', color: effectiveSelected.includes(opt.name) ? 'var(--text-main)' : 'var(--text-muted)' }}>
-            {opt.name}
-          </span>
-        </label>
-      ))}
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '16px', marginTop: '10px' }}>
+      {PERMISSION_GROUPS.map(group => {
+        const groupVals = group.permissions.map(p => p.value);
+        const allSelected = groupVals.every(v => permissions.includes(v));
+        const someSelected = groupVals.some(v => permissions.includes(v)) && !allSelected;
+        
+        return (
+          <div key={group.name} style={{
+            border: '1.5px solid var(--border)',
+            borderRadius: '12px',
+            background: 'var(--card-bg, rgba(255,255,255,0.01))',
+            overflow: 'hidden'
+          }}>
+            <div style={{
+              background: 'var(--border-saffron, rgba(247,168,77,0.08))',
+              padding: '10px 14px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              borderBottom: '1.5px solid var(--border)'
+            }}>
+              <span style={{ fontWeight: 800, fontSize: '0.82rem', color: 'var(--text-main)' }}>
+                <i className={group.icon} style={{ marginRight: 8, color: 'var(--saffron, #f7a84d)' }} />
+                {group.name}
+              </span>
+              <input
+                type="checkbox"
+                checked={allSelected}
+                ref={el => { if (el) el.indeterminate = someSelected; }}
+                onChange={e => handleSelectAll(groupVals, e.target.checked)}
+                style={{ cursor: 'pointer' }}
+              />
+            </div>
+            <div style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {group.permissions.map(p => (
+                <label key={p.value} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', userSelect: 'none' }}>
+                  <input
+                    type="checkbox"
+                    checked={permissions.includes(p.value)}
+                    onChange={() => handleToggle(p.value)}
+                    style={{ cursor: 'pointer' }}
+                  />
+                  <span style={{ fontSize: '0.82rem', color: permissions.includes(p.value) ? 'var(--text-main)' : 'var(--text-muted)' }}>
+                    {p.label}
+                  </span>
+                </label>
+              ))}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -174,19 +227,20 @@ export default function UsersManagement() {
 
   // When role changes in new user form — auto-set permissions
   const handleRoleChange = (role, target = 'new') => {
+    const matchedRole = dynamicRoles.find(r => r.name === role);
+    const defaultPerms = matchedRole ? matchedRole.permissions : [];
+
     if (target === 'new') {
       setNewUser(prev => ({
         ...prev,
         role,
-        permissions: role === 'admin' ? [...ALL_PERMISSIONS] : [],
-        selectedGroups: [],
+        permissions: role === 'admin' ? [...ALL_PERMISSIONS] : defaultPerms,
       }));
     } else {
       setEditForm(prev => ({
         ...prev,
         role,
-        permissions: role === 'admin' ? [...ALL_PERMISSIONS] : [],
-        selectedGroups: [],
+        permissions: role === 'admin' ? [...ALL_PERMISSIONS] : defaultPerms,
       }));
     }
   };
@@ -231,7 +285,6 @@ export default function UsersManagement() {
       confirmPassword: '',
       assignedWork: user.assignedWork || '',
       status: user.status || 'Active',
-      selectedGroups: [],
     });
   };
 
@@ -244,7 +297,6 @@ export default function UsersManagement() {
       fullName: editingUser.fullName || '',
       email: editingUser.email || '',
       permissions: [],
-      selectedGroups: [],
       assignedWork: '',
       status: 'Active',
       password: '',
@@ -438,10 +490,7 @@ export default function UsersManagement() {
             </div>
           ) : (
             <PermissionPicker
-              role={newUser.role}
               permissions={newUser.permissions}
-              selectedOptions={newUser.selectedGroups}
-              onToggleOption={newSelected => setNewUser(p => ({ ...p, selectedGroups: newSelected }))}
               onChange={perms => setNewUser(p => ({ ...p, permissions: perms }))}
             />
           )}
@@ -647,10 +696,7 @@ export default function UsersManagement() {
                       </div>
                     ) : (
                       <PermissionPicker
-                        role={editForm.role}
                         permissions={editForm.permissions}
-                        selectedOptions={editForm.selectedGroups || []}
-                        onToggleOption={newSelected => setEditForm(p => ({ ...p, selectedGroups: newSelected }))}
                         onChange={perms => setEditForm(p => ({ ...p, permissions: perms }))}
                       />
                     )}

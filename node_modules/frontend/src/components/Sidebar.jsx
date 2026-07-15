@@ -9,10 +9,11 @@ function Sidebar({ onOpenUpload }) {
 
   // Determine if we should show any admin links (has any of the permissions)
   const showAdminLinks = isAdmin || 
-    hasAnyPermission(['audio_view', 'audio_upload', 'audio_edit', 'audio_delete', 
-                      'category_view', 'category_create', 'category_edit', 'category_delete',
-                      'album_view', 'album_create', 'album_edit', 'album_delete',
-                      'feedback_view', 'feedback_delete', 'analytics_view']);
+    hasAnyPermission(['audios_read', 'audios_create', 'audios_update', 'audios_delete',
+                      'categories_read', 'categories_create', 'categories_update', 'categories_delete',
+                      'albums_read', 'albums_create', 'albums_update', 'albums_delete',
+                      'feedback_read', 'feedback_delete', 'analytics_view', 'logs_read',
+                      'users_read', 'roles_read']);
 
   return (
     <aside className="sidebar">
@@ -34,7 +35,7 @@ function Sidebar({ onOpenUpload }) {
           <span>Dashboard</span>
         </NavLink>
 
-        {(isPublicUser || isAdmin || hasPermission('audio_view')) && (
+        {(isPublicUser || isAdmin || hasPermission('audios_read')) && (
           <NavLink to="/library" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
             <i className="fas fa-music" />
             <span>Audio Library</span>
@@ -67,14 +68,14 @@ function Sidebar({ onOpenUpload }) {
             <div className="nav-divider" />
             <div className="nav-section-label">Administration</div>
 
-            {(isAdmin || hasPermission('analytics_view')) && (
+            {(isAdmin || hasPermission('analytics_view') || hasPermission('logs_read')) && (
               <NavLink to="/admin" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
                 <i className="fas fa-cog" />
                 <span>Admin Panel</span>
               </NavLink>
             )}
 
-            {isAdmin && (
+            {(isAdmin || hasPermission('users_read')) && (
               <NavLink to="/users" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
                 <i className="fas fa-users" />
                 <span>Users Management</span>
@@ -84,7 +85,7 @@ function Sidebar({ onOpenUpload }) {
         )}
 
         {/* Upload audio — admin/onlyuser with permission only */}
-        {token && !isPublicUser && (isAdmin || hasPermission('audio_upload')) && (
+        {token && !isPublicUser && (isAdmin || hasPermission('audios_create')) && (
           <button onClick={onOpenUpload} className="nav-item">
             <i className="fas fa-cloud-upload-alt" />
             <span>Upload Audio</span>

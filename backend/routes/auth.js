@@ -2,9 +2,11 @@ const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const Role = require('../models/Role');
 const bcrypt = require('bcryptjs');
 const auth = require('../middleware/auth');
 const roleCheck = require('../middleware/roleCheck');
+const { expandPermissions } = require('../middleware/permissionCheck');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -37,7 +39,9 @@ router.get('/me', auth, async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-    res.json(user);
+    const userObj = user.toObject();
+    userObj.permissions = req.user.permissions; // fully expanded permissions resolved by auth middleware
+    res.json(userObj);
   } catch (err) {
     console.error('Get current user error:', err);
     res.status(500).json({ message: err.message });
@@ -55,15 +59,40 @@ router.post('/login', async (req, res) => {
     if (!user) return res.status(401).json({ message: 'Invalid credentials' });
     const valid = await user.validatePassword(password);
     if (!valid) return res.status(401).json({ message: 'Invalid credentials' });
+
+    if (user.status && user.status !== 'Active') {
+      return res.status(403).json({ message: `Your account is ${user.status}. Access denied.` });
+    }
+
+    // Resolve permissions
+    let permissions = [];
+    if (user.role === 'admin') {
+      permissions = ['admin'];
+    } else {
+      const roleDoc = await Role.findOne({ name: user.role });
+      if (roleDoc && !roleDoc.enabled) {
+        return res.status(403).json({ message: 'Role is disabled. Access denied.' });
+      }
+      if (user.permissions && user.permissions.length > 0) {
+        permissions = user.permissions;
+      } else if (roleDoc) {
+        permissions = roleDoc.permissions || [];
+      } else {
+        permissions = user.permissions || [];
+      }
+    }
+
+    const expandedPerms = expandPermissions(permissions);
+
     const token = jwt.sign(
-      { id: user._id, role: user.role, permissions: user.permissions || [] },
+      { id: user._id, role: user.role, permissions: expandedPerms },
       process.env.JWT_SECRET || 'defaultsecret',
       { expiresIn: '7d' }
     );
     res.json({ 
       token, 
       role: user.role, 
-      permissions: user.permissions || [],
+      permissions: expandedPerms,
       username: user.username,
       email: user.email,
       fullName: user.fullName,

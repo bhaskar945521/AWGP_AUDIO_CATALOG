@@ -15,9 +15,9 @@ export default function AudioCard({
   const { userFavorites, toggleFavoriteTrack, userReactions, fetchReactions, toggleLike, toggleDislike } = useAudio();
   const navigate = useNavigate();
   
-  const canEditAudio   = isAdmin || hasPermission('audio_edit');
-  const canDeleteAudio = isAdmin || hasPermission('audio_delete');
-  const canAddToAlbum  = isAdmin || hasPermission('album_edit');
+  const canEditAudio   = isAdmin || hasPermission('audios_update');
+  const canDeleteAudio = isAdmin || hasPermission('audios_delete');
+  const canAddToAlbum  = isAdmin || hasPermission('albums_update');
   const canDownload    = isAdmin || hasPermission('audios_download');
   const showAdminOptions = canEditAudio || canDeleteAudio || canAddToAlbum || canDownload;
 

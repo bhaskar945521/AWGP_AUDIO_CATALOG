@@ -60,37 +60,47 @@ export default function Admin() {
   const availableTabs = [];
 
   // Audio Library tab if has any audio permission
-  if (isAdmin || hasAnyPermission(['audio_view', 'audio_upload', 'audio_edit', 'audio_delete'])) {
+  if (isAdmin || hasAnyPermission(['audios_read', 'audios_create', 'audios_update', 'audios_delete'])) {
     availableTabs.push({ id: 'library', label: 'Audio Library', icon: 'fas fa-music' });
   }
 
   // Categories tab if has any category permission
-  if (isAdmin || hasAnyPermission(['category_view', 'category_create', 'category_edit', 'category_delete'])) {
+  if (isAdmin || hasAnyPermission(['categories_read', 'categories_create', 'categories_update', 'categories_delete'])) {
     availableTabs.push({ id: 'categories', label: 'Categories', icon: 'fas fa-tags' });
   }
 
   // Albums tab if has any album permission
-  if (isAdmin || hasAnyPermission(['album_view', 'album_create', 'album_edit', 'album_delete'])) {
+  if (isAdmin || hasAnyPermission(['albums_read', 'albums_create', 'albums_update', 'albums_delete'])) {
     availableTabs.push({ id: 'albums', label: 'Albums', icon: 'fas fa-photo-video' });
   }
 
   // Feedback tab if has any feedback permission
-  if (isAdmin || hasAnyPermission(['feedback_view', 'feedback_delete'])) {
+  if (isAdmin || hasAnyPermission(['feedback_read', 'feedback_delete'])) {
     availableTabs.push({ id: 'feedback', label: 'Feedback Management', icon: 'fas fa-comment-alt' });
   }
 
   // Analytics tab if has analytics permission
-  if (isAdmin || hasPermission('analytics_view')) {
+  if (isAdmin || hasPermission('analytics_view') || hasPermission('logs_read')) {
     availableTabs.push({ id: 'analytics', label: 'Analytics Dashboard', icon: 'fas fa-chart-bar' });
   }
 
-  // Only admin sees Users, Roles, Audit, Exports tabs
-  if (isAdmin) {
+  // Users tab if admin or has users_read
+  if (isAdmin || hasPermission('users_read')) {
     availableTabs.push({ id: 'users', label: 'Users', icon: 'fas fa-users' });
+  }
+
+  // Roles tab if admin or has roles_read
+  if (isAdmin || hasPermission('roles_read')) {
     availableTabs.push({ id: 'roles', label: 'Roles & Permissions', icon: 'fas fa-user-shield' });
+  }
+
+  // Audit logs, exports, trash — admin only
+  if (isAdmin) {
     availableTabs.push({ id: 'audit', label: 'Audit Logs', icon: 'fas fa-history' });
     availableTabs.push({ id: 'exports', label: 'Data Exports', icon: 'fas fa-download' });
     availableTabs.push({ id: 'trash', label: 'Trash', icon: 'fas fa-trash-alt' });
+  } else if (hasPermission('logs_read')) {
+    availableTabs.push({ id: 'audit', label: 'Audit Logs', icon: 'fas fa-history' });
   }
 
   // Default to first available tab or library if no tabs
@@ -404,7 +414,7 @@ export default function Admin() {
             <p className="admin-page-sub">Manage audio library, categories, and metadata.</p>
           </div>
         </div>
-        {(isAdmin || hasPermission('audio_upload')) && (
+        {(isAdmin || hasPermission('audios_create')) && (
           <button
             onClick={() => setIsUploadOpen(true)}
             className="admin-upload-btn"

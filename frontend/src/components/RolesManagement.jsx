@@ -7,7 +7,7 @@ const PERMISSION_GROUPS = [
     name: 'Audio Library',
     icon: 'fas fa-music',
     permissions: [
-      { value: 'audios_view',     label: 'View / Listen' },
+      { value: 'audios_read',     label: 'View / Listen' },
       { value: 'audios_create',   label: 'Upload' },
       { value: 'audios_update',   label: 'Edit' },
       { value: 'audios_delete',   label: 'Delete (Soft)' },
@@ -19,7 +19,7 @@ const PERMISSION_GROUPS = [
     name: 'Categories',
     icon: 'fas fa-tags',
     permissions: [
-      { value: 'categories_view',   label: 'View' },
+      { value: 'categories_read',   label: 'View' },
       { value: 'categories_create', label: 'Create' },
       { value: 'categories_update', label: 'Edit' },
       { value: 'categories_delete', label: 'Delete' },
@@ -29,10 +29,18 @@ const PERMISSION_GROUPS = [
     name: 'Albums',
     icon: 'fas fa-compact-disc',
     permissions: [
-      { value: 'albums_view',   label: 'View' },
+      { value: 'albums_read',   label: 'View' },
       { value: 'albums_create', label: 'Create' },
       { value: 'albums_update', label: 'Edit' },
       { value: 'albums_delete', label: 'Delete' },
+    ],
+  },
+  {
+    name: 'Feedback',
+    icon: 'fas fa-comments',
+    permissions: [
+      { value: 'feedback_read',   label: 'View' },
+      { value: 'feedback_delete', label: 'Delete' },
     ],
   },
   {

@@ -1,26 +1,34 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
-// Define all possible permissions
+// Define all possible permissions (standardized)
 const ALL_PERMISSIONS = [
-  'audio_view',
-  'audio_upload',
-  'audio_edit',
-  'audio_delete',
-  'category_view',
-  'category_create',
-  'category_edit',
-  'category_delete',
-  'album_view',
-  'album_create',
-  'album_edit',
-  'album_delete',
-  'feedback_view',
+  'audios_read',
+  'audios_create',
+  'audios_update',
+  'audios_delete',
+  'audios_download',
+  'audios_print',
+  'categories_read',
+  'categories_create',
+  'categories_update',
+  'categories_delete',
+  'albums_read',
+  'albums_create',
+  'albums_update',
+  'albums_delete',
+  'feedback_read',
   'feedback_delete',
+  'logs_read',
   'analytics_view',
-  'users_manage',
-  'settings_manage',
-  'admin_settings_manage'
+  'roles_read',
+  'roles_create',
+  'roles_update',
+  'roles_delete',
+  'users_read',
+  'users_create',
+  'users_update',
+  'users_delete'
 ];
 
 const UserSchema = new mongoose.Schema({
