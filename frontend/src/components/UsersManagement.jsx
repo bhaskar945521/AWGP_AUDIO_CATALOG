@@ -19,7 +19,7 @@ const PERMISSION_GROUPS = [
     ],
   },
   {
-    name: 'Category Management',
+    name: 'Categories',
     icon: 'fas fa-tags',
     permissions: [
       { value: 'categories_read',   label: 'View Categories' },
@@ -29,7 +29,7 @@ const PERMISSION_GROUPS = [
     ],
   },
   {
-    name: 'Album Management',
+    name: 'Albums',
     icon: 'fas fa-compact-disc',
     permissions: [
       { value: 'albums_read',   label: 'View Albums' },
@@ -99,9 +99,9 @@ function PermissionPicker({ permissions = [], onChange }) {
     if (onChange) onChange(newPerms);
   };
 
-  const handleSelectAll = (groupPerms, all) => {
+  const handleSelectAll = (groupPerms, selectAll) => {
     let newPerms = [...permissions];
-    if (all) {
+    if (selectAll) {
       groupPerms.forEach(p => {
         if (!newPerms.includes(p)) newPerms.push(p);
       });
@@ -126,21 +126,21 @@ function PermissionPicker({ permissions = [], onChange }) {
             overflow: 'hidden'
           }}>
             <div style={{
-              background: 'var(--border-saffron, rgba(247,168,77,0.08))',
+              background: 'var(--border-saffron, rgba(247,168,77,0.1))',
               padding: '10px 14px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
               borderBottom: '1.5px solid var(--border)'
             }}>
-              <span style={{ fontWeight: 800, fontSize: '0.82rem', color: 'var(--text-main)' }}>
+              <span style={{ fontWeight: 800, fontSize: '0.85rem', color: 'var(--text-main)' }}>
                 <i className={group.icon} style={{ marginRight: 8, color: 'var(--saffron, #f7a84d)' }} />
                 {group.name}
               </span>
               <input
                 type="checkbox"
                 checked={allSelected}
-                ref={el => { if (el) el.indeterminate = someSelected; }}
+                ref={el => { if(el) el.indeterminate = someSelected; }}
                 onChange={e => handleSelectAll(groupVals, e.target.checked)}
                 style={{ cursor: 'pointer' }}
               />
@@ -154,7 +154,7 @@ function PermissionPicker({ permissions = [], onChange }) {
                     onChange={() => handleToggle(p.value)}
                     style={{ cursor: 'pointer' }}
                   />
-                  <span style={{ fontSize: '0.82rem', color: permissions.includes(p.value) ? 'var(--text-main)' : 'var(--text-muted)' }}>
+                  <span style={{ fontSize: '0.85rem', color: permissions.includes(p.value) ? 'var(--text-main)' : 'var(--text-muted)' }}>
                     {p.label}
                   </span>
                 </label>
@@ -167,7 +167,7 @@ function PermissionPicker({ permissions = [], onChange }) {
   );
 }
 
-// ── Role Badge ───────────────────────────────────────────────────
+// ── Role Badge ────────────────────────────────────────────────────
 function RoleBadge({ role }) {
   const styles = {
     admin:       { bg: 'rgba(247,168,77,0.15)',  color: '#f7a84d', icon: 'fas fa-crown',       label: 'Admin' },
@@ -188,7 +188,7 @@ function RoleBadge({ role }) {
   );
 }
 
-// ── Main Component ───────────────────────────────────────────────
+// ── Main Component ────────────────────────────────────────────────
 export default function UsersManagement() {
   const { token, isAdmin, hasPermission } = useAuth();
   const authConfig = () => ({ headers: { Authorization: `Bearer ${token || localStorage.getItem('token')}` } });
@@ -484,7 +484,7 @@ export default function UsersManagement() {
                   onChange={() => handleRoleChange(r.name, 'new')} style={{ display: 'none' }} />
                 <i className={r.isSystem ? 'fas fa-shield-alt' : 'fas fa-user-tag'} style={{ fontSize: '1.1rem', color: newUser.role === r.name ? 'var(--saffron, #f7a84d)' : 'var(--text-muted)' }} />
                 <div>
-                  <div style={{ fontWeight: 700, fontSize: '0.88rem', color: newUser.role === r.name ? 'var(--text-main)' : 'var(--text-muted)' }}>{r.displayName}</div>
+                  <div style={{ fontWeight: 700, fontSize: '0.92rem', color: newUser.role === r.name ? 'var(--text-main)' : 'var(--text-muted)' }}>{r.displayName}</div>
                   <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>{r.permissions.length} permissions</div>
                 </div>
               </label>
@@ -502,7 +502,7 @@ export default function UsersManagement() {
                   onChange={() => handleRoleChange('onlyuser', 'new')} style={{ display: 'none' }} />
                 <i className="fas fa-user-cog" style={{ fontSize: '1.1rem', color: newUser.role === 'onlyuser' ? 'var(--saffron, #f7a84d)' : 'var(--text-muted)' }} />
                 <div>
-                  <div style={{ fontWeight: 700, fontSize: '0.88rem', color: newUser.role === 'onlyuser' ? 'var(--text-main)' : 'var(--text-muted)' }}>Operator</div>
+                  <div style={{ fontWeight: 700, fontSize: '0.92rem', color: newUser.role === 'onlyuser' ? 'var(--text-main)' : 'var(--text-muted)' }}>Operator</div>
                   <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>Legacy custom</div>
                 </div>
               </label>
@@ -569,7 +569,7 @@ export default function UsersManagement() {
 
             <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '14px', maxHeight: '72vh', overflowY: 'auto', padding: '20px' }}>
 
-              {/* ── PUBLIC USER: Show Convert Button (when NOT in convertMode) ── */}
+              {/* ── PUBLIC USER: Show Convert Button (when not in convertMode) ── */}
               {isPublicUserEditing && !convertMode && (
                 <div style={{
                   background: 'linear-gradient(135deg, rgba(247, 168, 77, 0.12), rgba(245, 158, 11, 0.08))',
@@ -606,7 +606,7 @@ export default function UsersManagement() {
                       border: 'none', color: '#fff', fontWeight: 700, fontSize: '0.88rem',
                       cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px',
                       whiteSpace: 'nowrap', flexShrink: 0,
-                      boxShadow: '0 4px 15px rgba(247, 168, 77, 0.35)',
+                      boxShadow: '0 4px 15px rgba(247, 168, 77, 0.3)',
                       transition: 'all 0.2s',
                     }}
                   >
@@ -751,7 +751,7 @@ export default function UsersManagement() {
               )}
             </div>
 
-            <div className="modal-actions" style={{ padding: '16px 20px', borderTop: '1px solid var(--border)', display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+            <div className="modal-actions" style={{ padding: '16px 20px', borderTop: '1px solid var(--border)', display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
               <button className="btn-ghost" onClick={() => { setEditingUser(null); setConvertMode(false); }}>Cancel</button>
               {/* Only show save/change button when fields are visible */}
               {(!isPublicUserEditing || convertMode) && (
@@ -785,7 +785,7 @@ export default function UsersManagement() {
       ) : users.length === 0 ? (
         <div className="empty-state"><p className="empty-title">No users found.</p></div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {users.map(u => {
             const isLastAdmin = u.role === 'admin' && adminCount <= 1;
             const permCount = u.role === 'admin' ? ALL_PERMISSIONS.length : (u.permissions?.length || 0);
@@ -860,7 +860,7 @@ export default function UsersManagement() {
                     </div>
                   )}
                   {/* Permission chips */}
-                  <div style={{ marginTop: 6, display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                  <div style={{ marginTop: 6, display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                     {isPublic ? (
                       <span style={{ fontSize: '0.7rem', color: '#8b5cf6', fontStyle: 'italic' }}>
                         No operator permissions — click Edit to convert
@@ -872,12 +872,12 @@ export default function UsersManagement() {
                     ) : u.permissions?.length > 0 ? (
                       <>
                         {u.permissions.slice(0, 4).map(p => (
-                          <span key={p} style={{ fontSize: '0.68rem', padding: '2px 8px', borderRadius: '99px', background: 'rgba(66,153,225,0.12)', color: '#4299e1', fontWeight: 600 }}>
+                          <span key={p} style={{ fontSize: '0.7rem', padding: '2px 8px', borderRadius: '99px', background: 'rgba(66,153,225,0.12)', color: '#4299e1', fontWeight: 600 }}>
                             {p.replace(/_/g, ' ')}
                           </span>
                         ))}
                         {u.permissions.length > 4 && (
-                          <span style={{ fontSize: '0.68rem', padding: '2px 8px', borderRadius: '99px', background: 'rgba(160,160,160,0.12)', color: 'var(--text-muted)' }}>
+                          <span style={{ fontSize: '0.7rem', padding: '2px 8px', borderRadius: '99px', background: 'rgba(160,160,160,0.12)', color: 'var(--text-muted)' }}>
                             +{u.permissions.length - 4} more
                           </span>
                         )}

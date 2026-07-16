@@ -70,12 +70,13 @@ export default function AlbumsManagement() {
       const isInAlbum = a.albumIds?.some(al => (al._id || al) === editAudioAlbumFilter);
       if (!isInAlbum) return false;
     }
-    if (editAudioCategoryFilter) {
-      const isInCategory = a.albumIds?.some(al => {
-        const catId = al.categoryId && typeof al.categoryId === 'object' ? al.categoryId._id : al.categoryId;
-        return catId === editAudioCategoryFilter;
-      });
-      if (!isInCategory) return false;
+    if (!editAudioAlbumFilter) {
+      const cid = al.categoryId && typeof al.categoryId === 'object' ? al.categoryId._id : al.categoryId;
+      if (!cid) return false;
+    }
+    if (!editAudioAlbumFilter) {
+      const cid = a.categoryId && typeof a.categoryId === 'object' ? a.categoryId._id : a.categoryId;
+      if (!cid) return false;
     }
     return true;
   });
@@ -137,10 +138,10 @@ export default function AlbumsManagement() {
       setFilteredAlbums(albums);
     } else {
       setFilteredAlbums(
-        albums.filter(a =>
-          (a.name && a.name.toLowerCase().includes(term)) ||
-          (a.title && a.title.toLowerCase().includes(term)) ||
-          (a.speaker && a.speaker.toLowerCase().includes(term))
+        albums.filter(al =>
+          (al.name && al.name.toLowerCase().includes(term)) ||
+          (al.title && al.title.toLowerCase().includes(term)) ||
+          (al.speaker && al.speaker.toLowerCase().includes(term))
         )
       );
     }
@@ -150,15 +151,15 @@ export default function AlbumsManagement() {
   const [audioEdits, setAudioEdits] = useState({});
 
   // Open simple prompt dialogs to edit audio metadata (optional)
-  const handleAudioEdit = audio => {
-    const newTitle = window.prompt('Edit title (leave empty to keep unchanged):', audio.title || '');
-    const newSpeaker = window.prompt('Edit speaker (leave empty to keep unchanged):', audio.speaker || '');
-    const newDesc = window.prompt('Edit description (leave empty to keep unchanged):', audio.description || '');
-    const newTags = window.prompt('Edit tags as comma‑separated list (leave empty to keep unchanged):', (audio.tags && audio.tags.join(',')) || '');
+  const handleAudioEdit = a => {
+    const newTitle = window.prompt('Edit title (leave empty to keep unchanged):', a.title || '');
+    const newSpeaker = window.prompt('Edit speaker (leave empty to keep unchanged):', a.speaker || '');
+    const newDesc = window.prompt('Edit description (leave empty to keep unchanged):', a.description || '');
+    const newTags = window.prompt('Edit tags as comma-separated list (leave empty to keep unchanged):', (a.tags && a.tags.join(',')) || '');
     setAudioEdits(prev => ({
       ...prev,
-      [audio._id]: {
-        ...(prev[audio._id] || {}),
+      [a._id]: {
+        ...(prev[a._id] || {}),
         ...(newTitle ? { title: newTitle } : {}),
         ...(newSpeaker ? { speaker: newSpeaker } : {}),
         ...(newDesc ? { description: newDesc } : {}),
@@ -614,8 +615,8 @@ export default function AlbumsManagement() {
               {albums
                 .filter(al => {
                   if (!audioCategoryFilter) return true;
-                  const catId = al.categoryId && typeof al.categoryId === 'object' ? al.categoryId._id : al.categoryId;
-                  return catId === audioCategoryFilter;
+                  const cid = al.categoryId && typeof al.categoryId === 'object' ? al.categoryId._id : al.categoryId;
+                  return cid === audioCategoryFilter;
                 })
                 .map(album => (
                   <option key={album._id} value={album._id}>{album.title || album.name}</option>
@@ -802,8 +803,8 @@ export default function AlbumsManagement() {
                       {albums
                         .filter(al => {
                           if (!editAudioCategoryFilter) return true;
-                          const catId = al.categoryId && typeof al.categoryId === 'object' ? al.categoryId._id : al.categoryId;
-                          return catId === editAudioCategoryFilter;
+                          const cid = al.categoryId && typeof al.categoryId === 'object' ? al.categoryId._id : al.categoryId;
+                          return cid === editAudioCategoryFilter;
                         })
                         .map(album => (
                           <option key={album._id} value={album._id}>{album.title || album.name}</option>

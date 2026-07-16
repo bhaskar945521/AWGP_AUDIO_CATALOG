@@ -203,7 +203,7 @@ export default function RolesManagement() {
   const inputStyle = {
     width: '100%', padding: '10px 14px', borderRadius: '10px',
     border: '1.5px solid var(--border)', background: 'var(--card-bg, rgba(255,255,255,0.04))',
-    color: 'var(--text-main)', fontSize: '0.88rem', outline: 'none'
+    color: 'var(--text-main)', fontSize: '0.85rem', outline: 'none'
   };
 
   return (
@@ -213,7 +213,7 @@ export default function RolesManagement() {
           <i className="fas fa-user-shield"></i> Roles & Permissions
         </span>
         {!isCreating && !editingRole && (isAdmin || hasPermission('roles_create')) && (
-          <button className="btn-saffron-gradient" onClick={startCreate}>
+          <button className="btn-primary" onClick={startCreate}>
             <i className="fas fa-plus"></i> New Role
           </button>
         )}
@@ -231,11 +231,11 @@ export default function RolesManagement() {
           
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
             <div>
-              <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)' }}>Display Name *</label>
+              <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)' }}>Display Name *</label>
               <input style={inputStyle} type="text" placeholder="e.g. Content Manager" value={form.displayName} onChange={e => setForm(p => ({ ...p, displayName: e.target.value }))} required />
             </div>
             <div>
-              <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)' }}>Internal Identifier {editingRole && '(Cannot edit)'}</label>
+              <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)' }}>Internal Identifier {editingRole && '(Cannot edit)'}</label>
               <input style={inputStyle} type="text" placeholder="e.g. content_manager" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} disabled={!!editingRole} required={!editingRole} />
             </div>
             <div style={{ gridColumn: '1/-1', display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -283,7 +283,7 @@ export default function RolesManagement() {
 
           <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: '20px' }}>
             <button type="button" className="btn-ghost" onClick={cancelEdit}>Cancel</button>
-            <button type="submit" className="btn-saffron-gradient">
+            <button type="submit" className="btn-primary">
               <i className="fas fa-save" /> Save Role
             </button>
           </div>

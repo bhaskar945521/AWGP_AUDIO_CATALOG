@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 export default function FeedbackManagement() {
   const { isAdmin, hasPermission } = useAuth();
   const [feedbacks, setFeedbacks] = useState([]);
-  const [loading, setLoading]     = useState(true);
+  const [loading, setLoading] = useState(true);
 
   const fetchFeedbacks = async () => {
     try {
@@ -78,17 +78,17 @@ export default function FeedbackManagement() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '16px 0' }}>
           {feedbacks.map(f => (
             <div
-               key={f._id}
-               style={{
-                 background: 'var(--card-bg, rgba(255,255,255,0.03))',
-                 border: '1.5px solid var(--border)',
-                 borderRadius: '14px',
-                 padding: '18px 20px',
-                 position: 'relative',
-                 display: 'flex',
-                 flexDirection: 'column',
-                 gap: '8px'
-               }}
+              key={f._id}
+              style={{
+                background: 'var(--card-bg, rgba(255,255,255,0.03))',
+                border: '1.5px solid var(--border)',
+                borderRadius: '14px',
+                padding: '18px 20px',
+                position: 'relative',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px'
+              }}
             >
               {/* Delete Button */}
               <button
@@ -106,7 +106,7 @@ export default function FeedbackManagement() {
                   fontSize: '0.95rem'
                 }}
                 disabled={!(isAdmin || hasPermission('feedback_delete'))}
-                title={!(isAdmin || hasPermission('feedback_delete')) ? "Delete disabled (insufficient permission)" : "Delete Feedback Log"}
+                title={!(isAdmin || hasPermission('feedback_delete')) ? 'Delete disabled (insufficient permission)' : 'Delete Feedback Log'}
               >
                 <i className="fas fa-trash-alt" />
               </button>
@@ -168,7 +168,7 @@ export default function FeedbackManagement() {
                     transition: 'all 0.2s'
                   }}
                 >
-                  <i className={f.approved ? "fas fa-check-circle" : "far fa-circle"} />
+                  <i className={f.approved ? 'fas fa-check-circle' : 'far fa-circle'} />
                   {f.approved ? 'Approved (Shown in Ticker)' : 'Approve for Ticker'}
                 </button>
               </div>
