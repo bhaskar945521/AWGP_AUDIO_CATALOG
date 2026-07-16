@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
 import { toast } from 'react-hot-toast';
+import { useAuth } from '../context/AuthContext';
 
 const PERMISSION_GROUPS = [
   {
@@ -77,6 +78,7 @@ const PERMISSION_GROUPS = [
 const ALL_PERMISSIONS = PERMISSION_GROUPS.flatMap(g => g.permissions.map(p => p.value));
 
 export default function RolesManagement() {
+  const { isAdmin, hasPermission } = useAuth();
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingRole, setEditingRole] = useState(null);
@@ -210,7 +212,7 @@ export default function RolesManagement() {
         <span className="admin-panel-title">
           <i className="fas fa-user-shield"></i> Roles & Permissions
         </span>
-        {!isCreating && !editingRole && (
+        {!isCreating && !editingRole && (isAdmin || hasPermission('roles_create')) && (
           <button className="btn-saffron-gradient" onClick={startCreate}>
             <i className="fas fa-plus"></i> New Role
           </button>
@@ -343,16 +345,18 @@ export default function RolesManagement() {
                 <button 
                   onClick={() => startEdit(role)} 
                   className="admin-action-btn edit" 
-                  disabled={role.isSystem && role.name === 'admin'}
-                  style={{ opacity: (role.isSystem && role.name === 'admin') ? 0.3 : 1 }}
+                  disabled={(role.isSystem && role.name === 'admin') || !(isAdmin || hasPermission('roles_update'))}
+                  style={{ opacity: ((role.isSystem && role.name === 'admin') || !(isAdmin || hasPermission('roles_update'))) ? 0.3 : 1, cursor: ((role.isSystem && role.name === 'admin') || !(isAdmin || hasPermission('roles_update'))) ? 'not-allowed' : 'pointer' }}
+                  title={(role.isSystem && role.name === 'admin') ? 'System admin role cannot be edited' : !(isAdmin || hasPermission('roles_update')) ? 'Edit disabled (insufficient permission)' : 'Edit Role'}
                 >
                   <i className="fas fa-edit" />
                 </button>
                 <button 
                   onClick={() => handleDelete(role)} 
                   className="admin-action-btn delete"
-                  disabled={role.isSystem}
-                  style={{ opacity: role.isSystem ? 0.3 : 1 }}
+                  disabled={role.isSystem || !(isAdmin || hasPermission('roles_delete'))}
+                  style={{ opacity: (role.isSystem || !(isAdmin || hasPermission('roles_delete'))) ? 0.3 : 1, cursor: (role.isSystem || !(isAdmin || hasPermission('roles_delete'))) ? 'not-allowed' : 'pointer' }}
+                  title={role.isSystem ? 'System role cannot be deleted' : !(isAdmin || hasPermission('roles_delete')) ? 'Delete disabled (insufficient permission)' : 'Delete Role'}
                 >
                   <i className="fas fa-trash-alt" />
                 </button>

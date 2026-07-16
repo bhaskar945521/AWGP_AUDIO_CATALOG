@@ -189,7 +189,7 @@ function RoleBadge({ role }) {
 
 // ── Main Component ───────────────────────────────────────────────
 export default function UsersManagement() {
-  const { token, isAdmin } = useAuth();
+  const { token, isAdmin, hasPermission } = useAuth();
   const authConfig = () => ({ headers: { Authorization: `Bearer ${token || localStorage.getItem('token')}` } });
 
   const [users, setUsers]           = useState([]);
@@ -373,6 +373,7 @@ export default function UsersManagement() {
       </div>
 
       {/* ── Create Operator Form ──────────────────────────────── */}
+      {(isAdmin || hasPermission('users_create')) && (
       <form onSubmit={handleCreate} style={{
         background: 'var(--card-bg, rgba(255,255,255,0.03))',
         border: '1.5px solid var(--border)', borderRadius: '16px',
@@ -496,16 +497,17 @@ export default function UsersManagement() {
           )}
         </div>
 
-        <button type="submit" disabled={creating} style={{
+        <button type="submit" disabled={creating || !(isAdmin || hasPermission('users_create'))} style={{
           padding: '11px 28px', borderRadius: '10px',
           background: 'linear-gradient(135deg, var(--saffron, #f7a84d), #f59e0b)',
           border: 'none', color: '#fff', fontWeight: 700, fontSize: '0.9rem',
-          cursor: creating ? 'not-allowed' : 'pointer', opacity: creating ? 0.7 : 1,
+          cursor: (creating || !(isAdmin || hasPermission('users_create'))) ? 'not-allowed' : 'pointer', opacity: (creating || !(isAdmin || hasPermission('users_create'))) ? 0.7 : 1,
           display: 'flex', alignItems: 'center', gap: '8px',
         }}>
           {creating ? <><i className="fas fa-spinner fa-spin" /> Creating...</> : <><i className="fas fa-plus" /> Create Operator</>}
         </button>
       </form>
+      )}
 
       {/* ── Edit / Convert Modal ──────────────────────────────── */}
       {editingUser && (
@@ -844,16 +846,25 @@ export default function UsersManagement() {
 
                 {/* Actions */}
                 <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
-                  <button onClick={() => startEdit(u)} className="admin-action-btn edit" title={isPublic ? 'Convert to Operator' : 'Edit User'}
-                    style={isPublic ? { background: 'var(--saffron-pale, #fff3e0)', borderColor: 'var(--saffron-border, rgba(255, 152, 0, 0.22))', color: 'var(--saffron, #f7a84d)' } : {}}>
+                  <button
+                    onClick={() => (isAdmin || hasPermission('users_update')) && startEdit(u)}
+                    className="admin-action-btn edit"
+                    disabled={!(isAdmin || hasPermission('users_update'))}
+                    style={{
+                      opacity: !(isAdmin || hasPermission('users_update')) ? 0.4 : 1,
+                      cursor: !(isAdmin || hasPermission('users_update')) ? 'not-allowed' : 'pointer',
+                      ...(isPublic && (isAdmin || hasPermission('users_update')) ? { background: 'var(--saffron-pale, #fff3e0)', borderColor: 'var(--saffron-border, rgba(255, 152, 0, 0.22))', color: 'var(--saffron, #f7a84d)' } : {})
+                    }}
+                    title={!(isAdmin || hasPermission('users_update')) ? 'Edit disabled (insufficient permission)' : (isPublic ? 'Convert to Operator' : 'Edit User')}
+                  >
                     <i className={isPublic ? 'fas fa-exchange-alt' : 'fas fa-edit'} />
                   </button>
                   <button
-                    onClick={() => !isLastAdmin && handleDelete(u._id)}
+                    onClick={() => !isLastAdmin && (isAdmin || hasPermission('users_delete')) && handleDelete(u._id)}
                     className="admin-action-btn delete"
-                    title={isLastAdmin ? 'Last admin — cannot delete' : 'Delete User'}
-                    disabled={isLastAdmin}
-                    style={{ opacity: isLastAdmin ? 0.4 : 1, cursor: isLastAdmin ? 'not-allowed' : 'pointer' }}
+                    title={isLastAdmin ? 'Last admin — cannot delete' : !(isAdmin || hasPermission('users_delete')) ? 'Delete disabled (insufficient permission)' : 'Delete User'}
+                    disabled={isLastAdmin || !(isAdmin || hasPermission('users_delete'))}
+                    style={{ opacity: (isLastAdmin || !(isAdmin || hasPermission('users_delete'))) ? 0.4 : 1, cursor: (isLastAdmin || !(isAdmin || hasPermission('users_delete'))) ? 'not-allowed' : 'pointer' }}
                   >
                     <i className={isLastAdmin ? 'fas fa-lock' : 'fas fa-trash-alt'} />
                   </button>

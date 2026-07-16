@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import api from '../api';
 import { toast } from 'react-hot-toast';
+import { useAuth } from '../context/AuthContext';
 
 export default function FeedbackManagement() {
+  const { isAdmin, hasPermission } = useAuth();
   const [feedbacks, setFeedbacks] = useState([]);
   const [loading, setLoading]     = useState(true);
 
@@ -24,6 +26,10 @@ export default function FeedbackManagement() {
   }, []);
 
   const handleDelete = async (id) => {
+    if (!(isAdmin || hasPermission('feedback_delete'))) {
+      toast.error('Permission denied to delete feedback');
+      return;
+    }
     if (!window.confirm('Are you sure you want to delete this feedback log?')) return;
     try {
       await api.delete(`/feedback/${id}`);
@@ -86,7 +92,7 @@ export default function FeedbackManagement() {
             >
               {/* Delete Button */}
               <button
-                onClick={() => handleDelete(f._id)}
+                onClick={() => (isAdmin || hasPermission('feedback_delete')) && handleDelete(f._id)}
                 style={{
                   position: 'absolute',
                   top: '18px',
@@ -94,11 +100,13 @@ export default function FeedbackManagement() {
                   background: 'none',
                   border: 'none',
                   color: '#e53e3e',
-                  cursor: 'pointer',
+                  cursor: !(isAdmin || hasPermission('feedback_delete')) ? 'not-allowed' : 'pointer',
+                  opacity: !(isAdmin || hasPermission('feedback_delete')) ? 0.3 : 1,
                   padding: '4px 8px',
                   fontSize: '0.95rem'
                 }}
-                title="Delete Feedback Log"
+                disabled={!(isAdmin || hasPermission('feedback_delete'))}
+                title={!(isAdmin || hasPermission('feedback_delete')) ? "Delete disabled (insufficient permission)" : "Delete Feedback Log"}
               >
                 <i className="fas fa-trash-alt" />
               </button>

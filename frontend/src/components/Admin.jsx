@@ -59,23 +59,23 @@ export default function Admin() {
   // Define tabs based on user permissions to get default tab
   const availableTabs = [];
 
-  // Audio Library tab if has any audio permission
-  if (isAdmin || hasAnyPermission(['audios_read', 'audios_create', 'audios_update', 'audios_delete'])) {
+  // Audio Library tab if has read permission
+  if (isAdmin || hasPermission('audios_read')) {
     availableTabs.push({ id: 'library', label: 'Audio Library', icon: 'fas fa-music' });
   }
 
-  // Categories tab if has any category permission
-  if (isAdmin || hasAnyPermission(['categories_read', 'categories_create', 'categories_update', 'categories_delete'])) {
+  // Categories tab if has read permission
+  if (isAdmin || hasPermission('categories_read')) {
     availableTabs.push({ id: 'categories', label: 'Categories', icon: 'fas fa-tags' });
   }
 
-  // Albums tab if has any album permission
-  if (isAdmin || hasAnyPermission(['albums_read', 'albums_create', 'albums_update', 'albums_delete'])) {
+  // Albums tab if has read permission
+  if (isAdmin || hasPermission('albums_read')) {
     availableTabs.push({ id: 'albums', label: 'Albums', icon: 'fas fa-photo-video' });
   }
 
-  // Feedback tab if has any feedback permission
-  if (isAdmin || hasAnyPermission(['feedback_read', 'feedback_delete'])) {
+  // Feedback tab if has read permission
+  if (isAdmin || hasPermission('feedback_read')) {
     availableTabs.push({ id: 'feedback', label: 'Feedback Management', icon: 'fas fa-comment-alt' });
   }
 
@@ -501,13 +501,13 @@ export default function Admin() {
       )}
 
        {/* Users Tab */}
-       {activeTab === 'users' && isAdmin && <UsersManagement />}
+       {activeTab === 'users' && (isAdmin || hasPermission('users_read')) && <UsersManagement />}
 
        {/* Roles Tab */}
-       {activeTab === 'roles' && isAdmin && <RolesManagement />}
+       {activeTab === 'roles' && (isAdmin || hasPermission('roles_read')) && <RolesManagement />}
 
        {/* Audit Logs Tab */}
-       {activeTab === 'audit' && isAdmin && <AuditLogs />}
+       {activeTab === 'audit' && (isAdmin || hasPermission('logs_read')) && <AuditLogs />}
 
        {/* Exports Tab */}
        {activeTab === 'exports' && isAdmin && <Exports />}
@@ -695,15 +695,19 @@ export default function Admin() {
                         <div className="admin-actions">
                           <button
                             className="admin-action-btn edit"
-                            onClick={() => startEdit(audio)}
-                            title="Edit Metadata"
+                            onClick={() => (isAdmin || hasPermission('audios_update')) && startEdit(audio)}
+                            disabled={!(isAdmin || hasPermission('audios_update'))}
+                            style={{ opacity: !(isAdmin || hasPermission('audios_update')) ? 0.4 : 1, cursor: !(isAdmin || hasPermission('audios_update')) ? 'not-allowed' : 'pointer' }}
+                            title={!(isAdmin || hasPermission('audios_update')) ? "Edit disabled (insufficient permission)" : "Edit Metadata"}
                           >
                             <i className="fas fa-edit"></i>
                           </button>
                           <button
                             className="admin-action-btn delete"
-                            onClick={() => handleDelete(audio._id)}
-                            title="Delete Audio"
+                            onClick={() => (isAdmin || hasPermission('audios_delete')) && handleDelete(audio._id)}
+                            disabled={!(isAdmin || hasPermission('audios_delete'))}
+                            style={{ opacity: !(isAdmin || hasPermission('audios_delete')) ? 0.4 : 1, cursor: !(isAdmin || hasPermission('audios_delete')) ? 'not-allowed' : 'pointer' }}
+                            title={!(isAdmin || hasPermission('audios_delete')) ? "Delete disabled (insufficient permission)" : "Delete Audio"}
                           >
                             <i className="fas fa-trash-alt"></i>
                           </button>
@@ -729,53 +733,65 @@ export default function Admin() {
           </div>
 
           {/* Add New Category */}
-    <div className="form-group admin-add-cat">
-  <input
-    type="text"
-    placeholder="New category name..."
-    className="admin-cat-input"
-    value={newCategory}
-    onChange={e => setNewCategory(e.target.value)}
-    onKeyDown={e => e.key === 'Enter' && handleAddCategory()}
-    style={{ marginBottom: '8px', width: '100%' }}
-  />
-  {categoryCoverPreview && (
-    <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
-      <img src={resolveUrl(categoryCoverPreview)} alt="Preview" style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 4 }} />
-      <button className="btn-ghost" onClick={() => { setCategoryCoverFile(null); setCategoryCoverPreview(null); }} style={{ fontSize: '0.8rem' }}>Remove</button>
-    </div>
-  )}
-  <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
-    <button className="btn-ghost" onClick={() => { setGalleryTarget('add'); setShowGallery(true); }} style={{ fontSize: '0.8rem' }}>
-      <i className="fas fa-images"></i> From Gallery
-    </button>
-    <button className="btn-ghost" onClick={() => document.getElementById('add-cat-pc').click()} style={{ fontSize: '0.8rem' }}>
-      <i className="fas fa-desktop"></i> From PC
-    </button>
-  </div>
-  <input
-    id="add-cat-pc"
-    type="file"
-    accept="image/*"
-    className="sr-only"
-    onChange={e => {
-      const file = e.target.files?.[0];
-      if (file && file.type.startsWith('image/')) {
-        setCategoryCoverFile(file);
-        setCategoryCoverPreview(URL.createObjectURL(file));
-      }
-    }}
-  />
-  <button
-    className="btn-primary"
-    onClick={handleAddCategory}
-    disabled={addingCategory || !newCategory.trim()}
-    style={{ marginTop: '12px' }}
-  >
-    {addingCategory ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-plus"></i>}
-    Add Category
-  </button>
-</div>
+          <div className="form-group admin-add-cat">
+            <input
+              type="text"
+              placeholder={!(isAdmin || hasPermission('categories_create')) ? "Create disabled (insufficient permission)" : "New category name..."}
+              className="admin-cat-input"
+              value={newCategory}
+              onChange={e => setNewCategory(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && (isAdmin || hasPermission('categories_create')) && handleAddCategory()}
+              disabled={!(isAdmin || hasPermission('categories_create'))}
+              style={{ marginBottom: '8px', width: '100%', opacity: !(isAdmin || hasPermission('categories_create')) ? 0.5 : 1 }}
+            />
+            {categoryCoverPreview && (
+              <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <img src={resolveUrl(categoryCoverPreview)} alt="Preview" style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 4 }} />
+                <button className="btn-ghost" onClick={() => { setCategoryCoverFile(null); setCategoryCoverPreview(null); }} style={{ fontSize: '0.8rem' }}>Remove</button>
+              </div>
+            )}
+            <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
+              <button
+                className="btn-ghost"
+                onClick={() => { setGalleryTarget('add'); setShowGallery(true); }}
+                disabled={!(isAdmin || hasPermission('categories_create'))}
+                style={{ fontSize: '0.8rem', opacity: !(isAdmin || hasPermission('categories_create')) ? 0.5 : 1, cursor: !(isAdmin || hasPermission('categories_create')) ? 'not-allowed' : 'pointer' }}
+              >
+                <i className="fas fa-images"></i> From Gallery
+              </button>
+              <button
+                className="btn-ghost"
+                onClick={() => document.getElementById('add-cat-pc').click()}
+                disabled={!(isAdmin || hasPermission('categories_create'))}
+                style={{ fontSize: '0.8rem', opacity: !(isAdmin || hasPermission('categories_create')) ? 0.5 : 1, cursor: !(isAdmin || hasPermission('categories_create')) ? 'not-allowed' : 'pointer' }}
+              >
+                <i className="fas fa-desktop"></i> From PC
+              </button>
+            </div>
+            <input
+              id="add-cat-pc"
+              type="file"
+              accept="image/*"
+              className="sr-only"
+              disabled={!(isAdmin || hasPermission('categories_create'))}
+              onChange={e => {
+                const file = e.target.files?.[0];
+                if (file && file.type.startsWith('image/')) {
+                  setCategoryCoverFile(file);
+                  setCategoryCoverPreview(URL.createObjectURL(file));
+                }
+              }}
+            />
+            <button
+              className="btn-primary"
+              onClick={handleAddCategory}
+              disabled={addingCategory || !newCategory.trim() || !(isAdmin || hasPermission('categories_create'))}
+              style={{ marginTop: '12px', opacity: (!(isAdmin || hasPermission('categories_create'))) ? 0.5 : 1, cursor: (!(isAdmin || hasPermission('categories_create'))) ? 'not-allowed' : 'pointer' }}
+            >
+              {addingCategory ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-plus"></i>}
+              Add Category
+            </button>
+          </div>
 
           {/* Category List */}
           {categories.length === 0 ? (
@@ -855,15 +871,19 @@ export default function Admin() {
                       <div className="admin-actions">
                         <button
                           className="admin-action-btn edit"
-                          onClick={() => { setEditingCategory(cat); setCategoryName(cat.name); setEditCoverFile(null); setEditCoverPreview(null); }}
-                          title="Rename"
+                          onClick={() => (isAdmin || hasPermission('categories_update')) && (() => { setEditingCategory(cat); setCategoryName(cat.name); setEditCoverFile(null); setEditCoverPreview(null); })()}
+                          disabled={!(isAdmin || hasPermission('categories_update'))}
+                          style={{ opacity: !(isAdmin || hasPermission('categories_update')) ? 0.4 : 1, cursor: !(isAdmin || hasPermission('categories_update')) ? 'not-allowed' : 'pointer' }}
+                          title={!(isAdmin || hasPermission('categories_update')) ? "Edit disabled (insufficient permission)" : "Rename"}
                         >
                           <i className="fas fa-pen"></i>
                         </button>
                         <button
                           className="admin-action-btn delete"
-                          onClick={() => handleDeleteCategory(cat._id)}
-                          title="Delete"
+                          onClick={() => (isAdmin || hasPermission('categories_delete')) && handleDeleteCategory(cat._id)}
+                          disabled={!(isAdmin || hasPermission('categories_delete'))}
+                          style={{ opacity: !(isAdmin || hasPermission('categories_delete')) ? 0.4 : 1, cursor: !(isAdmin || hasPermission('categories_delete')) ? 'not-allowed' : 'pointer' }}
+                          title={!(isAdmin || hasPermission('categories_delete')) ? "Delete disabled (insufficient permission)" : "Delete"}
                         >
                           <i className="fas fa-trash-alt"></i>
                         </button>
@@ -1168,8 +1188,9 @@ export default function Admin() {
                 </button>
                 <button
                   type="submit"
-                  disabled={isSaving}
+                  disabled={isSaving || !(isAdmin || hasPermission('audios_update'))}
                   className="btn-primary"
+                  style={{ opacity: (isSaving || !(isAdmin || hasPermission('audios_update'))) ? 0.6 : 1, cursor: (isSaving || !(isAdmin || hasPermission('audios_update'))) ? 'not-allowed' : 'pointer' }}
                 >
                   {isSaving ? (
                     <><i className="fas fa-spinner fa-spin"></i> Saving...</>

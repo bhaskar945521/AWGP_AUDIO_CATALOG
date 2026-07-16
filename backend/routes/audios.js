@@ -14,7 +14,7 @@ const auth = require('../middleware/auth');
 const roleCheck = require('../middleware/roleCheck');
 const permissionCheck = require('../middleware/permissionCheck');
 const { STORAGE_FOLDERS, generateUniqueFilename, deleteLocalFile } = require('../utils/localStorage');
-const logAudit = require('../utils/auditLogger');
+const { logAudit } = require('../utils/auditLogger');
 
 function escapeRegExp(value) {
   return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

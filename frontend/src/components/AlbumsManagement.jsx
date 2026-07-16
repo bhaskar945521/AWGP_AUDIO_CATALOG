@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 
 // Albums Management for Admin panel
 export default function AlbumsManagement() {
-  const { token } = useAuth();
+  const { token, isAdmin, hasPermission } = useAuth();
   const authConfig = () => ({ headers: { Authorization: `Bearer ${token || localStorage.getItem('token')}` } });
 
   const [albums, setAlbums] = useState([]);
@@ -661,7 +661,13 @@ export default function AlbumsManagement() {
               >
                 <i className="fas fa-eye" /> Preview
               </button>
-              <button type="submit" className="btn-primary" disabled={!canBuildAlbum || creating}>
+              <button
+                type="submit"
+                className="btn-primary"
+                disabled={!canBuildAlbum || creating || !(isAdmin || hasPermission('albums_create'))}
+                style={{ opacity: !(isAdmin || hasPermission('albums_create')) ? 0.5 : 1, cursor: !(isAdmin || hasPermission('albums_create')) ? 'not-allowed' : 'pointer' }}
+                title={!(isAdmin || hasPermission('albums_create')) ? 'Create disabled (insufficient permission)' : ''}
+              >
                 {creating ? <i className="fas fa-spinner fa-spin" /> : <><i className="fas fa-plus" /> Create Album</>}
               </button>
             </>
@@ -669,7 +675,9 @@ export default function AlbumsManagement() {
             <button
               type="submit"
               className="btn-primary"
-              disabled={!existingAlbumId || selectedAudioIds.length === 0 || creating}
+              disabled={!existingAlbumId || selectedAudioIds.length === 0 || creating || !(isAdmin || hasPermission('albums_update'))}
+              style={{ opacity: !(isAdmin || hasPermission('albums_update')) ? 0.5 : 1, cursor: !(isAdmin || hasPermission('albums_update')) ? 'not-allowed' : 'pointer' }}
+              title={!(isAdmin || hasPermission('albums_update')) ? 'Save disabled (insufficient permission)' : ''}
             >
               {creating ? <i className="fas fa-spinner fa-spin" /> : <><i className="fas fa-save" /> Save Changes</>}
             </button>
@@ -703,8 +711,20 @@ export default function AlbumsManagement() {
                   <td>{album.categoryId && album.categoryId.name ? album.categoryId.name : (album.categoryId ? album.categoryId : '—')}</td>
                   <td>{album.coverImage ? (<img src={resolveUrl(album.coverImage) || album.coverImage} alt="cover" className="admin-album-thumb" style={{ width: 40, height: 40, objectFit: 'cover' }} />) : '—'}</td>
                   <td style={{ textAlign: 'right' }}>
-                    <button className="admin-action-btn edit" onClick={() => startEdit(album)} title="Edit Album"><i className="fas fa-edit" /></button>
-                    <button className="admin-action-btn delete" onClick={() => handleDelete(album._id)} title="Delete Album"><i className="fas fa-trash-alt" /></button>
+                    <button
+                      className="admin-action-btn edit"
+                      onClick={() => (isAdmin || hasPermission('albums_update')) && startEdit(album)}
+                      disabled={!(isAdmin || hasPermission('albums_update'))}
+                      style={{ opacity: !(isAdmin || hasPermission('albums_update')) ? 0.4 : 1, cursor: !(isAdmin || hasPermission('albums_update')) ? 'not-allowed' : 'pointer' }}
+                      title={!(isAdmin || hasPermission('albums_update')) ? 'Edit disabled (insufficient permission)' : 'Edit Album'}
+                    ><i className="fas fa-edit" /></button>
+                    <button
+                      className="admin-action-btn delete"
+                      onClick={() => (isAdmin || hasPermission('albums_delete')) && handleDelete(album._id)}
+                      disabled={!(isAdmin || hasPermission('albums_delete'))}
+                      style={{ opacity: !(isAdmin || hasPermission('albums_delete')) ? 0.4 : 1, cursor: !(isAdmin || hasPermission('albums_delete')) ? 'not-allowed' : 'pointer' }}
+                      title={!(isAdmin || hasPermission('albums_delete')) ? 'Delete disabled (insufficient permission)' : 'Delete Album'}
+                    ><i className="fas fa-trash-alt" /></button>
                   </td>
                 </tr>
               ))}
@@ -828,7 +848,13 @@ export default function AlbumsManagement() {
               </div>
               <div className="modal-footer" style={{ flexShrink: 0, marginTop: '16px', paddingTop: '16px', borderTop: '1px solid var(--border)' }}>
                 <button type="button" className="btn-ghost" onClick={() => setEditingId(null)}>Cancel</button>
-                <button type="submit" className="btn-primary">Save Changes</button>
+                <button
+                  type="submit"
+                  className="btn-primary"
+                  disabled={!(isAdmin || hasPermission('albums_update'))}
+                  style={{ opacity: !(isAdmin || hasPermission('albums_update')) ? 0.5 : 1, cursor: !(isAdmin || hasPermission('albums_update')) ? 'not-allowed' : 'pointer' }}
+                  title={!(isAdmin || hasPermission('albums_update')) ? 'Save disabled (insufficient permission)' : ''}
+                >Save Changes</button>
               </div>
             </form>
           </div>
