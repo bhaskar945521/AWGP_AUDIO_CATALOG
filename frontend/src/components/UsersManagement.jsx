@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api, { resolveUrl } from '../api';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
+import RolesManagement from './RolesManagement';
 
 // All available permissions grouped (standardized)
 const PERMISSION_GROUPS = [
@@ -192,6 +193,7 @@ export default function UsersManagement() {
   const { token, isAdmin, hasPermission } = useAuth();
   const authConfig = () => ({ headers: { Authorization: `Bearer ${token || localStorage.getItem('token')}` } });
 
+  const [subTab, setSubTab]         = useState('operators');
   const [users, setUsers]           = useState([]);
   const [dynamicRoles, setDynamicRoles] = useState([]);
   const [loading, setLoading]       = useState(true);
@@ -358,7 +360,7 @@ export default function UsersManagement() {
   return (
     <div className="admin-panel">
       <div className="admin-panel-header">
-        <span className="admin-panel-title"><i className="fas fa-users" /> User Access</span>
+        <span className="admin-panel-title"><i className="fas fa-users" /> User & Role Management</span>
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
           <span style={{ fontSize: '0.75rem', padding: '3px 10px', borderRadius: '99px', background: 'rgba(247,168,77,0.15)', color: '#f7a84d', fontWeight: 700 }}>
             <i className="fas fa-crown" style={{ marginRight: 4 }} />{adminCount} Admin
@@ -371,6 +373,48 @@ export default function UsersManagement() {
           </span>
         </div>
       </div>
+
+      {/* ── Sub-tab switcher ─────────────────────────────────── */}
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', borderBottom: '2px solid var(--border)', paddingBottom: '4px' }}>
+        <button
+          type="button"
+          onClick={() => setSubTab('operators')}
+          style={{
+            padding: '8px 18px', border: 'none', borderRadius: '8px 8px 0 0',
+            fontWeight: 700, fontSize: '0.88rem', cursor: 'pointer',
+            background: subTab === 'operators' ? 'var(--saffron, #f7a84d)' : 'transparent',
+            color: subTab === 'operators' ? '#fff' : 'var(--text-muted)',
+            borderBottom: subTab === 'operators' ? '2px solid var(--saffron, #f7a84d)' : '2px solid transparent',
+            transition: 'all 0.18s',
+            display: 'flex', alignItems: 'center', gap: '7px'
+          }}
+        >
+          <i className="fas fa-users" /> Manage Operators
+        </button>
+        {(isAdmin || hasPermission('roles_read')) && (
+          <button
+            type="button"
+            onClick={() => setSubTab('roles')}
+            style={{
+              padding: '8px 18px', border: 'none', borderRadius: '8px 8px 0 0',
+              fontWeight: 700, fontSize: '0.88rem', cursor: 'pointer',
+              background: subTab === 'roles' ? 'var(--saffron, #f7a84d)' : 'transparent',
+              color: subTab === 'roles' ? '#fff' : 'var(--text-muted)',
+              borderBottom: subTab === 'roles' ? '2px solid var(--saffron, #f7a84d)' : '2px solid transparent',
+              transition: 'all 0.18s',
+              display: 'flex', alignItems: 'center', gap: '7px'
+            }}
+          >
+            <i className="fas fa-user-shield" /> Roles & Permissions
+          </button>
+        )}
+      </div>
+
+      {/* ── Roles & Permissions sub-view ─────────────────────── */}
+      {subTab === 'roles' && (isAdmin || hasPermission('roles_read')) && <RolesManagement />}
+
+      {/* ── Operators Sub-view ───────────────────────────────── */}
+      {subTab === 'operators' && <>
 
       {/* ── Create Operator Form ──────────────────────────────── */}
       {(isAdmin || hasPermission('users_create')) && (
@@ -874,6 +918,8 @@ export default function UsersManagement() {
           })}
         </div>
       )}
+
+      </> /* end subTab === 'operators' */}
     </div>
   );
 }

@@ -84,14 +84,9 @@ export default function Admin() {
     availableTabs.push({ id: 'analytics', label: 'Analytics Dashboard', icon: 'fas fa-chart-bar' });
   }
 
-  // Users tab if admin or has users_read
-  if (isAdmin || hasPermission('users_read')) {
-    availableTabs.push({ id: 'users', label: 'Users', icon: 'fas fa-users' });
-  }
-
-  // Roles tab if admin or has roles_read
-  if (isAdmin || hasPermission('roles_read')) {
-    availableTabs.push({ id: 'roles', label: 'Roles & Permissions', icon: 'fas fa-user-shield' });
+  // Users tab — now includes Roles & Permissions as a sub-tab
+  if (isAdmin || hasPermission('users_read') || hasPermission('roles_read')) {
+    availableTabs.push({ id: 'users', label: 'Users & Roles', icon: 'fas fa-users' });
   }
 
   // Audit logs, exports, trash — admin only
@@ -501,10 +496,7 @@ export default function Admin() {
       )}
 
        {/* Users Tab */}
-       {activeTab === 'users' && (isAdmin || hasPermission('users_read')) && <UsersManagement />}
-
-       {/* Roles Tab */}
-       {activeTab === 'roles' && (isAdmin || hasPermission('roles_read')) && <RolesManagement />}
+       {activeTab === 'users' && (isAdmin || hasPermission('users_read') || hasPermission('roles_read')) && <UsersManagement />}
 
        {/* Audit Logs Tab */}
        {activeTab === 'audit' && (isAdmin || hasPermission('logs_read')) && <AuditLogs />}
