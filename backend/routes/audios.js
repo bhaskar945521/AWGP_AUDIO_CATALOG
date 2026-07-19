@@ -14,7 +14,7 @@ const auth = require('../middleware/auth');
 const roleCheck = require('../middleware/roleCheck');
 const permissionCheck = require('../middleware/permissionCheck');
 const { STORAGE_FOLDERS, generateUniqueFilename, deleteLocalFile } = require('../utils/localStorage');
-const logAudit = require('../utils/auditLogger');
+const { logAudit } = require('../utils/auditLogger');
 
 function escapeRegExp(value) {
   return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -635,7 +635,9 @@ router.delete('/:id/permanent', auth, permissionCheck(['audios_delete']), async 
 });
 
 // ─── PATCH /api/audios/:id/favorite ─────────────────────────────────────────
-router.patch('/:id/favorite', async (req, res) => {
+// ─── PATCH /api/audios/:id/favorite ─────────────────────────────────────────
+// Requires auth — only authenticated users can toggle favorites
+router.patch('/:id/favorite', auth, async (req, res) => {
   try {
     const audio = await Audio.findById(req.params.id);
     if (!audio) return res.status(404).json({ message: 'Audio not found' });

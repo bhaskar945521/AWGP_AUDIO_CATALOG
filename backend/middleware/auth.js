@@ -29,7 +29,9 @@ module.exports = async function (req, res, next) {
     // Resolve permissions:
     // If role is admin, they have admin role bypass.
     // Otherwise, check if role doc is enabled (Access Denied if disabled).
-    // Use user.permissions as source of truth. Fallback to roleDoc permissions if user.permissions is uninitialized.
+    // IMPORTANT: user.permissions is the STRICT source of truth for non-admin users.
+    // An empty array [] means "no permissions granted" — do NOT fall back to role permissions.
+    // Only fall back to role permissions if user.permissions is null/undefined (truly uninitialized/legacy user).
     let permissions = [];
     if (user.role === 'admin') {
       permissions = ['admin'];
@@ -38,12 +40,14 @@ module.exports = async function (req, res, next) {
       if (roleDoc && !roleDoc.enabled) {
         return res.status(403).json({ message: 'Role is disabled. Access denied.' });
       }
-      if (user.permissions && user.permissions.length > 0) {
+      if (user.permissions !== null && user.permissions !== undefined) {
+        // Use exactly what was assigned to this user (even if empty = no permissions)
         permissions = user.permissions;
       } else if (roleDoc) {
+        // Legacy uninitialized user: fall back to role defaults
         permissions = roleDoc.permissions || [];
       } else {
-        permissions = user.permissions || [];
+        permissions = [];
       }
     }
 

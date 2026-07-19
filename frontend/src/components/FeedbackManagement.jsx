@@ -22,7 +22,9 @@ export default function FeedbackManagement() {
   };
 
   useEffect(() => {
-    fetchFeedbacks();
+    if (isAdmin || hasPermission('feedback_read')) {
+      fetchFeedbacks();
+    }
   }, []);
 
   const handleDelete = async (id) => {

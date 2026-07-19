@@ -11,9 +11,15 @@ import UploadAudioModal from './UploadAudioModal';
 import FeedbackMarquee from './FeedbackMarquee';
 
 /* ─── Mobile bottom navigation bar ─────────────────────── */
-function MobileBottomNav({ isAdmin, isUser, isOnlyUser }) {
+function MobileBottomNav() {
+  const { token, isAdmin, isUser, hasAnyPermission } = useAuth();
   const navigate = useNavigate();
-  const showAdminPanel = isAdmin || isOnlyUser;
+  const showAdminPanel = isAdmin || 
+    hasAnyPermission(['audios_read', 'audios_create', 'audios_update', 'audios_delete',
+                      'categories_read', 'categories_create', 'categories_update', 'categories_delete',
+                      'albums_read', 'albums_create', 'albums_update', 'albums_delete',
+                      'feedback_read', 'feedback_delete', 'analytics_view', 'logs_read',
+                      'users_read', 'roles_read']);
 
   return (
     <nav className="mobile-bottom-nav" aria-label="Mobile navigation">
@@ -41,7 +47,7 @@ function MobileBottomNav({ isAdmin, isUser, isOnlyUser }) {
         <span>History</span>
       </NavLink>
 
-      {(isAdmin || isUser) && (
+      {token && (
         <NavLink to={showAdminPanel ? '/admin' : '/profile'} className={({ isActive }) => `mobile-nav-item${isActive ? ' active' : ''}`}>
           <i className={showAdminPanel ? 'fas fa-cog' : 'fas fa-user-circle'} />
           <span>{showAdminPanel ? 'Admin' : 'Profile'}</span>
@@ -317,7 +323,7 @@ export default function Layout() {
       )}
 
       {/* ── MOBILE: bottom navigation ── */}
-      <MobileBottomNav isAdmin={isAdmin} isUser={isUser} isOnlyUser={isOnlyUser} />
+      <MobileBottomNav />
 
       {/* Upload modal */}
       <UploadAudioModal

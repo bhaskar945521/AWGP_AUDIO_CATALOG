@@ -4,7 +4,7 @@ const User = require('../models/User');
 const ListeningHistory = require('../models/ListeningHistory');
 const auth = require('../middleware/auth');
 const permissionCheck = require('../middleware/permissionCheck');
-const logAudit = require('../utils/auditLogger');
+const { logAudit } = require('../utils/auditLogger');
 const bcrypt = require('bcryptjs');
 
 // GET all users (requires users_read) – omit passwordHash

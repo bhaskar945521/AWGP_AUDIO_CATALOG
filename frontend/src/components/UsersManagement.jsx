@@ -212,20 +212,56 @@ export default function UsersManagement() {
 
   const fetchUsersAndRoles = async () => {
     try {
-      const [usersRes, rolesRes] = await Promise.all([
-        api.get('/users', authConfig()),
-        api.get('/roles', authConfig())
-      ]);
-      setUsers(usersRes.data);
-      setDynamicRoles(rolesRes.data.filter(r => r.enabled || r.name === 'admin'));
-    } catch {
-      toast.error('Unable to load data');
+      setLoading(true);
+      const promises = [];
+      const canReadUsers = isAdmin || hasPermission('users_read');
+      const canReadRoles = isAdmin || hasPermission('roles_read');
+
+      if (canReadUsers) {
+        promises.push(
+          api.get('/users', authConfig())
+            .then(res => setUsers(res.data))
+            .catch(err => {
+              console.error('Failed to fetch users', err);
+              toast.error('Unable to load users list');
+            })
+        );
+      }
+
+      if (canReadRoles) {
+        promises.push(
+          api.get('/roles', authConfig())
+            .then(res => setDynamicRoles(res.data.filter(r => r.enabled || r.name === 'admin')))
+            .catch(err => {
+              console.error('Failed to fetch roles', err);
+              // Fallback to default system roles if role fetching fails
+              setDynamicRoles([
+                { name: 'onlyuser', displayName: 'Operator', permissions: [], isSystem: true, enabled: true },
+                { name: 'admin', displayName: 'Admin', permissions: [], isSystem: true, enabled: true },
+                { name: 'public_user', displayName: 'Public User', permissions: [], isSystem: true, enabled: true }
+              ]);
+            })
+        );
+      } else {
+        // Fallback default roles when roles_read is not granted
+        setDynamicRoles([
+          { name: 'onlyuser', displayName: 'Operator', permissions: [], isSystem: true, enabled: true },
+          { name: 'admin', displayName: 'Admin', permissions: [], isSystem: true, enabled: true },
+          { name: 'public_user', displayName: 'Public User', permissions: [], isSystem: true, enabled: true }
+        ]);
+      }
+
+      await Promise.all(promises);
+    } catch (err) {
+      toast.error('Unable to load user management data');
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { fetchUsersAndRoles(); }, []); // eslint-disable-line
+  useEffect(() => {
+    fetchUsersAndRoles();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // When role changes in new user form — auto-set permissions
   const handleRoleChange = (role, target = 'new') => {

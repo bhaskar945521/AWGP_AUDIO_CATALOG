@@ -172,14 +172,22 @@ export default function Admin() {
   };
 
   useEffect(() => {
-    fetchAudios();
-    fetchCategories();
-    fetchAlbums();
+    if (isAdmin || hasPermission('audios_read')) {
+      fetchAudios();
+    }
+    if (isAdmin || hasPermission('categories_read')) {
+      fetchCategories();
+    }
+    if (isAdmin || hasPermission('albums_read')) {
+      fetchAlbums();
+    }
   }, [uploadRefresh]);
 
   // Fetch audios when filters or search change
   useEffect(() => {
-    fetchAudios();
+    if (isAdmin || hasPermission('audios_read')) {
+      fetchAudios();
+    }
   }, [searchQuery, filterCat, filterExt]);
 
   useEffect(() => {
@@ -570,7 +578,13 @@ export default function Admin() {
           {selectedAudioIds.length > 0 && (
             <div className="admin-bulk-actions">
               <span>{selectedAudioIds.length} selected</span>
-              <button className="btn-primary" onClick={() => setShowAlbumFromSelectionModal(true)}>
+              <button
+                className="btn-primary"
+                onClick={() => (isAdmin || hasPermission('albums_create')) && setShowAlbumFromSelectionModal(true)}
+                disabled={!(isAdmin || hasPermission('albums_create'))}
+                style={{ opacity: !(isAdmin || hasPermission('albums_create')) ? 0.5 : 1, cursor: !(isAdmin || hasPermission('albums_create')) ? 'not-allowed' : 'pointer' }}
+                title={!(isAdmin || hasPermission('albums_create')) ? 'Create album disabled (insufficient permission)' : ''}
+              >
                 Create Album from Selected
               </button>
             </div>

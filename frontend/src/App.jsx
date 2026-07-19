@@ -94,8 +94,8 @@ function AppContent() {
             <Route path="history" element={<ListeningHistory />} />
             <Route path="profile" element={<UserProfile />} />
             <Route path="details/:id" element={<PermissionRoute requiredPermissions={['audios_read', 'audio_view']}><Details /></PermissionRoute>} />
-            <Route path="admin" element={<PermissionRoute requiredPermissions={['analytics_view', 'feedback_view', 'feedback_delete', 'audio_view', 'category_view', 'album_view']}><Admin /></PermissionRoute>} />
-            <Route path="users" element={<AdminRoute><UsersManagement /></AdminRoute>} />
+            <Route path="admin" element={<PermissionRoute requiredPermissions={['analytics_view', 'feedback_read', 'feedback_delete', 'audios_read', 'categories_read', 'albums_read']}><Admin /></PermissionRoute>} />
+            <Route path="users" element={<PermissionRoute requiredPermissions={['users_read', 'users_create', 'users_update', 'users_delete', 'roles_read']}><UsersManagement /></PermissionRoute>} />
             {/* Catch-all redirects back to Home */}
             <Route path="*" element={<Dashboard />} />
           </Route>

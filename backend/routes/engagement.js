@@ -194,7 +194,7 @@ router.get('/feedback/approved', async (req, res) => {
 });
 
 // GET /api/feedback — List all feedback (admin & authorized onlyuser only)
-router.get('/feedback', auth, permissionCheck(['feedback_view']), async (req, res) => {
+router.get('/feedback', auth, permissionCheck(['feedback_read']), async (req, res) => {
   try {
     const feedback = await Feedback.find()
       .populate('userId', 'fullName email username')
@@ -233,7 +233,7 @@ router.post('/audio/:id/feedback', auth, async (req, res) => {
 });
 
 // PATCH /api/feedback/:id/approve — Toggle approval or update feedback details (admin/moderator only)
-router.patch('/feedback/:id/approve', auth, permissionCheck(['feedback_view']), async (req, res) => {
+router.patch('/feedback/:id/approve', auth, permissionCheck(['feedback_read']), async (req, res) => {
   const { approved, shortFeedback } = req.body;
   try {
     const updateObj = {};

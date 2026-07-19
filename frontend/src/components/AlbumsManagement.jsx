@@ -8,6 +8,8 @@ import { useAuth } from '../context/AuthContext';
 export default function AlbumsManagement() {
   const { token, isAdmin, hasPermission } = useAuth();
   const authConfig = () => ({ headers: { Authorization: `Bearer ${token || localStorage.getItem('token')}` } });
+  const canCreate = isAdmin || hasPermission('albums_create');
+  const canUpdate = isAdmin || hasPermission('albums_update');
 
   const [albums, setAlbums] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -28,7 +30,7 @@ export default function AlbumsManagement() {
   const [editAudioIds, setEditAudioIds] = useState([]);
 
   // States for associating selected audios (existing vs new album)
-  const [formMode, setFormMode] = useState('create'); // 'create' or 'existing'
+  const [formMode, setFormMode] = useState(() => (isAdmin || hasPermission('albums_create')) ? 'create' : 'existing'); // 'create' or 'existing'
   const [existingCategoryId, setExistingCategoryId] = useState('');
   const [existingAlbumId, setExistingAlbumId] = useState('');
 
@@ -125,9 +127,9 @@ export default function AlbumsManagement() {
   };
 
   useEffect(() => {
-    fetchAlbums();
-    fetchCategories();
-    fetchAudios();
+    if (isAdmin || hasPermission('albums_read')) fetchAlbums();
+    if (isAdmin || hasPermission('categories_read')) fetchCategories();
+    if (isAdmin || hasPermission('audios_read')) fetchAudios();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -415,17 +417,20 @@ export default function AlbumsManagement() {
           <button
             type="button"
             onClick={() => setFormMode('create')}
+            disabled={!canCreate}
             style={{
               padding: '6px 14px',
               fontSize: '0.85rem',
               fontWeight: 700,
               borderRadius: '6px',
               border: 'none',
-              cursor: 'pointer',
+              cursor: !canCreate ? 'not-allowed' : 'pointer',
               background: formMode === 'create' ? 'var(--saffron)' : 'transparent',
               color: formMode === 'create' ? '#fff' : 'var(--text-muted)',
-              transition: 'all 0.2s'
+              transition: 'all 0.2s',
+              opacity: !canCreate ? 0.5 : 1
             }}
+            title={!canCreate ? 'Create disabled (insufficient permission)' : ''}
           >
             <i className="fas fa-plus-circle" style={{ marginRight: 6 }} />
             Create New Album
@@ -433,17 +438,20 @@ export default function AlbumsManagement() {
           <button
             type="button"
             onClick={() => setFormMode('existing')}
+            disabled={!canUpdate}
             style={{
               padding: '6px 14px',
               fontSize: '0.85rem',
               fontWeight: 700,
               borderRadius: '6px',
               border: 'none',
-              cursor: 'pointer',
+              cursor: !canUpdate ? 'not-allowed' : 'pointer',
               background: formMode === 'existing' ? 'var(--saffron)' : 'transparent',
               color: formMode === 'existing' ? '#fff' : 'var(--text-muted)',
-              transition: 'all 0.2s'
+              transition: 'all 0.2s',
+              opacity: !canUpdate ? 0.5 : 1
             }}
+            title={!canUpdate ? 'Add to existing disabled (insufficient permission)' : ''}
           >
             <i className="fas fa-folder-plus" style={{ marginRight: 6 }} />
             Add to Existing Album

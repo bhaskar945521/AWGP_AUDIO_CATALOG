@@ -6,8 +6,9 @@ const AuditLog = require('../models/AuditLog');
 const auth = require('../middleware/auth');
 const permissionCheck = require('../middleware/permissionCheck');
 
-// ── GET Audit Logs (Paginated, Searchable) ───────────────────
-router.get('/audit-logs', auth, permissionCheck(['logs_read', 'analytics_view']), async (req, res) => {
+// ── GET Audit Logs (Paginated, Searchable) ────────────────────────────
+// Strictly requires logs_read permission — analytics_view does NOT grant access to raw audit logs
+router.get('/audit-logs', auth, permissionCheck(['logs_read']), async (req, res) => {
   try {
     const { page = 1, limit = 20, search = '' } = req.query;
     const filter = {};
@@ -53,8 +54,9 @@ function escapeCSVValue(val) {
   return str;
 }
 
-// ── GET Exports ──────────────────────────────────────────────
-router.get('/export', auth, permissionCheck(['logs_read', 'analytics_view']), async (req, res) => {
+// ── GET Exports ──────────────────────────────────────────
+// Strictly requires logs_read permission for data exports
+router.get('/export', auth, permissionCheck(['logs_read']), async (req, res) => {
   const { type } = req.query;
   try {
     let filename = 'report.csv';

@@ -32,8 +32,8 @@ const upload = multer({
   },
 });
 
-// GET /api/gallery
-router.get('/', async (req, res) => {
+// GET /api/gallery — requires auth and any create/update permission (gallery is admin-side)
+router.get('/', auth, permissionCheck(['albums_create', 'albums_update', 'audios_create', 'audios_update', 'categories_create', 'categories_update']), async (req, res) => {
   try {
     const images = await GalleryImage.find().sort({ createdAt: -1 });
     res.json(images);
@@ -43,8 +43,8 @@ router.get('/', async (req, res) => {
   }
 });
 
-// POST /api/gallery — admin or users with edit/create permissions
-router.post('/', auth, permissionCheck(['album_create', 'album_edit', 'category_create', 'category_edit', 'audio_upload', 'audio_edit']), upload.single('image'), async (req, res) => {
+// POST /api/gallery — admin or users with standard create/update permissions
+router.post('/', auth, permissionCheck(['albums_create', 'albums_update', 'audios_create', 'audios_update', 'categories_create', 'categories_update']), upload.single('image'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ message: 'No image file provided' });
   }
@@ -64,7 +64,7 @@ router.post('/', auth, permissionCheck(['album_create', 'album_edit', 'category_
 });
 
 // POST /api/gallery/upload — upload multiple images to gallery
-router.post('/upload', auth, permissionCheck(['album_create', 'album_edit', 'category_create', 'category_edit', 'audio_upload', 'audio_edit']), upload.array('images'), async (req, res) => {
+router.post('/upload', auth, permissionCheck(['albums_create', 'albums_update', 'audios_create', 'audios_update', 'categories_create', 'categories_update']), upload.array('images'), async (req, res) => {
   if (!req.files || req.files.length === 0) {
     return res.status(400).json({ message: 'No image files provided' });
   }
@@ -88,7 +88,7 @@ router.post('/upload', auth, permissionCheck(['album_create', 'album_edit', 'cat
 });
 
 // DELETE /api/gallery/:id
-router.delete('/:id', auth, permissionCheck(['album_create', 'album_edit', 'category_create', 'category_edit', 'audio_upload', 'audio_edit']), async (req, res) => {
+router.delete('/:id', auth, permissionCheck(['albums_create', 'albums_update', 'audios_create', 'audios_update', 'categories_create', 'categories_update']), async (req, res) => {
   try {
     const image = await GalleryImage.findById(req.params.id);
     if (!image) {
