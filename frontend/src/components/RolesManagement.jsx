@@ -105,7 +105,12 @@ export default function RolesManagement() {
   };
 
   useEffect(() => {
-    fetchRoles();
+    // Only fetch roles if user has permission to view them
+    if (isAdmin || hasPermission('roles_read')) {
+      fetchRoles();
+    } else {
+      setLoading(false);
+    }
   }, []);
 
   const handleTogglePermission = (val) => {
