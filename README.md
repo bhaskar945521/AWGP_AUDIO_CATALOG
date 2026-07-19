@@ -349,21 +349,57 @@ AWGP_AUDIO_CATLOG/
 
 ## 🔐 Permissions System
 
-### Available Permissions
-| Group               | Permissions                                                      |
-|---------------------|------------------------------------------------------------------|
-| Audio Library       | `audio_view`, `audio_upload`, `audio_edit`, `audio_delete`       |
-| Category Management | `category_view`, `category_create`, `category_edit`, `category_delete` |
-| Album Management    | `album_view`, `album_create`, `album_edit`, `album_delete`       |
-| Feedback Management | `feedback_view`, `feedback_delete`                               |
-| Feedback Approval   | Admin Only — approve/reject public marquee reviews               |
-| Analytics Dashboard | `analytics_view`                                                 |
-| User Management     | Admin Only                                                       |
-| Website Settings    | Admin Only                                                       |
+### Standardized Permission Names
+| Module              | Read               | Create               | Update               | Delete               | Other                          |
+|---------------------|--------------------|----------------------|----------------------|----------------------|--------------------------------|
+| Audio Library       | `audios_read`      | `audios_create`      | `audios_update`      | `audios_delete`      | `audios_download`, `audios_print` |
+| Categories          | `categories_read`  | `categories_create`  | `categories_update`  | `categories_delete`  | —                              |
+| Albums              | `albums_read`      | `albums_create`      | `albums_update`      | `albums_delete`      | —                              |
+| Feedback            | `feedback_read`    | —                    | —                    | `feedback_delete`    | —                              |
+| Users Management    | `users_read`       | `users_create`       | `users_update`       | `users_delete`       | —                              |
+| Roles Management    | `roles_read`       | `roles_create`       | `roles_update`       | `roles_delete`       | —                              |
+| System & Analytics  | `logs_read`        | —                    | —                    | —                    | `analytics_view`               |
+
+### How Permissions Work
+- **Admin** → Full access to everything — no permission checks needed
+- **Operator (`onlyuser`)** → Gets **only** the permissions explicitly assigned via checkboxes
+- **Empty `[]` permissions** → Zero access — no fallback to role defaults (strict enforcement)
+- **`null`/`undefined` permissions** → Legacy user — falls back to role's default permissions
+- **Disabled Role** → All users in that role are denied access at login
+
+### Permission Enforcement — Dual Layer
+1. **Frontend**: Buttons, tabs, forms, and routes are hidden/disabled if permission is missing
+2. **Backend**: Every API endpoint has `auth` + `permissionCheck(...)` middleware — direct API calls are also blocked
 
 ---
 
 ## 📝 Changelog
+
+### v2.5 — Security Hardening & Strict Permission Enforcement (2026-07-19)
+
+#### 🔐 Backend Security Fixes
+- **Auth Middleware** (`middleware/auth.js`): Fixed critical bug where empty `permissions: []` was falling back to role defaults. Empty array now correctly means **zero permissions** — only `null`/`undefined` triggers legacy fallback
+- **Favorites API** (`audios.js`): Added `auth` middleware guard to `/api/audios/:id/favorite` — previously unprotected
+- **Gallery API** (`gallery.js`): Secured `GET /api/gallery` with auth + permission check; upload/delete also tightened
+- **Reports API** (`reports.js`): Raw audit logs and data exports now strictly require `logs_read` permission
+- **Engagement API** (`engagement.js`): Feedback list and approve endpoints migrated to `feedback_read` permission
+- **`logAudit` Import Fix**: Standardized to named import `{ logAudit }` in `audios.js` and `users.js`
+
+#### 🖥️ Frontend Security & UX Fixes
+- **App.jsx**: Route guards updated — `/admin` uses `PermissionRoute` with full permission list; `/users` accessible to operators with user management permissions
+- **Admin.jsx**: All data fetches (`fetchAudios`, `fetchCategories`, `fetchAlbums`) now guarded by permission checks on mount; "Create Album from Selected" bulk button disabled without `albums_create`
+- **AlbumsManagement.jsx**: Fetch guards added on mount; `formMode` defaults to `existing` if operator lacks `albums_create`; creation/update fields fully disabled per permission
+- **FeedbackManagement.jsx**: Mount fetch guarded by `feedback_read` permission check
+- **Layout.jsx**: Mobile bottom nav admin gear icon visibility corrected to use `hasAnyPermission` with standard permission names
+- **UsersManagement.jsx**: Split `Promise.all` into separate isolated fetch calls — users and roles fetched independently with their own `try/catch` and permission guards; automatic fallback to system roles if role fetch fails or is unauthorized — prevents "Unable to load data" 403 error toasts
+- **RolesManagement.jsx**: Added `isAdmin || hasPermission('roles_read')` guard in `useEffect` before calling `fetchRoles()` — component is now self-contained and secure regardless of where it is rendered
+
+#### 🗂️ Git Cleanup
+- Removed `node_modules` from Git tracking (was previously committed by mistake)
+- Updated `.gitignore` — `node_modules` is now properly excluded from all future commits
+- Committed all security fixes in a single clean commit
+
+---
 
 ### v2.4 — Advanced Audio Filters, Grid/List Toggle & Share Everywhere (2026-07-16)
 
