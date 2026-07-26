@@ -298,7 +298,7 @@ export default function Dashboard() {
           <div className="hero-section">
             <div className="hero-content">
               <span className="hero-eyebrow">
-                <i className="fas fa-star" /> Welcome to Spiritual Audio Hub
+                Welcome to Spiritual Audio Hub
               </span>
               <h1 className="hero-title">
                 <span className="hero-title-line">Preserving Sacred Audio</span>

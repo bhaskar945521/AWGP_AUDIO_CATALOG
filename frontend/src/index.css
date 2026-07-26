@@ -863,18 +863,10 @@ a {
 }
 
 /* ============================================================
-   HERO BANNER  —  Vibrant Saffron Sunrise (Premium, Light, Readable)
+   HERO BANNER  —  Full Background Image + Clean Direct Text
    ============================================================ */
 .hero-section {
-  background:
-    /* Warm saffron overlay — image visible + text readable */
-    linear-gradient(
-      145deg,
-      rgba(255, 109, 0, 0.72) 0%,
-      rgba(255, 143, 0, 0.60) 40%,
-      rgba(255, 183, 77, 0.45) 100%
-    ),
-    url('/hero.png') center center / cover no-repeat;
+  background: url('/hero.png') center center / cover no-repeat;
   border: none;
   border-radius: var(--radius-xl);
   padding: 52px 44px 44px;
@@ -885,42 +877,26 @@ a {
   flex-direction: column;
   align-items: flex-end;
   justify-content: center;
-  min-height: 460px;
+  min-height: 480px;
   gap: 0;
-  box-shadow:
-    0 16px 48px rgba(255, 109, 0, 0.28),
-    0 4px 16px rgba(255, 109, 0, 0.18);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.18);
 }
 
-/* Sacred golden shimmer glow — top right corner */
+/* Subtle dark vignette overlay at edges for crisp edge contrast */
 .hero-section::before {
   content: '';
   position: absolute;
-  top: -80px;
-  right: -80px;
-  width: 340px;
-  height: 340px;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.18) 0%, transparent 65%);
-  border-radius: 50%;
+  inset: 0;
+  background: radial-gradient(circle at 75% 50%, rgba(0, 0, 0, 0.15) 0%, rgba(0, 0, 0, 0.35) 100%);
   pointer-events: none;
   z-index: 0;
 }
 
-/* Bottom left warm glow accent */
 .hero-section::after {
-  content: '';
-  position: absolute;
-  bottom: -60px;
-  left: -60px;
-  width: 260px;
-  height: 260px;
-  background: radial-gradient(circle, rgba(255, 179, 0, 0.28) 0%, transparent 65%);
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 0;
+  display: none;
 }
 
-/* ── Content wrapper — Clean, no glassmorphism ── */
+/* ── Content wrapper — Completely Transparent (No Box) ── */
 .hero-content {
   position: relative;
   z-index: 2;
@@ -931,45 +907,48 @@ a {
   align-items: flex-end;
   margin: 0 0 0 auto;
   background: transparent !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
   border: none !important;
   border-radius: 0 !important;
   padding: 0 !important;
   box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
-/* ── Eyebrow badge — white translucent pill ── */
+/* ── Eyebrow badge — Translucent Frosted Pill ── */
 .hero-eyebrow {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  background: rgba(255, 255, 255, 0.22);
-  border: 1.5px solid rgba(255, 255, 255, 0.45);
-  color: #ffffff;
-  font-size: 0.74rem;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  color: #FFFFFF;
+  font-size: 0.76rem;
   font-weight: 700;
-  letter-spacing: 1.4px;
+  letter-spacing: 1.2px;
   text-transform: uppercase;
   padding: 6px 18px;
   border-radius: 999px;
   margin-bottom: 20px;
   position: relative;
   z-index: 1;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
 }
 
-/* ── Hero Title — Pure White, Bold ── */
+/* ── Hero Title — Pure White with Crisp Drop Shadow ── */
 .hero-title {
-  font-size: clamp(1.7rem, 3vw, 2.7rem);
+  font-size: clamp(1.75rem, 3.2vw, 2.75rem);
   font-weight: 900;
-  color: #ffffff;
-  line-height: 1.18;
+  color: #FFFFFF;
+  line-height: 1.2;
   margin: 0 0 18px 0;
   position: relative;
   z-index: 1;
   max-width: 100%;
   text-align: right;
-  text-shadow: 0 2px 12px rgba(180, 80, 0, 0.22);
+  text-shadow: 0 3px 12px rgba(0, 0, 0, 0.8), 0 1px 3px rgba(0, 0, 0, 0.9);
   transition: transform 0.25s ease;
 }
 
@@ -977,29 +956,29 @@ a {
   display: block;
 }
 
-/* Accent line — bright golden yellow (readable on orange bg) */
+/* Accent line — Warm Bright Saffron/Gold */
 .hero-title-line--accent {
-  color: #FFF9C4;
-  -webkit-text-fill-color: #FFF9C4;
+  color: #FFD54F;
+  -webkit-text-fill-color: #FFD54F;
   background: none;
   background-clip: unset;
   -webkit-background-clip: unset;
   filter: none !important;
   white-space: nowrap;
-  text-shadow: 0 2px 16px rgba(255, 200, 0, 0.35);
+  text-shadow: 0 3px 14px rgba(0, 0, 0, 0.85), 0 0 20px rgba(255, 179, 0, 0.45);
 }
 
-/* ── Hero Subtitle — Pure White, Readable ── */
+/* ── Hero Subtitle — Bright White with Shadow ── */
 .hero-subtitle {
   font-size: 1rem;
-  color: rgba(255, 255, 255, 0.92);
+  color: rgba(255, 255, 255, 0.96);
   max-width: 100%;
   margin: 0;
   line-height: 1.72;
   text-align: right;
   position: relative;
   z-index: 1;
-  text-shadow: 0 1px 4px rgba(150, 60, 0, 0.18);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.85), 0 1px 3px rgba(0, 0, 0, 0.95);
 }
 
 .hero-subtitle--spaced {
@@ -1025,10 +1004,11 @@ a {
   margin-left: 0;
 }
 
-/* ── Highlighted keywords — bright gold on saffron ── */
+/* ── Highlighted keywords — Gold ── */
 .hero-highlight {
-  color: #FFF9C4;
+  color: #FFD54F;
   font-weight: 700;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.85);
 }
 
 /* ── Desktop ── */
@@ -1120,28 +1100,29 @@ a {
 .hero-stat {
   text-align: center;
   min-width: 0;
-  padding: 14px 12px;
+  padding: 12px 18px;
   border-radius: 16px;
-  border: 1.5px solid rgba(255, 255, 255, 0.55);
-  background: rgba(255, 255, 255, 0.22);
-  box-shadow: 0 4px 16px rgba(180, 70, 0, 0.12), inset 0 1px 0 rgba(255,255,255,0.3);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(0, 0, 0, 0.32);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .hero-stat-number {
   font-size: 1.45rem;
   font-weight: 800;
-  color: #ffffff;
+  color: #FFD54F;
   line-height: 1.1;
-  text-shadow: 0 1px 6px rgba(150, 60, 0, 0.20);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
 }
 
 .hero-stat-label {
-  font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.88);
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.92);
   font-weight: 600;
   margin-top: 4px;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
 }
 
 .hero-section::before {
@@ -5209,42 +5190,43 @@ a {
 @media (max-width: 768px) {
   .topbar {
     height: auto !important;
-    padding: 10px 14px 10px !important;
+    padding: 8px 10px !important;
     display: flex !important;
-    flex-wrap: wrap !important;
+    flex-wrap: nowrap !important;
     align-items: center !important;
     justify-content: space-between !important;
-    gap: 8px 10px !important;
+    gap: 4px 6px !important;
   }
 
   .topbar-left {
     order: 1 !important;
-    flex: 1 1 auto !important;
+    flex: 0 0 auto !important;
     min-width: 0 !important;
     margin-right: 0 !important;
-    gap: 10px !important;
+    gap: 6px !important;
   }
 
   .topbar-title {
-    font-size: 0.95rem !important;
-    letter-spacing: 0.2px !important;
+    font-size: 0.84rem !important;
+    letter-spacing: 0 !important;
     white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    max-width: 170px !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    max-width: none !important;
+    line-height: 1.1 !important;
   }
 
   .topbar-subtitle {
-    font-size: 0.64rem !important;
-    white-space: nowrap !important;
+    display: none !important;
   }
 
   .topbar-right {
     order: 2 !important;
-    flex-shrink: 0 !important;
-    gap: 8px !important;
+    flex: 0 0 auto !important;
+    gap: 4px !important;
     display: flex !important;
     align-items: center !important;
+    margin-left: 4px !important;
   }
 
   .nav-links-top {
@@ -5252,10 +5234,13 @@ a {
   }
 
   .voice-search-btn {
-    padding: 0 12px !important;
-    height: 36px !important;
-    border-radius: 99px !important;
-    gap: 4px !important;
+    padding: 0 !important;
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
 
   .voice-search-label {
@@ -5264,21 +5249,23 @@ a {
 
   .topbar-center {
     order: 3 !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    margin: 2px 0 0 0 !important;
+    width: auto !important;
+    flex: 0 0 auto !important;
+    margin-left: 2px !important;
   }
 
   .search-bar {
-    max-width: 100% !important;
-    width: 100% !important;
-    height: 38px !important;
-    padding: 4px 12px !important;
+    width: 100px !important;
+    max-width: 100px !important;
+    height: 32px !important;
+    padding: 2px 6px !important;
+    border-radius: 99px !important;
   }
 
   .search-bar input {
-    font-size: 0.85rem !important;
-    max-width: 100% !important;
+    font-size: 0.78rem !important;
+    padding: 0 2px !important;
+    width: 100% !important;
   }
 }
 
@@ -6274,24 +6261,18 @@ a {
    ============================================================ */
 @media (max-width: 768px) {
   .hero-section {
-    background:
-      linear-gradient(
-        155deg,
-        rgba(255, 109, 0, 0.76) 0%,
-        rgba(255, 143, 0, 0.62) 50%,
-        rgba(255, 183, 77, 0.48) 100%
-      ),
-      url('/hero.png') center center / cover no-repeat !important;
+    background: url('/hero.png') center center / cover no-repeat !important;
     text-align: center !important;
     align-items: center !important;
-    padding: 32px 18px 28px !important;
+    padding: 20px 12px !important;
     min-height: 280px !important;
     border-radius: 18px !important;
     margin-bottom: 24px !important;
-    box-shadow: 0 8px 28px rgba(255, 109, 0, 0.30) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
   }
 
   .hero-content {
+    padding: 22px 18px !important;
     max-width: 100% !important;
     align-items: center !important;
     margin-left: auto !important;
@@ -6299,7 +6280,7 @@ a {
     text-align: center !important;
     display: flex !important;
     flex-direction: column !important;
-    gap: 18px !important;
+    gap: 16px !important;
   }
 
   .hero-title,
