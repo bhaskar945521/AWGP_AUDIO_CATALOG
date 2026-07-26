@@ -3,7 +3,7 @@ import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import Logo from './Logo';
 import VoiceSearch from './VoiceSearch';
 import toast from 'react-hot-toast';
-import api from '../api';
+import api, { resolveUrl } from '../api';
 import { useAuth } from '../context/AuthContext';
 
 function timeAgo(dateStr) {
@@ -19,7 +19,8 @@ function timeAgo(dateStr) {
 export default function Header({ onToggleSidebar, onVoiceResult, searchQuery, onSearchChange }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAdmin, isOnlyUser } = useAuth();
+  const { isAdmin, isOnlyUser, user } = useAuth();
+  const avatarSrc = user?.avatarUrl ? resolveUrl(user.avatarUrl) : null;
   const [categories, setCategories] = useState([]);
   const [siteTitle, setSiteTitle] = useState('Spiritual Audio Hub');
   const [notifOpen, setNotifOpen] = useState(false);
@@ -205,14 +206,25 @@ export default function Header({ onToggleSidebar, onVoiceResult, searchQuery, on
         </div>
       </div>
 
-      {/* MOBILE-ONLY: Profile icon after search */}
+      {/* Profile button — shows avatar if uploaded, else icon */}
       <NavLink
         to="/profile"
         className={({ isActive }) => `topbar-profile-btn${isActive ? ' active' : ''}`}
-        title="Profile"
+        title={user?.fullName || user?.username || 'Profile'}
         aria-label="My Profile"
       >
-        <i className="fas fa-user-circle" />
+        {avatarSrc ? (
+          <img
+            src={avatarSrc}
+            alt="avatar"
+            className="topbar-profile-avatar"
+            onError={e => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+          />
+        ) : null}
+        <i
+          className="fas fa-user-circle"
+          style={avatarSrc ? { display: 'none' } : {}}
+        />
       </NavLink>
 
       {/* RIGHT: nav links + voice + notif */}
