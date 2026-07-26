@@ -5186,9 +5186,28 @@ a {
   display: inline-block;
 }
 
-/* ── Mobile-only Profile icon button (after search bar) ── */
+/* ── Profile icon button in topbar (mobile + desktop) ── */
 .topbar-profile-btn {
-  display: none; /* hidden on desktop */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(255, 109, 0, 0.08);
+  border: 1.5px solid rgba(255, 109, 0, 0.25);
+  color: #E65100;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  text-decoration: none;
+  transition: background 0.2s, color 0.2s;
+  cursor: pointer;
+}
+
+.topbar-profile-btn.active,
+.topbar-profile-btn:hover {
+  background: rgba(255, 109, 0, 0.18);
+  color: #BF360C;
 }
 
 /* ── Mobile Topbar Responsive Layout ── */
