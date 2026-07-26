@@ -21,17 +21,18 @@ export default function AlbumDetails() {
   const fetchAlbumData = async () => {
     try {
       setLoading(true);
-      const [albumRes, audiosRes] = await Promise.all([
-        api.get(`/albums/${id}`),
-        api.get(`/audios?album=${id}`)
-      ]);
+      const albumRes = await api.get(`/albums/${id}`);
       setAlbum(albumRes.data);
       
-      // Handle paginated or non-paginated audio response format
-      const audioList = audiosRes.data.data || audiosRes.data;
+      const realAlbumId = albumRes.data?._id || id;
+      const audiosRes = await api.get(`/audios?album=${realAlbumId}`);
+      const audioList = Array.isArray(audiosRes.data)
+        ? audiosRes.data
+        : (audiosRes.data?.data || []);
       setAudios(audioList);
     } catch (err) {
       console.error('Failed to load album data', err);
+      toast.error('Unable to fetch album details');
     } finally {
       setLoading(false);
     }
@@ -50,21 +51,6 @@ export default function AlbumDetails() {
       }
     });
   }, [audios, fetchReactions, userReactions]);
-
-  useEffect(() => {
-    const handleVisibility = () => {
-      if (document.visibilityState === 'visible') {
-        fetchAlbumData();
-      }
-    };
-    const handleFocus = () => fetchAlbumData();
-    document.addEventListener('visibilitychange', handleVisibility);
-    window.addEventListener('focus', handleFocus);
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibility);
-      window.removeEventListener('focus', handleFocus);
-    };
-  }, []);
 
 
   const playAll = () => {

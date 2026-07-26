@@ -868,94 +868,122 @@ a {
 }
 
 /* ============================================================
-   HERO BANNER
+   HERO BANNER  —  Nature + Spirituality (Fully Readable)
    ============================================================ */
 .hero-section {
   background:
-    linear-gradient(to right, rgba(255, 253, 231, 0.05) 0%, rgba(255, 249, 194, 0.6) 45%, rgba(255, 246, 165, 0.95) 80%, rgba(255, 246, 165, 1) 100%),
-    url('/hero.png') left center / cover no-repeat;
-  border: 1px solid var(--border-saffron);
+    /* Full dark veil for universal readability on bright nature image */
+    linear-gradient(
+      135deg,
+      rgba(15, 10, 5, 0.78) 0%,
+      rgba(20, 15, 5, 0.65) 50%,
+      rgba(30, 20, 5, 0.45) 100%
+    ),
+    /* Saffron sunrise warmth glow */
+    radial-gradient(
+      ellipse at 60% 35%,
+      rgba(247, 168, 77, 0.18) 0%,
+      transparent 65%
+    ),
+    url('/hero.png') center center / cover no-repeat;
+  border: 1px solid var(--saffron-border);
   border-radius: var(--radius-xl);
-  padding: 80px 40px 68px;
-  /* reduced top padding to allow content to sit higher */
-  text-align: right;
+  padding: 72px 48px 60px;
   margin-bottom: 24px;
   position: relative;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
-  /* centered so content uses top space better */
-  min-height: 700px;
-  gap: 24px;
-  /* space between hero children */
+  min-height: 620px;
+  gap: 0;
 }
 
+/* Golden sacred glow overlays */
+.hero-section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 10% 85%, rgba(247, 168, 77, 0.10) 0%, transparent 45%),
+    radial-gradient(circle at 90% 15%, rgba(255, 215, 0, 0.08) 0%, transparent 40%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Subtle diagonal grain texture */
+.hero-section::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    -14deg,
+    transparent,
+    transparent 55px,
+    rgba(247, 168, 77, 0.015) 55px,
+    rgba(247, 168, 77, 0.015) 56px
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Content wrapper ── */
 .hero-content {
   position: relative;
-  z-index: 1;
-  max-width: 900px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  margin: 0 0 0 auto;
-}
-
-.hero-actions {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  text-align: right;
+  z-index: 2;
   width: 100%;
-  max-width: 860px;
+  max-width: 720px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
   margin: 0 0 0 auto;
-  align-self: flex-end;
-  padding-left: 0;
+  /* Glassmorphism text panel for clarity */
+  background: rgba(15, 10, 5, 0.38);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(247, 168, 77, 0.18);
+  border-radius: 20px;
+  padding: 36px 40px;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 215, 0, 0.08);
 }
 
-.hero-actions .hero-cta {
-  margin-left: 0;
-}
-
-.hero-subtitle {
-  font-size: 1rem;
-  color: var(--text-muted);
-  max-width: 620px;
-  margin: 20px 0 10px 0;
-  /* increased bottom margin */
-  line-height: 1.6;
-  white-space: normal;
+/* ── Eyebrow badge ── */
+.hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(247, 168, 77, 0.18);
+  border: 1px solid rgba(247, 168, 77, 0.45);
+  color: #FFD166;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 5px 16px;
+  border-radius: 999px;
+  margin-bottom: 20px;
   position: relative;
   z-index: 1;
-  display: block;
-  overflow: visible;
-  text-overflow: initial;
-  text-align: right;
 }
 
-.hero-subtitle--spaced {
-  margin-top: 0;
-  margin-bottom: 20px;           /* more breathing room before stats */
-}
-
+/* ── Hero Title ── */
 .hero-title {
-  font-size: clamp(1.8rem, 3.2vw, 2.8rem);
+  font-size: clamp(1.7rem, 3vw, 2.6rem);
   font-weight: 900;
-  color: var(--text-main);
-  line-height: 1.1;
-  margin-top: -20px;
-  /* more space below subtitle */
-  margin-bottom: 30px;
+  color: #fff8f0;
+  line-height: 1.15;
+  margin: 0 0 18px 0;
   position: relative;
   z-index: 1;
   max-width: 100%;
-  padding: 0 4px;
-  overflow-wrap: anywhere;
-  word-break: break-word;
-  white-space: normal;
   text-align: right;
-  transition: transform 0.25s ease, color 0.25s ease;
+  text-shadow:
+    0 2px 16px rgba(0, 0, 0, 0.55),
+    0 1px 4px rgba(0, 0, 0, 0.4);
+  transition: transform 0.25s ease;
 }
 
 .hero-title-line {
@@ -963,38 +991,125 @@ a {
 }
 
 .hero-title-line--accent {
-  color: var(--saffron);
+  background: linear-gradient(135deg, #FFD700, #FF8C00);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 2px 6px rgba(255, 140, 0, 0.35));
   white-space: nowrap;
 }
 
+/* ── Hero Subtitle ── */
+.hero-subtitle {
+  font-size: 0.97rem;
+  color: rgba(255, 245, 220, 0.85);
+  max-width: 100%;
+  margin: 0;
+  line-height: 1.7;
+  text-align: right;
+  position: relative;
+  z-index: 1;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.45);
+}
+
+.hero-subtitle--spaced {
+  margin-bottom: 0;
+}
+
+.hero-subtitle-line {
+  display: block;
+}
+
+/* ── Hero Actions ── */
+.hero-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+}
+
+.hero-actions .hero-cta {
+  margin-left: 0;
+}
+
+/* ── Highlighted keywords in subtitle ── */
+.hero-highlight {
+  color: #FFD166;
+  font-weight: 700;
+}
+
+/* ── Desktop ── */
 @media (min-width: 769px) {
+  .hero-section {
+    padding: 80px 56px 72px;
+    min-height: 640px;
+  }
+  .hero-content {
+    padding: 44px 48px;
+    max-width: 640px;
+  }
   .hero-title {
     display: flex;
-    flex-direction: column;       /* stack lines vertically */
-    align-items: flex-end;        /* right-align both lines */
-    text-align: right;
-    white-space: normal;
-    gap: 0.15rem;                 /* tight gap between the two lines */
-    margin-top: -5px;
-    margin-bottom: 40px;          /* more space below title */
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.1rem;
+    margin-bottom: 20px;
   }
-
   .hero-title-line {
-    display: block;
     text-align: right;
     width: 100%;
   }
+}
 
+/* ── Mobile ── */
+@media (max-width: 768px) {
+  .hero-section {
+    padding: 40px 20px 36px;
+    min-height: auto;
+    align-items: center;
+    border-radius: 16px;
+  }
+  .hero-content {
+    align-items: center;
+    text-align: center;
+    margin: 0 auto;
+    padding: 28px 22px;
+    max-width: 100%;
+    backdrop-filter: blur(8px);
+  }
   .hero-eyebrow {
-    margin-top: -15px;            /* shift badge upward */
-    margin-bottom: 26px;          /* breathing room between badge and title */
+    margin-bottom: 14px;
+    font-size: 0.65rem;
+  }
+  .hero-title {
+    font-size: clamp(1.45rem, 6vw, 2rem);
+    text-align: center;
+    margin-bottom: 14px;
+  }
+  .hero-title-line {
+    text-align: center;
+  }
+  .hero-title-line--accent {
+    white-space: normal;
+  }
+  .hero-subtitle {
+    font-size: 0.88rem;
+    text-align: center;
+    line-height: 1.6;
+  }
+  .hero-actions {
+    align-items: center;
   }
 }
 
+/* ── Hover lift ── */
 .hero-title:hover {
-  transform: translateY(-3px);
-  color: var(--saffron);
+  transform: translateY(-2px);
 }
+
 
 .hero-stats {
   display: grid;

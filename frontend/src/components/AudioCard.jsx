@@ -69,7 +69,7 @@ export default function AudioCard({
   };
 
   const rawImage = (image && image !== '/placeholder.png') ? image : (imageUrl && imageUrl !== '/placeholder.png') ? imageUrl : null;
-  const displayImage = rawImage ? resolveUrl(rawImage) : '/awgp.jpg';
+  const displayImage = rawImage ? resolveUrl(rawImage) : '/placeholder.png';
   const shapeColorClass = (_id && _id.length > 0 && _id.charCodeAt(_id.length - 1) % 2 === 0) ? 'card-brand-shape--yellow' : 'card-brand-shape--orange';
 
   return (
@@ -81,7 +81,7 @@ export default function AudioCard({
           loading="lazy"
           decoding="async"
           className="audio-thumbnail"
-          onError={(e) => { e.target.src = '/awgp.jpg'; }}
+          onError={(e) => { e.target.src = '/placeholder.png'; }}
         />
 
         {/* Category badge */}

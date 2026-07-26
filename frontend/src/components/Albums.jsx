@@ -40,17 +40,16 @@ export default function Albums() {
   const fetchAlbums = async () => {
     try {
       setLoading(true);
-      const [albumsRes, audiosRes, catsRes] = await Promise.all([
+      const [albumsRes, audiosRes, catsRes] = await Promise.allSettled([
         api.get('/albums'),
         api.get('/audios'),
         api.get('/categories')
       ]);
-      setAlbums(albumsRes.data);
-      setAudios(audiosRes.data);
-      setCategories(catsRes.data);
+      if (albumsRes.status === 'fulfilled') setAlbums(albumsRes.value.data || []);
+      if (audiosRes.status === 'fulfilled') setAudios(audiosRes.value.data || []);
+      if (catsRes.status === 'fulfilled') setCategories(catsRes.value.data || []);
     } catch (err) {
-      toast.error('Failed to fetch albums');
-      console.error(err);
+      console.error('Error fetching albums:', err);
     } finally {
       setLoading(false);
     }
@@ -259,7 +258,7 @@ export default function Albums() {
     title={album.title}
     description={album.description}
     coverImage={album.coverImage}
-    count={getAlbumAudioCount(album._id)}
+    count={album.count !== undefined ? album.count : getAlbumAudioCount(album._id)}
     onClick={() => navigate(`/albums/${album._id}`)}
     isAdmin={isAdmin}
     onEdit={(e) => { e.stopPropagation(); openEditModal(album, e); }}

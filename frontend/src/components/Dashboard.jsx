@@ -120,22 +120,25 @@ export default function Dashboard() {
   const fetchDashboardData = useCallback(async () => {
     try {
       setLoading(true);
-      const [audiosRes, catsRes, albumsRes] = await Promise.all([
+      const [audiosRes, catsRes, albumsRes] = await Promise.allSettled([
         api.get('/audios'),
         api.get('/categories'),
         api.get('/albums'),
       ]);
-      setAudios(audiosRes.data);
-      setAlbums(albumsRes.data);
+      const loadedAudios = audiosRes.status === 'fulfilled' ? (audiosRes.value.data || []) : [];
+      const loadedCats = catsRes.status === 'fulfilled' ? (catsRes.value.data || []) : [];
+      const loadedAlbums = albumsRes.status === 'fulfilled' ? (albumsRes.value.data || []) : [];
+
+      setAudios(loadedAudios);
+      setAlbums(loadedAlbums);
 
       // Merge: categories from DB + any categories found in audios (for old data)
-      const dbCats = catsRes.data;
-      const dbCatNames = new Set(dbCats.map(c => c.name));
-      const audioCats = audiosRes.data
+      const dbCatNames = new Set(loadedCats.map(c => c.name));
+      const audioCats = loadedAudios
         .map(a => a.category)
         .filter(c => c && !dbCatNames.has(c));
       const extraCats = [...new Set(audioCats)].map(name => ({ name, _id: `auto-${name}` }));
-      setCategories([...dbCats, ...extraCats]);
+      setCategories([...loadedCats, ...extraCats]);
     } catch (err) {
       console.error('Failed to load dashboard data', err);
     } finally {
@@ -295,18 +298,17 @@ export default function Dashboard() {
           <div className="hero-section">
             <div className="hero-content">
               <span className="hero-eyebrow">
-                <i className="fas fa-headphones" /> Spiritual Digital Archive
+                <i className="fas fa-star" /> Welcome to Spiritual Audio Hub
               </span>
               <h1 className="hero-title">
-                <span className="hero-title-line">Spiritual Knowledge</span>
-                <span className="hero-title-line hero-title-line--accent">Preserved Forever</span>
+                <span className="hero-title-line">Preserving Sacred Audio</span>
+                <span className="hero-title-line hero-title-line--accent">Wisdom for Eternity</span>
               </h1>
               <div className="hero-actions">
                 <p className="hero-subtitle hero-subtitle--spaced">
-                <span className="hero-subtitle-line">Explore the timeless teachings of <strong className="hero-highlight">Pragya Geet</strong>,</span>
-                <span className="hero-subtitle-line"><strong className="hero-highlight">Amritvani</strong>, and profound spiritual wisdom from  </span>
-                <span className="hero-subtitle-line hero-subtitle-line--no-break"><strong className="hero-highlight">All World Gayatri Pariwar</strong> — all in one place.</span>
-              </p>
+                  <span className="hero-subtitle-line">Discover curated spiritual albums, rare <strong className="hero-highlight">Pravachans</strong>,</span>
+                  <span className="hero-subtitle-line"><strong className="hero-highlight">Amritvani</strong>, and devotional tracks preserved in one digital archive.</span>
+                </p>
               </div>
 
               {!loading && (
@@ -354,7 +356,7 @@ export default function Dashboard() {
                     title={album.title}
                     description={album.description}
                     coverImage={album.coverImage}
-                    count={getAlbumAudioCount(album._id)}
+                    count={album.count !== undefined ? album.count : getAlbumAudioCount(album._id)}
                     onClick={() => navigate(`/albums/${album._id}`)}
                     index={index}
                   />

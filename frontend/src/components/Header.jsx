@@ -5,8 +5,6 @@ import VoiceSearch from './VoiceSearch';
 import toast from 'react-hot-toast';
 import api from '../api';
 import { useAuth } from '../context/AuthContext';
-import { Link } from 'react-router-dom';
-import { resolveUrl } from '../api';
 
 function timeAgo(dateStr) {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -21,10 +19,8 @@ function timeAgo(dateStr) {
 export default function Header({ onToggleSidebar, onVoiceResult, searchQuery, onSearchChange }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { token, logout, isAdmin, isOnlyUser, user } = useAuth();
+  const { isAdmin, isOnlyUser } = useAuth();
   const [categories, setCategories] = useState([]);
-  const [profileOpen, setProfileOpen] = useState(false);
-  const profileRef = useRef(null);
   const [siteTitle, setSiteTitle] = useState('Spiritual Audio Hub');
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifItems, setNotifItems] = useState([]);
@@ -36,7 +32,7 @@ export default function Header({ onToggleSidebar, onVoiceResult, searchQuery, on
   const [clickCount, setClickCount] = useState(0);
   const lastClickTime = useRef(0);
 
-  // Handle voice search result: update query, focus input, show toast, and propagate if needed
+  // Handle voice search result
   const handleVoiceResult = (text) => {
     if (onSearchChange) onSearchChange(text);
     if (searchInputRef.current) searchInputRef.current.focus();
@@ -51,10 +47,6 @@ export default function Header({ onToggleSidebar, onVoiceResult, searchQuery, on
   const handleCategorySelect = (cat) => {
     setCategoriesOpen(false);
     navigate(`/albums?category=${cat._id}`);
-  };
-
-  const closeCategories = () => {
-    setCategoriesOpen(false);
   };
 
   // Track which notification IDs the user has already seen
@@ -108,9 +100,6 @@ export default function Header({ onToggleSidebar, onVoiceResult, searchQuery, on
       if (categoriesRef.current && !categoriesRef.current.contains(e.target)) {
         setCategoriesOpen(false);
       }
-      if (profileRef.current && !profileRef.current.contains(e.target)) {
-        setProfileOpen(false);
-      }
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
@@ -130,17 +119,14 @@ export default function Header({ onToggleSidebar, onVoiceResult, searchQuery, on
 
   const handleLogoClick = () => {
     const now = Date.now();
-    // If clicks are within 500ms of each other, count them!
     if (now - lastClickTime.current < 500) {
       const newCount = clickCount + 1;
       setClickCount(newCount);
       if (newCount === 5) {
-        // 5 clicks! Go to login page!
         navigate('/login');
         setClickCount(0);
       }
     } else {
-      // Reset if more than 500ms since last click
       setClickCount(1);
     }
     lastClickTime.current = now;
@@ -162,7 +148,7 @@ export default function Header({ onToggleSidebar, onVoiceResult, searchQuery, on
   return (
     <header className="topbar">
       {/* LEFT: Logo + title + admin sidebar toggle */}
-      <div className="topbar-left">
+      <div className="topbar-left" style={{ gap: '14px', alignItems: 'center' }}>
         {isAdmin && (
           <button
             onClick={onToggleSidebar}
@@ -172,12 +158,14 @@ export default function Header({ onToggleSidebar, onVoiceResult, searchQuery, on
             <i className="fas fa-bars" />
           </button>
         )}
-        <div style={{ cursor: 'pointer' }} onClick={handleLogoClick}>
-          <Logo size={42} />
+        <div style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }} onClick={handleLogoClick}>
+          <Logo size={40} />
         </div>
-        <div>
-          <div className="topbar-title">{siteTitle}</div>
-          <span className="topbar-subtitle">Spiritual Catalog</span>
+        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <div className="topbar-title" style={{ fontWeight: 800, background: 'linear-gradient(135deg, #FFB300, #FF6D00)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontSize: '1.1rem', letterSpacing: '0.4px', lineHeight: 1.2 }}>
+            Spiritual Audio Hub
+          </div>
+          <span className="topbar-subtitle" style={{ fontSize: '0.7rem', opacity: 0.8, marginTop: '1px' }}>Spiritual Catalog</span>
         </div>
       </div>
 
@@ -217,7 +205,7 @@ export default function Header({ onToggleSidebar, onVoiceResult, searchQuery, on
         </div>
       </div>
 
-      {/* RIGHT: nav links + voice + notif + auth */}
+      {/* RIGHT: nav links + voice + notif */}
       <div className="topbar-right">
         <nav className="nav-links-top">
           <NavLink to="/" className={({ isActive }) => `nav-link-top${isActive ? ' active' : ''}`}>Home</NavLink>
@@ -259,7 +247,6 @@ export default function Header({ onToggleSidebar, onVoiceResult, searchQuery, on
           <button className="notif-btn" title="Recent uploads" onClick={() => {
             setNotifOpen(p => !p);
             if (!notifOpen) {
-              // Opening dropdown → mark all as seen, dismiss badge
               markAllSeen(notifItems);
               setNotifCount(0);
             }
@@ -297,75 +284,6 @@ export default function Header({ onToggleSidebar, onVoiceResult, searchQuery, on
             </div>
           )}
         </div>
-        {token ? (
-          <div className="user-avatar-wrapper" ref={profileRef} style={{ position: 'relative' }}>
-            <button
-              className="user-avatar-btn"
-              onClick={() => setProfileOpen(p => !p)}
-              title="My Account"
-              style={{
-                width: 38, height: 38, borderRadius: '50%',
-                background: 'linear-gradient(135deg, var(--saffron, #f7a84d), #f59e0b)',
-                border: '2px solid rgba(247,168,77,0.4)',
-                color: '#fff', fontWeight: 800, fontSize: '0.95rem',
-                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                transition: 'box-shadow 0.2s',
-                position: 'relative', overflow: 'hidden',
-              }}
-            >
-              <span>{(user?.fullName || user?.username || 'U').charAt(0).toUpperCase()}</span>
-              {user?.avatarUrl && (
-                <img src={resolveUrl(user.avatarUrl)} alt="avatar" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} onError={e => { e.target.style.display = 'none'; }} />
-              )}
-            </button>
-            {profileOpen && (
-              <div style={{
-                position: 'absolute', top: '48px', right: 0,
-                background: 'var(--card-bg, #1a1a2e)', border: '1.5px solid var(--border)',
-                borderRadius: '14px', padding: '8px', minWidth: '180px',
-                boxShadow: '0 8px 32px rgba(0,0,0,0.22)', zIndex: 200,
-              }}>
-                <div style={{ padding: '10px 12px 8px', borderBottom: '1px solid var(--border)' }}>
-                  <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--text-main)' }}>
-                    {user?.fullName || user?.username || 'User'}
-                  </div>
-                  <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: 2 }}>
-                    {user?.email || user?.role || ''}
-                  </div>
-                </div>
-                <button
-                  className="profile-link-btn"
-                  onClick={() => { setProfileOpen(false); navigate('/profile'); }}
-                  style={{
-                    width: '100%', padding: '9px 12px', borderRadius: '9px',
-                    background: 'none', border: 'none', cursor: 'pointer',
-                    display: 'flex', alignItems: 'center', gap: '9px',
-                    color: 'var(--text-main)', fontSize: '0.86rem', fontWeight: 600,
-                    marginTop: '4px',
-                    transition: 'background 0.2s',
-                  }}
-                >
-                  <i className="fas fa-user-circle" style={{ color: 'var(--saffron, #f7a84d)' }} />
-                  My Profile
-                </button>
-                <button
-                  className="profile-signout-btn"
-                  onClick={() => { setProfileOpen(false); logout(); navigate('/'); }}
-                  style={{
-                    width: '100%', padding: '9px 12px', borderRadius: '9px',
-                    background: 'none', border: 'none', cursor: 'pointer',
-                    display: 'flex', alignItems: 'center', gap: '9px',
-                    color: '#e53e3e', fontSize: '0.86rem', fontWeight: 600,
-                    transition: 'background 0.2s',
-                  }}
-                >
-                  <i className="fas fa-sign-out-alt" />
-                  Sign Out
-                </button>
-              </div>
-            )}
-          </div>
-        ) : null}
       </div>
     </header>
   );

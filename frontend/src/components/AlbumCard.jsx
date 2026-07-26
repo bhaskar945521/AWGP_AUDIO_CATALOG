@@ -49,12 +49,12 @@ export default function AlbumCard({
         {/* Cover Image with gradient overlay */}
         <div className="album-card-img-wrap">
           <img
-            src={img || '/awgp.jpg'}
+            src={img || '/placeholder.png'}
             alt={title || name}
             loading="lazy"
             decoding="async"
             className="album-card-image"
-            onError={(e) => { e.currentTarget.src = '/awgp.jpg'; }}
+            onError={(e) => { e.currentTarget.src = '/placeholder.png'; }}
           />
           <div className="album-card-img-overlay" />
         </div>

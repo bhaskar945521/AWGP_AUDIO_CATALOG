@@ -38,10 +38,12 @@ function parseArrayField(field) {
   return [field];
 }
 
+const mongoose = require('mongoose');
+
   // GET all albums (requires albums_read)
   router.get('/', auth, permissionCheck(['albums_read', 'album_view']), async (req, res) => {
     try {
-      const albums = await Album.find().populate('categoryId').sort({ createdAt: -1 });
+      const albums = await Album.find().populate('categoryId').sort({ createdAt: -1 }).lean();
       res.json(albums);
     } catch (err) {
       console.error(err);
@@ -49,14 +51,23 @@ function parseArrayField(field) {
     }
   });
 
-  // GET single album by ID (requires albums_read)
+  // GET single album by ID or name (requires albums_read)
   router.get('/:id', auth, permissionCheck(['albums_read', 'album_view']), async (req, res) => {
     try {
-      const album = await Album.findById(req.params.id).populate('categoryId');
+      let album = null;
+      if (mongoose.Types.ObjectId.isValid(req.params.id)) {
+        album = await Album.findById(req.params.id).populate('categoryId').lean();
+      }
+      if (!album) {
+        album = await Album.findOne({ name: req.params.id }).populate('categoryId').lean();
+      }
+      if (!album) {
+        album = await Album.findOne({ title: req.params.id }).populate('categoryId').lean();
+      }
       if (!album) return res.status(404).json({ message: 'Album not found' });
       res.json(album);
     } catch (err) {
-      console.error(err);
+      console.error('Error fetching album:', err);
       res.status(500).json({ message: 'Server error' });
     }
   });

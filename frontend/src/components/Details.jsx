@@ -176,7 +176,7 @@ export default function Details() {
   };
 
   const rawImg = audio?.imageUrl || audio?.image;
-  const displayImage = rawImg && rawImg !== '/placeholder.png' ? resolveUrl(rawImg) : '/awgp.jpg';
+  const displayImage = rawImg && rawImg !== '/placeholder.png' ? resolveUrl(rawImg) : '/placeholder.png';
 
   if (loading) return (
     <div style={{ textAlign: 'center', padding: '80px 0' }}>
