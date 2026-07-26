@@ -6,6 +6,7 @@ const multer = require('multer');
 const auth = require('../middleware/auth');
 const permissionCheck = require('../middleware/permissionCheck');
 const { STORAGE_FOLDERS, generateUniqueFilename, deleteLocalFile } = require('../utils/localStorage');
+const { processFileUpload, deleteFileByUrl } = require('../utils/cloudinaryStorage');
 const GalleryImage = require('../models/GalleryImage');
 
 // Multer storage for gallery images
@@ -50,7 +51,8 @@ router.post('/', auth, permissionCheck(['albums_create', 'albums_update', 'audio
   }
 
   try {
-    const url = `/uploads/gallery/${req.file.filename}`;
+    const fallbackUrl = `/uploads/gallery/${req.file.filename}`;
+    const url = await processFileUpload(req.file.path, 'awgp_catalog/gallery', 'image', fallbackUrl);
     const newImage = new GalleryImage({
       url,
       title: req.body.title || req.file.originalname || '',
@@ -72,7 +74,8 @@ router.post('/upload', auth, permissionCheck(['albums_create', 'albums_update', 
   try {
     const savedImages = [];
     for (const file of req.files) {
-      const url = `/uploads/gallery/${file.filename}`;
+      const fallbackUrl = `/uploads/gallery/${file.filename}`;
+      const url = await processFileUpload(file.path, 'awgp_catalog/gallery', 'image', fallbackUrl);
       const newImage = new GalleryImage({
         url,
         title: file.originalname || '',
@@ -95,8 +98,8 @@ router.delete('/:id', auth, permissionCheck(['albums_create', 'albums_update', '
       return res.status(404).json({ message: 'Gallery item not found' });
     }
 
-    // Delete from local storage
-    deleteLocalFile(image.url);
+    // Delete from Cloudinary or local storage
+    await deleteFileByUrl(image.url);
 
     // Delete from DB
     await GalleryImage.findByIdAndDelete(req.params.id);

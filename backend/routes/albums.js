@@ -8,6 +8,7 @@ const roleCheck = require('../middleware/roleCheck');
 const permissionCheck = require('../middleware/permissionCheck');
 const { logAudit } = require('../utils/auditLogger');
 const { STORAGE_FOLDERS, generateUniqueFilename, deleteLocalFile } = require('../utils/localStorage');
+const { processFileUpload, deleteFileByUrl } = require('../utils/cloudinaryStorage');
 
 // Multer storage setup for album covers
 const storage = multer.diskStorage({
@@ -67,7 +68,7 @@ function parseArrayField(field) {
       let coverImage = req.body.coverImage || '/album_placeholder.png';
       
       if (req.file) {
-        coverImage = `/uploads/album-covers/${req.file.filename}`;
+        coverImage = await processFileUpload(req.file.path, 'awgp_catalog/album_covers', 'image', `/uploads/album-covers/${req.file.filename}`);
       }
 
       const newAlbum = new Album({ name, title, description, coverImage, categoryId, audioIds });
@@ -106,10 +107,10 @@ function parseArrayField(field) {
       if (audioIds !== undefined) album.audioIds = audioIds;
 
       if (req.file) {
-        if (album.coverImage && album.coverImage !== '/album_placeholder.png' && !album.coverImage.startsWith('http') && album.coverImage !== req.body.coverImage) {
-          deleteLocalFile(album.coverImage);
+        if (album.coverImage && album.coverImage !== '/album_placeholder.png' && album.coverImage !== req.body.coverImage) {
+          await deleteFileByUrl(album.coverImage);
         }
-        album.coverImage = `/uploads/album-covers/${req.file.filename}`;
+        album.coverImage = await processFileUpload(req.file.path, 'awgp_catalog/album_covers', 'image', `/uploads/album-covers/${req.file.filename}`);
       } else if (req.body.coverImage !== undefined) {
         album.coverImage = req.body.coverImage;
       }
@@ -143,7 +144,7 @@ function parseArrayField(field) {
       await Album.findByIdAndDelete(req.params.id);
 
       if (album.coverImage && album.coverImage !== '/album_placeholder.png') {
-        deleteLocalFile(album.coverImage);
+        await deleteFileByUrl(album.coverImage);
       }
 
       await Audio.updateMany(
@@ -175,7 +176,7 @@ router.post('/from-selection', auth, permissionCheck(['albums_create', 'album_cr
     }
 
     if (req.file) {
-      coverImage = `/uploads/album-covers/${req.file.filename}`;
+      coverImage = await processFileUpload(req.file.path, 'awgp_catalog/album_covers', 'image', `/uploads/album-covers/${req.file.filename}`);
     }
 
     const Category = require('../models/Category');
@@ -231,7 +232,7 @@ router.post('/from-selection-with-edits', auth, permissionCheck(['albums_create'
     }
 
     if (req.file) {
-      coverImage = `/uploads/album-covers/${req.file.filename}`;
+      coverImage = await processFileUpload(req.file.path, 'awgp_catalog/album_covers', 'image', `/uploads/album-covers/${req.file.filename}`);
     }
 
     const Category = require('../models/Category');

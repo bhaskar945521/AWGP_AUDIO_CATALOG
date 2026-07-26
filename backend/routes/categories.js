@@ -10,6 +10,7 @@ const permissionCheck = require('../middleware/permissionCheck');
 const { logAudit } = require('../utils/auditLogger');
 const multer = require('multer');
 const { STORAGE_FOLDERS, generateUniqueFilename, deleteLocalFile } = require('../utils/localStorage');
+const { processFileUpload, deleteFileByUrl } = require('../utils/cloudinaryStorage');
 
 // Use disk storage for category images
 const storage = multer.diskStorage({
@@ -50,7 +51,7 @@ router.post('/', auth, permissionCheck(['categories_create', 'category_create'])
     let coverImageUrl = req.body.coverImageUrl || '';
 
     if (req.file) {
-      coverImageUrl = `/uploads/categories/${req.file.filename}`;
+      coverImageUrl = await processFileUpload(req.file.path, 'awgp_catalog/categories', 'image', `/uploads/categories/${req.file.filename}`);
     }
 
     const newCat = new Category({ name, coverImageUrl });
@@ -82,9 +83,9 @@ router.patch('/:id', auth, permissionCheck(['categories_update', 'category_edit'
 
     if (req.file) {
       if (cat.coverImageUrl) {
-        deleteLocalFile(cat.coverImageUrl);
+        await deleteFileByUrl(cat.coverImageUrl);
       }
-      cat.coverImageUrl = `/uploads/categories/${req.file.filename}`;
+      cat.coverImageUrl = await processFileUpload(req.file.path, 'awgp_catalog/categories', 'image', `/uploads/categories/${req.file.filename}`);
     } else if (req.body.coverImageUrl !== undefined) {
       cat.coverImageUrl = req.body.coverImageUrl;
     }
@@ -114,7 +115,7 @@ router.delete('/:id', auth, permissionCheck(['categories_delete', 'category_dele
     await Category.findByIdAndDelete(req.params.id);
 
     if (cat.coverImageUrl) {
-      deleteLocalFile(cat.coverImageUrl);
+      await deleteFileByUrl(cat.coverImageUrl);
     }
 
     await Promise.all([

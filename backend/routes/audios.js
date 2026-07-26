@@ -14,6 +14,7 @@ const auth = require('../middleware/auth');
 const roleCheck = require('../middleware/roleCheck');
 const permissionCheck = require('../middleware/permissionCheck');
 const { STORAGE_FOLDERS, generateUniqueFilename, deleteLocalFile } = require('../utils/localStorage');
+const { processFileUpload, deleteFileByUrl, isCloudinaryConfigured } = require('../utils/cloudinaryStorage');
 const { logAudit } = require('../utils/auditLogger');
 
 function escapeRegExp(value) {
@@ -452,22 +453,30 @@ router.post(
         }
       }
 
-      // ── Step 2: Save processed audio to permanent local storage ─────────
+      // ── Step 2: Save processed audio (Cloudinary or local fallback) ─────────
       const finalAudioFilename = generateUniqueFilename('audio.mp3');
-      finalAudioPath = path.join(STORAGE_FOLDERS.audios, finalAudioFilename);
-      fs.copyFileSync(processedAudioPath, finalAudioPath);
-      const audioUrl = `/uploads/audios/${finalAudioFilename}`;
+      const fallbackAudioUrl = `/uploads/audios/${finalAudioFilename}`;
+      const localAudioPath = path.join(STORAGE_FOLDERS.audios, finalAudioFilename);
 
-      // ── Step 3: Use thumbnail image from local storage (if provided) ─────
+      let audioUrl = '';
+      if (isCloudinaryConfigured) {
+        audioUrl = await processFileUpload(processedAudioPath, 'awgp_catalog/audios', 'video', fallbackAudioUrl);
+      } else {
+        fs.copyFileSync(processedAudioPath, localAudioPath);
+        audioUrl = fallbackAudioUrl;
+      }
+
+      // ── Step 3: Thumbnail image (Cloudinary or local fallback) ─────
       let imageUrl = '/placeholder.png';
       if (imageFile) {
-        imageUrl = `/uploads/audio-images/${imageFile.filename}`;
+        const fallbackImageUrl = `/uploads/audio-images/${imageFile.filename}`;
+        imageUrl = await processFileUpload(imageFile.path, 'awgp_catalog/audio_images', 'image', fallbackImageUrl);
       }
 
       // ── Step 4: Clean up temp files ──────────────────────────────────────
       cleanupFiles(tempFiles);
 
-      // ── Step 5: Save to DB with local URLs ───────────────────────────────
+      // ── Step 5: Save to DB ───────────────────────────────────────────────
       const newAudio = new Audio({
         title,
         speaker,
@@ -507,7 +516,7 @@ router.put('/:id', auth, permissionCheck(['audios_update', 'audio_edit']), uploa
     const { title, speaker, duration, description, albumIds, tags, imageUrl } = req.body;
     const audio = await Audio.findById(req.params.id);
     if (!audio) {
-      if (req.file) deleteLocalFile(`/uploads/audio-images/${req.file.filename}`);
+      if (req.file) deleteLocalFile(req.file.path);
       return res.status(404).json({ message: 'Audio not found' });
     }
 
@@ -523,7 +532,8 @@ router.put('/:id', auth, permissionCheck(['audios_update', 'audio_edit']), uploa
     // Handle cover image replacement
     let newImageUrl = null;
     if (req.file) {
-      newImageUrl = `/uploads/audio-images/${req.file.filename}`;
+      const fallbackImageUrl = `/uploads/audio-images/${req.file.filename}`;
+      newImageUrl = await processFileUpload(req.file.path, 'awgp_catalog/audio_images', 'image', fallbackImageUrl);
     } else if (imageUrl) {
       newImageUrl = imageUrl;
     }
@@ -543,17 +553,17 @@ router.put('/:id', auth, permissionCheck(['audios_update', 'audio_edit']), uploa
       updatedData: saved
     });
 
-    // Delete old local image ONLY after successful DB save, if it's not a placeholder
-    if (oldImageUrl && oldImageUrl !== '/placeholder.png' && !oldImageUrl.startsWith('http')) {
+    // Delete old image ONLY after successful DB save, if it's not a placeholder
+    if (oldImageUrl && oldImageUrl !== '/placeholder.png') {
       if (oldImageUrl !== newImageUrl) {
-        deleteLocalFile(oldImageUrl);
+        await deleteFileByUrl(oldImageUrl);
       }
     }
 
     res.json(saved);
   } catch (err) {
     if (req.file) {
-      deleteLocalFile(`/uploads/audio-images/${req.file.filename}`);
+      deleteLocalFile(req.file.path);
     }
     res.status(400).json({ message: err.message });
   }
@@ -569,8 +579,8 @@ router.delete('/:id', auth, permissionCheck(['audios_delete', 'audio_delete']), 
 
     if (req.user.role === 'admin') {
       // Admin = permanent delete
-      if (audio.audioUrl) deleteLocalFile(audio.audioUrl);
-      if (audio.imageUrl && audio.imageUrl !== '/placeholder.png') deleteLocalFile(audio.imageUrl);
+      if (audio.audioUrl) await deleteFileByUrl(audio.audioUrl);
+      if (audio.imageUrl && audio.imageUrl !== '/placeholder.png') await deleteFileByUrl(audio.imageUrl);
       await Audio.findByIdAndDelete(req.params.id);
       await logAudit(req, { module: 'audios', action: 'delete', previousData, updatedData: null });
       return res.json({ message: 'Audio permanently deleted' });
@@ -624,8 +634,8 @@ router.delete('/:id/permanent', auth, permissionCheck(['audios_delete']), async 
     const audio = await Audio.findById(req.params.id);
     if (!audio) return res.status(404).json({ message: 'Audio not found' });
     const previousData = audio.toObject();
-    if (audio.audioUrl) deleteLocalFile(audio.audioUrl);
-    if (audio.imageUrl && audio.imageUrl !== '/placeholder.png') deleteLocalFile(audio.imageUrl);
+    if (audio.audioUrl) await deleteFileByUrl(audio.audioUrl);
+    if (audio.imageUrl && audio.imageUrl !== '/placeholder.png') await deleteFileByUrl(audio.imageUrl);
     await Audio.findByIdAndDelete(req.params.id);
     await logAudit(req, { module: 'audios', action: 'permanent_delete', previousData, updatedData: null });
     res.json({ message: 'Audio permanently deleted from trash' });

@@ -11,6 +11,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const { STORAGE_FOLDERS, generateUniqueFilename, deleteLocalFile } = require('../utils/localStorage');
+const { processFileUpload, deleteFileByUrl } = require('../utils/cloudinaryStorage');
 
 // ── Avatar upload setup ──────────────────────────────────────────
 const avatarsDir = path.join(__dirname, '..', 'uploads', 'avatars');
@@ -174,14 +175,12 @@ router.post('/me/avatar', auth, (req, res, next) => {
 
     // Delete old avatar if exists
     if (user.avatarUrl) {
-      const oldPath = path.join(__dirname, '..', user.avatarUrl.startsWith('/') ? user.avatarUrl.slice(1) : user.avatarUrl);
-      if (fs.existsSync(oldPath)) {
-        try { fs.unlinkSync(oldPath); } catch (_) {}
-      }
+      await deleteFileByUrl(user.avatarUrl);
     }
 
     // Save new avatar URL
-    const avatarUrl = `/uploads/avatars/${req.file.filename}`;
+    const fallbackUrl = `/uploads/avatars/${req.file.filename}`;
+    const avatarUrl = await processFileUpload(req.file.path, 'awgp_catalog/avatars', 'image', fallbackUrl);
     user.avatarUrl = avatarUrl;
     await user.save();
 
@@ -199,10 +198,7 @@ router.delete('/me/avatar', auth, async (req, res) => {
     if (!user) return res.status(404).json({ message: 'User not found' });
 
     if (user.avatarUrl) {
-      const oldPath = path.join(__dirname, '..', user.avatarUrl.startsWith('/') ? user.avatarUrl.slice(1) : user.avatarUrl);
-      if (fs.existsSync(oldPath)) {
-        try { fs.unlinkSync(oldPath); } catch (_) {}
-      }
+      await deleteFileByUrl(user.avatarUrl);
       user.avatarUrl = '';
       await user.save();
     }

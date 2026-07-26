@@ -1,6 +1,7 @@
 require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
 const cloudinary = require('cloudinary').v2;
 const fs = require('fs');
+const { deleteLocalFile } = require('./localStorage');
 
 // Configure Cloudinary from environment variables
 const isCloudinaryConfigured = Boolean(
@@ -23,11 +24,11 @@ if (isCloudinaryConfigured) {
 /**
  * Uploads a local file to Cloudinary.
  * @param {string} localFilePath - Path to local file on disk
- * @param {string} folder - Target Cloudinary folder (e.g. 'awgp/audios', 'awgp/images')
- * @param {string} resourceType - 'auto', 'image', or 'video' (audio files use 'video' or 'auto')
+ * @param {string} folder - Target Cloudinary folder (e.g. 'awgp_catalog/audios')
+ * @param {string} resourceType - 'auto', 'image', or 'video' (audio uses 'video' or 'auto')
  * @returns {Promise<string|null>} Cloudinary HTTPS URL or null if failed/not configured
  */
-async function uploadToCloudinary(localFilePath, folder = 'awgp_audio_catalog', resourceType = 'auto') {
+async function uploadToCloudinary(localFilePath, folder = 'awgp_catalog', resourceType = 'auto') {
   if (!isCloudinaryConfigured || !localFilePath || !fs.existsSync(localFilePath)) {
     return null;
   }
@@ -37,38 +38,99 @@ async function uploadToCloudinary(localFilePath, folder = 'awgp_audio_catalog', 
       folder: folder,
       resource_type: resourceType,
     });
-    console.log('[Cloudinary] Upload success:', result.secure_url);
+    console.log(`[Cloudinary] Upload success (${folder}):`, result.secure_url);
     return result.secure_url;
   } catch (error) {
-    console.error('[Cloudinary] Upload error:', error.message);
+    console.error(`[Cloudinary] Upload error (${folder}):`, error.message);
     return null;
   }
 }
 
 /**
- * Deletes an asset from Cloudinary given its URL.
- * @param {string} cloudinaryUrl
+ * Uploads local file to Cloudinary if configured and returns the secure URL.
+ * Cleans up local temporary file if Cloudinary upload succeeds.
+ * If Cloudinary is not configured or upload fails, falls back to fallbackLocalUrl.
+ *
+ * @param {string} localFilePath - Absolute path to local file on disk
+ * @param {string} folder - Cloudinary folder name
+ * @param {string} resourceType - 'auto' | 'image' | 'video'
+ * @param {string} fallbackLocalUrl - Local URL path if Cloudinary not used
+ * @returns {Promise<string>} Final URL (Cloudinary URL or local URL)
  */
-async function deleteFromCloudinary(cloudinaryUrl) {
-  if (!isCloudinaryConfigured || !cloudinaryUrl || !cloudinaryUrl.includes('cloudinary.com')) {
-    return;
+async function processFileUpload(localFilePath, folder = 'awgp_catalog', resourceType = 'auto', fallbackLocalUrl = '') {
+  if (!localFilePath || !fs.existsSync(localFilePath)) {
+    return fallbackLocalUrl;
   }
 
-  try {
-    // Extract public ID from Cloudinary URL
-    const parts = cloudinaryUrl.split('/');
-    const fileWithExt = parts.pop();
-    const publicId = parts.slice(parts.indexOf('upload') + 2).join('/') + '/' + fileWithExt.split('.')[0];
-    
-    await cloudinary.uploader.destroy(publicId);
-    console.log('[Cloudinary] Deleted asset:', publicId);
-  } catch (err) {
-    console.warn('[Cloudinary] Failed to delete asset:', err.message);
+  if (isCloudinaryConfigured) {
+    const cloudUrl = await uploadToCloudinary(localFilePath, folder, resourceType);
+    if (cloudUrl) {
+      // Remove temporary file from local disk
+      try {
+        if (fs.existsSync(localFilePath)) {
+          fs.unlinkSync(localFilePath);
+        }
+      } catch (err) {
+        console.warn('[Cloudinary] Failed to remove local file after upload:', err.message);
+      }
+      return cloudUrl;
+    }
   }
+
+  return fallbackLocalUrl;
+}
+
+/**
+ * Deletes an asset from Cloudinary or local disk given its URL.
+ * @param {string} url - Cloudinary HTTPS URL or local /uploads/... path
+ */
+async function deleteFileByUrl(url) {
+  if (!url) return;
+
+  if (url.includes('cloudinary.com')) {
+    if (!isCloudinaryConfigured) return;
+    try {
+      // Extract public ID from Cloudinary URL
+      // E.g. https://res.cloudinary.com/cloud/video/upload/v12345/awgp_catalog/audios/file.mp3
+      const parts = url.split('/');
+      const fileWithExt = parts.pop();
+      const filenameWithoutExt = fileWithExt.substring(0, fileWithExt.lastIndexOf('.')) || fileWithExt;
+      
+      const uploadIdx = parts.indexOf('upload');
+      if (uploadIdx !== -1) {
+        let pathParts = parts.slice(uploadIdx + 1);
+        if (pathParts[0] && /^v\d+$/.test(pathParts[0])) {
+          pathParts = pathParts.slice(1); // skip version part
+        }
+        const publicId = [...pathParts, filenameWithoutExt].join('/');
+
+        let resourceType = 'image';
+        if (url.includes('/video/') || /\.(mp3|wav|ogg|flac|aac|m4a|opus|webm)$/i.test(url)) {
+          resourceType = 'video';
+        }
+
+        await cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
+        console.log('[Cloudinary] Deleted asset:', publicId, `(${resourceType})`);
+      }
+    } catch (err) {
+      console.warn('[Cloudinary] Failed to delete asset:', err.message);
+    }
+  } else if (url.startsWith('/uploads/')) {
+    deleteLocalFile(url);
+  }
+}
+
+/**
+ * Deletes an asset from Cloudinary given its URL (legacy wrapper).
+ */
+async function deleteFromCloudinary(cloudinaryUrl) {
+  return deleteFileByUrl(cloudinaryUrl);
 }
 
 module.exports = {
   isCloudinaryConfigured,
   uploadToCloudinary,
+  processFileUpload,
+  deleteFileByUrl,
   deleteFromCloudinary,
 };
