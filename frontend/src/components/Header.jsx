@@ -206,27 +206,6 @@ export default function Header({ onToggleSidebar, onVoiceResult, searchQuery, on
         </div>
       </div>
 
-      {/* Profile button — shows avatar if uploaded, else icon */}
-      <NavLink
-        to="/profile"
-        className={({ isActive }) => `topbar-profile-btn${isActive ? ' active' : ''}`}
-        title={user?.fullName || user?.username || 'Profile'}
-        aria-label="My Profile"
-      >
-        {avatarSrc ? (
-          <img
-            src={avatarSrc}
-            alt="avatar"
-            className="topbar-profile-avatar"
-            onError={e => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
-          />
-        ) : null}
-        <i
-          className="fas fa-user-circle"
-          style={avatarSrc ? { display: 'none' } : {}}
-        />
-      </NavLink>
-
       {/* RIGHT: nav links + voice + notif */}
       <div className="topbar-right">
         <nav className="nav-links-top">
@@ -307,6 +286,28 @@ export default function Header({ onToggleSidebar, onVoiceResult, searchQuery, on
           )}
         </div>
       </div>
+
+      {/* Profile button — shows avatar if uploaded, else icon */}
+      <NavLink
+        to="/profile"
+        className={({ isActive }) => `topbar-profile-btn${isActive ? ' active' : ''}`}
+        title={user?.fullName || user?.username || 'Profile'}
+        aria-label="My Profile"
+      >
+        {avatarSrc ? (
+          <img
+            src={avatarSrc}
+            alt="avatar"
+            className="topbar-profile-avatar"
+            onError={e => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+          />
+        ) : null}
+        <i
+          className="fas fa-user-circle"
+          style={avatarSrc ? { display: 'none' } : {}}
+        />
+      </NavLink>
+
     </header>
   );
 }

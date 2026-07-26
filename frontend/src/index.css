@@ -5303,6 +5303,7 @@ a {
 
   /* Profile icon — visible on mobile, right of search */
   .topbar-profile-btn {
+    order: 4 !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
