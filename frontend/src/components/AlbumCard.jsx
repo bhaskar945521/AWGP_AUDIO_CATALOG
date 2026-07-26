@@ -48,16 +48,14 @@ export default function AlbumCard({
       <button onClick={onClick} className="album-card-inner">
         {/* Cover Image with gradient overlay */}
         <div className="album-card-img-wrap">
-          {img ? (
           <img
-            src={img}
+            src={img || '/awgp.jpg'}
             alt={title || name}
             loading="lazy"
             decoding="async"
             className="album-card-image"
-            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+            onError={(e) => { e.currentTarget.src = '/awgp.jpg'; }}
           />
-        ) : null}
           <div className="album-card-img-overlay" />
         </div>
         {/* Content */}

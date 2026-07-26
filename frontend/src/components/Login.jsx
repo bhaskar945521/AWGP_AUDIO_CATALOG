@@ -54,7 +54,7 @@ export default function Login() {
               <Logo />
             </div>
             <h1 className="login-title">Admin Console</h1>
-            <p className="login-subtitle">AWGP Audio Hub Management</p>
+            <p className="login-subtitle">Spiritual Audio Catalog Management</p>
           </div>
 
           {/* Error Alert */}

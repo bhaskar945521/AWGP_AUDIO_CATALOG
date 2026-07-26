@@ -8,13 +8,13 @@ export default function Footer() {
         <div className="footer-brand">
           <Logo size={34} />
           <div>
-            <div className="footer-brand-name">AWGP Audio Hub</div>
-            <div style={{ fontSize: '0.72rem', color: 'var(--text-light)' }}>Shantikunj, Haridwar</div>
+            <div className="footer-brand-name">Spiritual Audio Hub</div>
+            <div style={{ fontSize: '0.72rem', color: 'var(--text-light)' }}>Spiritual Catalog & Media Archive</div>
           </div>
         </div>
 
         <div className="footer-copy">
-          © {new Date().getFullYear()} AWGP. All rights reserved.
+          © {new Date().getFullYear()} Spiritual Audio Catalog. All rights reserved.
         </div>
 
         <div className="footer-links">

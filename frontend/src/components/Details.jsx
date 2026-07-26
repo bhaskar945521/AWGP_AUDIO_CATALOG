@@ -93,7 +93,7 @@ export default function Details() {
       <!DOCTYPE html>
       <html>
         <head>
-          <title>AWGP Audio - ${audio.title}</title>
+          <title>Spiritual Audio - ${audio.title}</title>
           <style>
             body { font-family: 'Segoe UI', sans-serif; padding: 40px; color: #1a1a1a; max-width: 600px; margin: auto; }
             .header { display: flex; gap: 24px; align-items: center; border-bottom: 2px solid #f7a84d; padding-bottom: 20px; margin-bottom: 24px; }
@@ -120,7 +120,7 @@ export default function Details() {
           </div>
           ${audio.description ? `<div class="label">Description</div><div class="desc">${audio.description}</div>` : ''}
           ${audio.tags?.length ? `<div class="label">Tags</div><div class="tags">${audio.tags.map(t => `<span class="tag">${t}</span>`).join('')}</div>` : ''}
-          <div class="footer">Printed from AWGP Audio Archive — ${window.location.origin}</div>
+          <div class="footer">Printed from Spiritual Audio Archive — ${window.location.origin}</div>
         </body>
       </html>
     `);
@@ -175,7 +175,8 @@ export default function Details() {
     }
   };
 
-  const displayImage = audio?.imageUrl ? resolveUrl(audio.imageUrl) : '/placeholder.png';
+  const rawImg = audio?.imageUrl || audio?.image;
+  const displayImage = rawImg && rawImg !== '/placeholder.png' ? resolveUrl(rawImg) : '/awgp.jpg';
 
   if (loading) return (
     <div style={{ textAlign: 'center', padding: '80px 0' }}>

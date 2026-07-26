@@ -21,8 +21,8 @@ function Sidebar({ onOpenUpload }) {
       <div className="sidebar-brand">
         <Logo size={38} />
         <div>
-          <div className="sidebar-brand-text">{isPublicUser ? 'AWGP Audio Hub' : 'Admin Panel'}</div>
-          <div className="sidebar-brand-sub">AWGP Catalog</div>
+          <div className="sidebar-brand-text">{isPublicUser ? 'Spiritual Audio Hub' : 'Admin Panel'}</div>
+          <div className="sidebar-brand-sub">Spiritual Catalog</div>
         </div>
       </div>
 

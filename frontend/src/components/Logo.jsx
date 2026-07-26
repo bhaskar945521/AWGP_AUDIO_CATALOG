@@ -19,8 +19,8 @@ export default function Logo({ size = 44 }) {
       }}
     >
       <img
-        src="/awgp.jpg"
-        alt="AWGP Logo"
+        src="/spiritual_logo.png"
+        alt="Spiritual Audio Logo"
         style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
       />
     </div>

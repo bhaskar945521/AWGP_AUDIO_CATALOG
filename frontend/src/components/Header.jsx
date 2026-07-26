@@ -25,7 +25,7 @@ export default function Header({ onToggleSidebar, onVoiceResult, searchQuery, on
   const [categories, setCategories] = useState([]);
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef(null);
-  const [siteTitle, setSiteTitle] = useState('AWGP Audio Hub');
+  const [siteTitle, setSiteTitle] = useState('Spiritual Audio Hub');
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifItems, setNotifItems] = useState([]);
   const [notifCount, setNotifCount] = useState(0);
@@ -177,7 +177,7 @@ export default function Header({ onToggleSidebar, onVoiceResult, searchQuery, on
         </div>
         <div>
           <div className="topbar-title">{siteTitle}</div>
-          <span className="topbar-subtitle">Shantikunj, Haridwar</span>
+          <span className="topbar-subtitle">Spiritual Catalog</span>
         </div>
       </div>
 

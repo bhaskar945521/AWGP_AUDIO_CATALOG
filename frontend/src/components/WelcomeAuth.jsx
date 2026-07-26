@@ -129,8 +129,8 @@ export default function WelcomeAuth() {
             <div className="login-logo-wrap">
               <Logo size={48} />
             </div>
-            <h1 className="login-title">{isAdminLogin ? 'Admin Console' : 'AWGP Audio Hub'}</h1>
-            <p className="login-subtitle">{isAdminLogin ? 'AWGP Audio Hub Management' : 'Spiritual Catalog & Media Archive'}</p>
+            <h1 className="login-title">{isAdminLogin ? 'Admin Console' : 'Spiritual Audio Hub'}</h1>
+            <p className="login-subtitle">{isAdminLogin ? 'Spiritual Audio Catalog Management' : 'Spiritual Catalog & Media Archive'}</p>
           </div>
 
           {/* Form Selector Tabs (Only if not Admin Login) */}

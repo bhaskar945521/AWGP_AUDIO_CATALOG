@@ -33,6 +33,7 @@ app.use(cors({
     // Allow any LAN/private IP range for cross-machine access
     if (/^http:\/\/(192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.|10\.)/.test(origin)) return callback(null, true);
     if (origin.startsWith('http://172.20.')) return callback(null, true);
+    if (origin.endsWith('.netlify.app') || origin.endsWith('.onrender.com')) return callback(null, true);
     // For production safety, log disallowed origins but don't fail (or fail as needed)
     console.warn('[CORS] Disallowed origin:', origin);
     // Allow for now - uncomment next line to block strictly
@@ -239,8 +240,8 @@ mongoose.connect(process.env.MONGODB_URI)
       }
     }
 
-    const adminUsername = process.env.ADMIN_USERNAME || 'shantikunjadmin';
-    const adminPassword = process.env.ADMIN_PASSWORD || 'Shantikunj2026';
+    const adminUsername = process.env.ADMIN_USERNAME || 'spiritualadmin';
+    const adminPassword = process.env.ADMIN_PASSWORD || 'Spiritual2026';
     let admin = await User.findOne({ username: adminUsername });
     if (!admin) {
       admin = new User({ username: adminUsername, role: 'admin' });

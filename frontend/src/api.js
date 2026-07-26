@@ -7,8 +7,9 @@ import axios from 'axios';
 let resolvedBaseUrl = import.meta.env.VITE_API_BASE_URL;
 if (!resolvedBaseUrl) {
   const hostname = window.location.hostname;
-  if (hostname && hostname !== 'localhost' && hostname !== '127.0.0.1') {
-    // Same machine that's serving the frontend likely also runs the backend on port 5000
+  const isCloudHost = hostname && (hostname.endsWith('.netlify.app') || hostname.endsWith('.vercel.app') || hostname.endsWith('.onrender.com') || hostname.endsWith('.github.io'));
+  if (hostname && hostname !== 'localhost' && hostname !== '127.0.0.1' && !isCloudHost) {
+    // Same machine on local network
     resolvedBaseUrl = `http://${hostname}:5000`;
   }
 }
