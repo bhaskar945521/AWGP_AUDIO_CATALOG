@@ -47,19 +47,11 @@ function MobileBottomNav() {
         <span>History</span>
       </NavLink>
 
-      {token && (
-        <>
-          {showAdminPanel && (
-            <NavLink to="/admin" className={({ isActive }) => `mobile-nav-item${isActive ? ' active' : ''}`}>
-              <i className="fas fa-cog" />
-              <span>Admin</span>
-            </NavLink>
-          )}
-          <NavLink to="/profile" className={({ isActive }) => `mobile-nav-item${isActive ? ' active' : ''}`}>
-            <i className="fas fa-user-circle" />
-            <span>Profile</span>
-          </NavLink>
-        </>
+      {token && showAdminPanel && (
+        <NavLink to="/admin" className={({ isActive }) => `mobile-nav-item${isActive ? ' active' : ''}`}>
+          <i className="fas fa-cog" />
+          <span>Admin</span>
+        </NavLink>
       )}
     </nav>
   );

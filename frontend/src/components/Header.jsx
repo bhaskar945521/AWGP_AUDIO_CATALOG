@@ -205,6 +205,16 @@ export default function Header({ onToggleSidebar, onVoiceResult, searchQuery, on
         </div>
       </div>
 
+      {/* MOBILE-ONLY: Profile icon after search */}
+      <NavLink
+        to="/profile"
+        className={({ isActive }) => `topbar-profile-btn${isActive ? ' active' : ''}`}
+        title="Profile"
+        aria-label="My Profile"
+      >
+        <i className="fas fa-user-circle" />
+      </NavLink>
+
       {/* RIGHT: nav links + voice + notif */}
       <div className="topbar-right">
         <nav className="nav-links-top">

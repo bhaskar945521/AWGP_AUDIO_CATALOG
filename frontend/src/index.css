@@ -5186,6 +5186,11 @@ a {
   display: inline-block;
 }
 
+/* ── Mobile-only Profile icon button (after search bar) ── */
+.topbar-profile-btn {
+  display: none; /* hidden on desktop */
+}
+
 /* ── Mobile Topbar Responsive Layout ── */
 @media (max-width: 768px) {
   .topbar {
@@ -5266,6 +5271,30 @@ a {
     font-size: 0.78rem !important;
     padding: 0 2px !important;
     width: 100% !important;
+  }
+
+  /* Profile icon — visible on mobile, right of search */
+  .topbar-profile-btn {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 50% !important;
+    background: rgba(255, 109, 0, 0.10) !important;
+    border: 1.5px solid rgba(255, 109, 0, 0.28) !important;
+    color: #E65100 !important;
+    font-size: 1.1rem !important;
+    flex-shrink: 0 !important;
+    text-decoration: none !important;
+    transition: background 0.2s !important;
+    margin-left: 0 !important;
+  }
+
+  .topbar-profile-btn.active,
+  .topbar-profile-btn:hover {
+    background: rgba(255, 109, 0, 0.22) !important;
+    color: #BF360C !important;
   }
 }
 
