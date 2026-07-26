@@ -162,7 +162,7 @@ export default function Header({ onToggleSidebar, onVoiceResult, searchQuery, on
           <Logo size={40} />
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          <div className="topbar-title" style={{ fontWeight: 800, background: 'linear-gradient(135deg, #FFB300, #FF6D00)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontSize: '1.1rem', letterSpacing: '0.4px', lineHeight: 1.2 }}>
+          <div className="topbar-title" style={{ fontWeight: 800, color: '#FF6D00', fontSize: '1.1rem', letterSpacing: '0.4px', lineHeight: 1.2 }}>
             Spiritual Audio Hub
           </div>
           <span className="topbar-subtitle" style={{ fontSize: '0.7rem', opacity: 0.8, marginTop: '1px' }}>Spiritual Catalog</span>

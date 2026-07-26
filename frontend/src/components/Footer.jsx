@@ -8,7 +8,7 @@ export default function Footer() {
         <div className="footer-brand">
           <Logo size={34} />
           <div>
-            <div className="footer-brand-name">Spiritual Audio Hub</div>
+            <div className="footer-brand-name" style={{ color: '#FF6D00', fontWeight: 800 }}>Spiritual Audio Hub</div>
             <div style={{ fontSize: '0.72rem', color: 'var(--text-light)' }}>Spiritual Catalog & Media Archive</div>
           </div>
         </div>
@@ -24,7 +24,7 @@ export default function Footer() {
         </div>
       </div>
       <div style={{ textAlign: 'center', padding: '8px 0 4px', fontSize: '0.75rem', color: 'var(--text-light)', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
-        Developed by <span style={{ color: 'var(--saffron)', fontWeight: '600' }}>Bhaskar</span>
+        Developed by <span style={{ color: '#FF6D00', fontWeight: '600' }}>Bhaskar</span>
       </div>
     </footer>
   );
