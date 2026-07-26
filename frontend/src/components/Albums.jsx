@@ -196,7 +196,7 @@ export default function Albums() {
           <input
             type="text"
             className="library-search-input"
-            placeholder="Search albums"
+            placeholder="Search..."
             value={albumSearch}
             onChange={e => setAlbumSearch(e.target.value)}
             style={{ width: '100%', maxWidth: '100%' }}

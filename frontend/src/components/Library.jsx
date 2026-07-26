@@ -149,7 +149,7 @@ export default function Library() {
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginTop: '16px' }}>
           <input
             type="text"
-            placeholder="Search library"
+            placeholder="Search..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             className="library-search-input"

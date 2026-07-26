@@ -182,7 +182,7 @@ export default function Header({ onToggleSidebar, onVoiceResult, searchQuery, on
           </button>
           <input
             type="text"
-            placeholder="Search"
+            placeholder="Search..."
             value={searchQuery || ''}
             onChange={e => onSearchChange && onSearchChange(e.target.value)}
             onKeyDown={e => {
