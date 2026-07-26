@@ -111,8 +111,8 @@ export default function AlbumDetails() {
           />
         </div>
 
-        {/* Text content on the right, matching dashboard structure */}
-        <div className="hero-content">
+        {/* Text content on the right */}
+        <div className="hero-content album-hero-content">
           <span className="hero-eyebrow">
             <i className="fas fa-compact-disc" /> Album Details
           </span>
@@ -120,46 +120,27 @@ export default function AlbumDetails() {
             <span className="hero-title-line">{album.title}</span>
           </h1>
           
-          <div className="hero-actions">
-            {album.description && (
-              <p className="hero-subtitle hero-subtitle--spaced">
-                {album.description}
-              </p>
-            )}
-            
-            <div style={{ display: 'flex', gap: '16px', alignItems: 'center', justifyContent: 'flex-end', flexWrap: 'wrap', marginTop: '10px' }}>
-              {audios.length > 0 && (
-                <button className="hero-cta" onClick={playAll}>
-                  <i className="fas fa-play" style={{ marginRight: 8 }} /> Play All
-                </button>
-              )}
-              <button className="btn-secondary album-back-btn" onClick={() => navigate('/albums')} style={{ 
-                padding: '12px 28px',
-                borderRadius: '99px',
-                border: '2px solid var(--border-saffron)',
-                background: 'white',
-                fontWeight: 600,
-                color: 'var(--text-muted)',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }} onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = 'var(--saffron)';
-                e.currentTarget.style.color = 'var(--saffron)';
-                e.currentTarget.style.background = 'var(--saffron-pale)';
-              }} onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = 'var(--border-saffron)';
-                e.currentTarget.style.color = 'var(--text-muted)';
-                e.currentTarget.style.background = 'white';
-              }}>
-                <i className="fas fa-arrow-left" style={{ marginRight: 8 }} /> Back to Albums
-              </button>
-            </div>
+          {album.description && (
+            <p className="hero-subtitle hero-subtitle--spaced">
+              {album.description}
+            </p>
+          )}
 
-            <div className="hero-stats" style={{ display: 'flex', gap: '24px', justifyContent: 'flex-end', marginTop: '30px' }}>
-               <div className="hero-stat" style={{ padding: '14px 24px', minWidth: '130px' }}>
-                 <div className="hero-stat-number">{audios.length}</div>
-                 <div className="hero-stat-label">{audios.length === 1 ? 'Track' : 'Tracks'}</div>
-               </div>
+          <div className="album-hero-actions">
+            {audios.length > 0 && (
+              <button className="hero-cta album-play-all-btn" onClick={playAll}>
+                <i className="fas fa-play" /> Play All ({audios.length})
+              </button>
+            )}
+            <button className="btn-secondary album-back-btn" onClick={() => navigate('/albums')}>
+              <i className="fas fa-arrow-left" /> Back to Albums
+            </button>
+          </div>
+
+          <div className="album-hero-stats">
+            <div className="hero-stat">
+              <div className="hero-stat-number">{audios.length}</div>
+              <div className="hero-stat-label">{audios.length === 1 ? 'Track' : 'Tracks'}</div>
             </div>
           </div>
         </div>
@@ -192,71 +173,30 @@ export default function AlbumDetails() {
               return (
                 <div
                   key={audio._id}
-                  className="audio-row"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    padding: '14px 18px',
-                    background: 'var(--card-bg)',
-                    borderRadius: '16px',
-                    cursor: 'pointer',
-                    gap: '16px',
-                    border: '1px solid var(--border)',
-                    position: 'relative',
-                    transition: 'all 0.3s ease',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
-                  }}
+                  className="audio-row album-track-row"
                   onClick={() => { setQueue(audios); setCurrentAudio(audio); }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = 'var(--saffron)';
-                    e.currentTarget.style.boxShadow = '0 8px 24px rgba(247,168,77,0.15)';
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = 'var(--border)';
-                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.03)';
-                    e.currentTarget.style.transform = 'translateY(0)';
-                  }}
                 >
-                  <span style={{ 
-                    width: '32px', 
-                    fontWeight: 800, 
-                    fontSize: '1.1rem',
-                    color: 'var(--text-muted)',
-                    textAlign: 'center'
-                  }}>{idx + 1}.</span>
-                  <img
-                    src={coverSrc}
-                    alt={audio.title}
-                    style={{ 
-                      width: '56px', 
-                      height: '56px', 
-                      objectFit: 'cover', 
-                      borderRadius: '12px',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
-                    }}
-                    onError={e => { e.currentTarget.src = '/placeholder.png'; }}
-                  />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ 
-                      fontWeight: 700, 
-                      color: 'var(--text-main)', 
-                      fontSize: '1rem',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis'
-                    }}>{audio.title}</div>
-                    <div style={{ 
-                      fontSize: '0.85rem', 
-                      color: 'var(--text-muted)',
-                      marginTop: '2px'
-                    }}>
+                  <span className="album-track-num">{String(idx + 1).padStart(2, '0')}</span>
+                  <div className="album-track-cover-wrap">
+                    <img
+                      src={coverSrc}
+                      alt={audio.title}
+                      className="album-track-cover"
+                      onError={e => { e.currentTarget.src = '/placeholder.png'; }}
+                    />
+                    <div className="album-track-play-overlay">
+                      <i className="fas fa-play" />
+                    </div>
+                  </div>
+                  <div className="album-track-info">
+                    <div className="album-track-title">{audio.title}</div>
+                    <div className="album-track-speaker">
                       {audio.speaker || 'Unknown Speaker'}
                     </div>
                   </div>
                   
                   {/* Quick Action Buttons */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }} onClick={(e) => e.stopPropagation()}>
+                  <div className="album-track-actions" onClick={(e) => e.stopPropagation()}>
                     {/* Like (count always visible to all, button only if logged in */}
                     {token ? (
                       <button

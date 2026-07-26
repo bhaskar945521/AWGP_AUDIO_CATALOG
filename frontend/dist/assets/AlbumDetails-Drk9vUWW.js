@@ -1,0 +1,59 @@
+import{a as e,c as t,d as n,h as r,i,m as a,n as o,o as s,p as c,r as l,u}from"./index-B1WXl6co.js";import{t as d}from"./Footer-CKj4h17g.js";var f=r(a(),1),p=i();function m(){let{id:r}=c(),i=n(),{setCurrentAudio:a,setQueue:m,toggleFavoriteTrack:h,userFavorites:g,userReactions:_,fetchReactions:v,toggleLike:y,toggleDislike:b}=o(),{token:x}=l(),[S,C]=(0,f.useState)(null),[w,T]=(0,f.useState)([]),[E,D]=(0,f.useState)(!0);u();let O=async()=>{try{D(!0);let t=await e.get(`/albums/${r}`);C(t.data);let n=t.data?._id||r,i=await e.get(`/audios?album=${n}`),a=Array.isArray(i.data)?i.data:i.data?.data||[];T(a)}catch(e){console.error(`Failed to load album data`,e),t.error(`Unable to fetch album details`)}finally{D(!1)}};(0,f.useEffect)(()=>{O()},[r]),(0,f.useEffect)(()=>{w.length!==0&&w.forEach(e=>{_[e._id]||v(e._id)})},[w,v,_]);let k=()=>{w.length!==0&&(m(w),a(w[0],!0),t.success(`Playing from ${S?.title}`))},A=()=>S?.coverImage&&s(S.coverImage)||`/placeholder.png`;return E?(0,p.jsx)(`div`,{style:{textAlign:`center`,padding:`100px 0`},children:(0,p.jsx)(`div`,{className:`search-spinner`})}):S?(0,p.jsxs)(`div`,{className:`album-details-page`,children:[(0,p.jsxs)(`div`,{className:`hero-section album-hero-container`,style:{"--bg-image":`url('${A()}')`},children:[(0,p.jsx)(`div`,{className:`album-hero-image-wrapper`,children:(0,p.jsx)(`img`,{src:A(),alt:S.title,className:`album-hero-image-1to1`,onError:e=>{e.currentTarget.src=`/placeholder.png`}})}),(0,p.jsxs)(`div`,{className:`hero-content album-hero-content`,children:[(0,p.jsxs)(`span`,{className:`hero-eyebrow`,children:[(0,p.jsx)(`i`,{className:`fas fa-compact-disc`}),` Album Details`]}),(0,p.jsx)(`h1`,{className:`hero-title`,children:(0,p.jsx)(`span`,{className:`hero-title-line`,children:S.title})}),S.description&&(0,p.jsx)(`p`,{className:`hero-subtitle hero-subtitle--spaced`,children:S.description}),(0,p.jsxs)(`div`,{className:`album-hero-actions`,children:[w.length>0&&(0,p.jsxs)(`button`,{className:`hero-cta album-play-all-btn`,onClick:k,children:[(0,p.jsx)(`i`,{className:`fas fa-play`}),` Play All (`,w.length,`)`]}),(0,p.jsxs)(`button`,{className:`btn-secondary album-back-btn`,onClick:()=>i(`/albums`),children:[(0,p.jsx)(`i`,{className:`fas fa-arrow-left`}),` Back to Albums`]})]}),(0,p.jsx)(`div`,{className:`album-hero-stats`,children:(0,p.jsxs)(`div`,{className:`hero-stat`,children:[(0,p.jsx)(`div`,{className:`hero-stat-number`,children:w.length}),(0,p.jsx)(`div`,{className:`hero-stat-label`,children:w.length===1?`Track`:`Tracks`})]})})]})]}),(0,p.jsxs)(`section`,{className:`section-block section-block--spacious`,children:[(0,p.jsx)(`div`,{className:`section-header`,style:{marginBottom:24},children:(0,p.jsx)(`div`,{className:`section-title`,children:`Tracks in this Album`})}),w.length===0?(0,p.jsxs)(`div`,{className:`empty-state`,style:{padding:`60px 0`,border:`1.5px dashed var(--border)`,borderRadius:12},children:[(0,p.jsx)(`div`,{className:`empty-icon`,children:(0,p.jsx)(`i`,{className:`fas fa-music`,style:{fontSize:`2.5rem`}})}),(0,p.jsx)(`div`,{className:`empty-title`,children:`No tracks yet`}),(0,p.jsx)(`div`,{className:`empty-desc`,children:`This album does not have any audio tracks associated with it yet.`})]}):(0,p.jsx)(`div`,{className:`audios-grid`,children:(0,p.jsx)(`div`,{className:`audio-list`,style:{display:`flex`,flexDirection:`column`,gap:`12px`},children:w.map((e,n)=>{let r=e.imageUrl&&e.imageUrl!==`/placeholder.png`?s(e.imageUrl):e.image&&e.image!==`/placeholder.png`?e.image:`/placeholder.png`,o=g.includes(e._id),c=_[e._id]||{liked:!1,disliked:!1,likeCount:0,dislikeCount:0};return(0,p.jsxs)(`div`,{className:`audio-row album-track-row`,onClick:()=>{m(w),a(e)},children:[(0,p.jsx)(`span`,{className:`album-track-num`,children:String(n+1).padStart(2,`0`)}),(0,p.jsxs)(`div`,{className:`album-track-cover-wrap`,children:[(0,p.jsx)(`img`,{src:r,alt:e.title,className:`album-track-cover`,onError:e=>{e.currentTarget.src=`/placeholder.png`}}),(0,p.jsx)(`div`,{className:`album-track-play-overlay`,children:(0,p.jsx)(`i`,{className:`fas fa-play`})})]}),(0,p.jsxs)(`div`,{className:`album-track-info`,children:[(0,p.jsx)(`div`,{className:`album-track-title`,children:e.title}),(0,p.jsx)(`div`,{className:`album-track-speaker`,children:e.speaker||`Unknown Speaker`})]}),(0,p.jsxs)(`div`,{className:`album-track-actions`,onClick:e=>e.stopPropagation(),children:[x?(0,p.jsxs)(`button`,{onClick:()=>y(e._id),style:{background:c.liked?`rgba(247,168,77,0.12)`:`transparent`,border:`none`,cursor:`pointer`,padding:`10px 14px`,color:c.liked?`var(--saffron)`:`var(--text-muted)`,fontSize:`1.05rem`,display:`flex`,alignItems:`center`,gap:`8px`,borderRadius:`99px`,transition:`all 0.2s ease`,fontWeight:600},onMouseEnter:e=>{c.liked||(e.currentTarget.style.color=`var(--saffron)`),e.currentTarget.style.background=`rgba(247,168,77,0.18)`,e.currentTarget.style.transform=`scale(1.05)`},onMouseLeave:e=>{c.liked||(e.currentTarget.style.color=`var(--text-muted)`),e.currentTarget.style.background=c.liked?`rgba(247,168,77,0.12)`:`transparent`,e.currentTarget.style.transform=`scale(1)`},title:`Like`,children:[(0,p.jsx)(`i`,{className:c.liked?`fas fa-thumbs-up`:`far fa-thumbs-up`}),c.likeCount>0&&(0,p.jsx)(`span`,{style:{fontSize:`0.85rem`},children:c.likeCount})]}):c.likeCount>0&&(0,p.jsxs)(`span`,{style:{padding:`10px 14px`,color:`var(--text-muted)`,fontSize:`1.05rem`,display:`flex`,alignItems:`center`,gap:`8px`,fontWeight:600},children:[(0,p.jsx)(`i`,{className:`far fa-thumbs-up`}),(0,p.jsx)(`span`,{style:{fontSize:`0.85rem`},children:c.likeCount})]}),x?(0,p.jsxs)(`button`,{onClick:()=>b(e._id),style:{background:c.disliked?`rgba(229,62,62,0.1)`:`transparent`,border:`none`,cursor:`pointer`,padding:`10px 14px`,color:c.disliked?`#e53e3e`:`var(--text-muted)`,fontSize:`1.05rem`,display:`flex`,alignItems:`center`,gap:`8px`,borderRadius:`99px`,transition:`all 0.2s ease`,fontWeight:600},onMouseEnter:e=>{c.disliked||(e.currentTarget.style.color=`#e53e3e`),e.currentTarget.style.background=`rgba(229,62,62,0.15)`,e.currentTarget.style.transform=`scale(1.05)`},onMouseLeave:e=>{c.disliked||(e.currentTarget.style.color=`var(--text-muted)`),e.currentTarget.style.background=c.disliked?`rgba(229,62,62,0.1)`:`transparent`,e.currentTarget.style.transform=`scale(1)`},title:`Dislike`,children:[(0,p.jsx)(`i`,{className:c.disliked?`fas fa-thumbs-down`:`far fa-thumbs-down`}),c.dislikeCount>0&&(0,p.jsx)(`span`,{style:{fontSize:`0.85rem`},children:c.dislikeCount})]}):c.dislikeCount>0&&(0,p.jsxs)(`span`,{style:{padding:`10px 14px`,color:`var(--text-muted)`,fontSize:`1.05rem`,display:`flex`,alignItems:`center`,gap:`8px`,fontWeight:600},children:[(0,p.jsx)(`i`,{className:`far fa-thumbs-down`}),(0,p.jsx)(`span`,{style:{fontSize:`0.85rem`},children:c.dislikeCount})]}),x&&(0,p.jsx)(`button`,{onClick:()=>h(e._id),style:{background:o?`rgba(229,62,62,0.12)`:`transparent`,border:`none`,cursor:`pointer`,padding:`10px 14px`,color:o?`#e53e3e`:`var(--text-muted)`,fontSize:`1.15rem`,borderRadius:`99px`,transition:`all 0.2s ease`},onMouseEnter:e=>{o||(e.currentTarget.style.color=`#e53e3e`),e.currentTarget.style.background=`rgba(229,62,62,0.18)`,e.currentTarget.style.transform=`scale(1.05)`},onMouseLeave:e=>{o||(e.currentTarget.style.color=`var(--text-muted)`),e.currentTarget.style.background=o?`rgba(229,62,62,0.12)`:`transparent`,e.currentTarget.style.transform=`scale(1)`},title:o?`Remove from Favorites`:`Add to Favorites`,children:(0,p.jsx)(`i`,{className:o?`fas fa-heart`:`far fa-heart`})}),(0,p.jsx)(`button`,{onClick:n=>{n.stopPropagation();let r=`${window.location.origin}/details/${e._id}`;navigator.clipboard.writeText(r).then(()=>{t.success(`Share link copied to clipboard!`)}).catch(()=>{t.error(`Failed to copy link`)})},title:`Share Track`,style:{background:`transparent`,border:`none`,cursor:`pointer`,padding:`10px 14px`,color:`var(--text-muted)`,fontSize:`1.05rem`,borderRadius:`99px`,transition:`all 0.2s ease`},onMouseEnter:e=>{e.currentTarget.style.color=`var(--saffron)`,e.currentTarget.style.background=`rgba(247,168,77,0.12)`,e.currentTarget.style.transform=`scale(1.05)`},onMouseLeave:e=>{e.currentTarget.style.color=`var(--text-muted)`,e.currentTarget.style.background=`transparent`,e.currentTarget.style.transform=`scale(1)`},children:(0,p.jsx)(`i`,{className:`fas fa-share-alt`})}),x&&(0,p.jsx)(`button`,{onClick:()=>i(`/details/${e._id}`),style:{background:`transparent`,border:`none`,cursor:`pointer`,padding:`10px 14px`,color:`var(--text-muted)`,fontSize:`1.05rem`,borderRadius:`99px`,transition:`all 0.2s ease`},onMouseEnter:e=>{e.currentTarget.style.color=`var(--saffron)`,e.currentTarget.style.background=`rgba(247,168,77,0.12)`,e.currentTarget.style.transform=`scale(1.05)`},onMouseLeave:e=>{e.currentTarget.style.color=`var(--text-muted)`,e.currentTarget.style.background=`transparent`,e.currentTarget.style.transform=`scale(1)`},title:`Comment/Feedback`,children:(0,p.jsx)(`i`,{className:`far fa-comment-alt`})})]})]},e._id)})})})]}),(0,p.jsx)(d,{}),(0,p.jsx)(`style`,{children:`
+        .album-hero-container {
+          flex-direction: row !important;
+          justify-content: space-between !important;
+          align-items: center !important;
+          padding: 60px 80px !important;
+          background: linear-gradient(to right, rgba(255, 253, 231, 0.8) 0%, rgba(255, 249, 194, 0.9) 45%, rgba(255, 246, 165, 0.98) 80%, rgba(255, 246, 165, 1) 100%), var(--bg-image) left center / cover no-repeat !important;
+          min-height: auto !important;
+        }
+        .album-hero-image-wrapper {
+          flex: 0 0 auto;
+          margin-right: auto;
+          z-index: 1;
+        }
+        .album-hero-image-1to1 {
+          width: 320px;
+          height: 320px;
+          object-fit: cover;
+          border-radius: 24px;
+          box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+          border: 6px solid white;
+          transform: perspective(1000px) rotateY(-5deg);
+          transition: transform 0.3s ease;
+        }
+        .album-hero-image-1to1:hover {
+          transform: perspective(1000px) rotateY(0deg) scale(1.02);
+        }
+        
+        .audio-row:hover {
+          border-color: var(--saffron) !important;
+          box-shadow: 0 8px 24px rgba(247,168,77,0.15) !important;
+        }
+        @media (max-width: 900px) {
+          .album-hero-container {
+            flex-direction: column !important;
+            padding: 40px 20px !important;
+            text-align: center !important;
+            background: linear-gradient(to bottom, rgba(255, 253, 231, 0.8) 0%, rgba(255, 249, 194, 0.9) 45%, rgba(255, 246, 165, 0.98) 80%, rgba(255, 246, 165, 1) 100%), var(--bg-image) center top / cover no-repeat !important;
+          }
+          .album-hero-image-wrapper {
+            margin: 0 auto 30px auto;
+          }
+          .album-hero-container .hero-content,
+          .album-hero-container .hero-actions,
+          .album-hero-container .hero-title,
+          .album-hero-container .hero-subtitle,
+          .album-hero-container .hero-stats,
+          .album-hero-container .hero-title-line {
+            align-items: center !important;
+            text-align: center !important;
+            justify-content: center !important;
+          }
+          .album-hero-image-1to1 {
+            width: 240px;
+            height: 240px;
+            transform: none;
+          }
+        }
+      `})]}):(0,p.jsxs)(`div`,{className:`empty-state`,style:{padding:`80px 0`},children:[(0,p.jsx)(`div`,{className:`empty-icon`,children:(0,p.jsx)(`i`,{className:`fas fa-exclamation-triangle`,style:{fontSize:`3rem`,color:`var(--saffron)`}})}),(0,p.jsx)(`div`,{className:`empty-title`,children:`Album not found`}),(0,p.jsx)(`button`,{className:`hero-cta`,onClick:()=>i(`/albums`),style:{marginTop:16},children:`Back to Albums`})]})}export{m as default};
