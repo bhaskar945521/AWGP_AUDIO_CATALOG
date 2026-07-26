@@ -8,7 +8,9 @@ let resolvedBaseUrl = import.meta.env.VITE_API_BASE_URL;
 if (!resolvedBaseUrl) {
   const hostname = window.location.hostname;
   const isCloudHost = hostname && (hostname.endsWith('.netlify.app') || hostname.endsWith('.vercel.app') || hostname.endsWith('.onrender.com') || hostname.endsWith('.github.io'));
-  if (hostname && hostname !== 'localhost' && hostname !== '127.0.0.1' && !isCloudHost) {
+  if (isCloudHost) {
+    resolvedBaseUrl = 'https://awgp-backend.onrender.com';
+  } else if (hostname && hostname !== 'localhost' && hostname !== '127.0.0.1') {
     // Same machine on local network
     resolvedBaseUrl = `http://${hostname}:5000`;
   }
