@@ -34,6 +34,7 @@ export default function Albums() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [coverImage, setCoverImage] = useState('');
+  const [coverFile, setCoverFile] = useState(null);
 
   const [selectedCategoryIdModal, setSelectedCategoryIdModal] = useState(null);
 
@@ -69,6 +70,7 @@ export default function Albums() {
     setTitle('');
     setDescription('');
     setCoverImage('');
+    setCoverFile(null);
     setSelectedCategoryIdModal(null);
     setModalOpen(true);
   };
@@ -80,7 +82,8 @@ export default function Albums() {
     setTitle(album.title);
     setDescription(album.description || '');
     setCoverImage(album.coverImage || '');
-    setSelectedCategoryIdModal(album.categoryId || null);
+    setCoverFile(null);
+    setSelectedCategoryIdModal(typeof album.categoryId === 'string' ? album.categoryId : album.categoryId?._id || null);
     setModalOpen(true);
   };
 
@@ -97,30 +100,49 @@ export default function Albums() {
     }
 
     try {
-      const config = {};
       const token = localStorage.getItem('token');
-      if (token) {
-        config.headers = { Authorization: `Bearer ${token}` };
-      }
+      let res;
 
-    const payload = {
-      name: name.trim(),
-      title: title.trim(),
-      description: description.trim(),
-      coverImage: coverImage.trim() || '/album_placeholder.png',
-      // Use the selected category as the required `categoryId`
-      categoryId: selectedCategoryIdModal || null,
-      // Optionally allow passing audioIds when creating from selection (not used here)
-      audioIds: []
-    };
+      if (coverFile) {
+        const formData = new FormData();
+        formData.append('name', name.trim());
+        formData.append('title', title.trim());
+        formData.append('description', description.trim());
+        formData.append('categoryId', selectedCategoryIdModal);
+        formData.append('coverImage', coverFile);
 
-      if (editingAlbum) {
-        await api.put(`/albums/${editingAlbum._id}`, payload, config);
-        toast.success('Album updated successfully');
+        const config = {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
+          },
+        };
+
+        if (editingAlbum) {
+          res = await api.put(`/albums/${editingAlbum._id}`, formData, config);
+        } else {
+          res = await api.post('/albums', formData, config);
+        }
       } else {
-        await api.post('/albums', payload, config);
-        toast.success('Album created successfully');
+        const payload = {
+          name: name.trim(),
+          title: title.trim(),
+          description: description.trim(),
+          coverImage: coverImage.trim() || '/album_placeholder.png',
+          categoryId: selectedCategoryIdModal || null,
+          audioIds: []
+        };
+
+        const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+
+        if (editingAlbum) {
+          res = await api.put(`/albums/${editingAlbum._id}`, payload, config);
+        } else {
+          res = await api.post('/albums', payload, config);
+        }
       }
+
+      toast.success(editingAlbum ? 'Album updated successfully' : 'Album created successfully');
       setModalOpen(false);
       fetchAlbums();
     } catch (err) {
@@ -251,20 +273,21 @@ export default function Albums() {
               <span className="add-album-card__label">Create Album</span>
             </button>
           )}
-          {filteredAlbums.map(album => (
-  <AlbumCard
-    key={album._id}
-    name={album.name}
-    title={album.title}
-    description={album.description}
-    coverImage={album.coverImage}
-    count={album.count !== undefined ? album.count : getAlbumAudioCount(album._id)}
-    onClick={() => navigate(`/albums/${album._id}`)}
-    isAdmin={isAdmin}
-    onEdit={(e) => { e.stopPropagation(); openEditModal(album, e); }}
-    onDelete={(e) => { e.stopPropagation(); handleDelete(album._id, e); }}
-  />
-))}
+          {filteredAlbums.map((album, index) => (
+            <AlbumCard
+              key={album._id}
+              name={album.name}
+              title={album.title}
+              description={album.description}
+              coverImage={album.coverImage}
+              count={album.count !== undefined ? album.count : getAlbumAudioCount(album._id)}
+              onClick={() => navigate(`/albums/${album._id}`)}
+              isAdmin={isAdmin}
+              onEdit={(e) => { e.stopPropagation(); openEditModal(album, e); }}
+              onDelete={(e) => { e.stopPropagation(); handleDelete(album._id, e); }}
+              index={index}
+            />
+          ))}
         </div>
       )}
 
@@ -345,16 +368,35 @@ export default function Albums() {
                  </div>
                </div>
 
-              <div className="form-group" style={{ marginBottom: 24 }}>
-                <label className="form-label" style={{ display: 'block', marginBottom: 6, fontSize: '0.82rem', fontWeight: 600 }}>Cover Image URL (Optional)</label>
-                <input
-                  type="text"
-                  className="form-input"
-                  style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1.5px solid var(--border)', fontSize: '0.9rem' }}
-                  value={coverImage}
-                  onChange={e => setCoverImage(e.target.value)}
-                  placeholder="e.g. /uploads/images/cover.jpg or external url"
-                />
+              <div className="form-group" style={{ marginBottom: 20 }}>
+                <label className="form-label" style={{ display: 'block', marginBottom: 6, fontSize: '0.82rem', fontWeight: 600 }}>Cover Image (Upload File or Enter URL)</label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="form-input"
+                    style={{ padding: '8px 12px', fontSize: '0.85rem' }}
+                    onChange={e => {
+                      if (e.target.files && e.target.files[0]) {
+                        setCoverFile(e.target.files[0]);
+                      }
+                    }}
+                  />
+                  {coverFile && (
+                    <div style={{ fontSize: '0.8rem', color: 'var(--saffron)', fontWeight: 600 }}>
+                      Selected File: {coverFile.name}
+                    </div>
+                  )}
+                  <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', textAlign: 'center' }}>— OR —</div>
+                  <input
+                    type="text"
+                    className="form-input"
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1.5px solid var(--border)', fontSize: '0.9rem' }}
+                    value={coverImage}
+                    onChange={e => { setCoverImage(e.target.value); setCoverFile(null); }}
+                    placeholder="e.g. /uploads/images/cover.jpg or external image URL"
+                  />
+                </div>
               </div>
 
               <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 24 }}>

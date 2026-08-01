@@ -8,7 +8,7 @@ const mongoose = require('mongoose');
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '..', 'backend', '.env') });
 
-const User = require('./backend/models/User');
+const User = require('../backend/models/User');
 
 async function migrateAdmin() {
   console.log('Connecting to MongoDB Atlas...');

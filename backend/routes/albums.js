@@ -194,12 +194,13 @@ router.post('/from-selection', auth, permissionCheck(['albums_create', 'album_cr
     const cat = await Category.findById(categoryId);
     if (!cat) return res.status(400).json({ error: 'Invalid categoryId' });
     let validAudioIds = [];
-    if (audioIds && audioIds.length) {
-      const audios = await Audio.find({ _id: { $in: audioIds } });
-      if (audios.length !== audioIds.length) {
+    const parsedAudioIds = parseArrayField(audioIds);
+    if (parsedAudioIds && parsedAudioIds.length) {
+      const audios = await Audio.find({ _id: { $in: parsedAudioIds } });
+      if (audios.length !== parsedAudioIds.length) {
         return res.status(400).json({ error: 'One or more audioIds are invalid' });
       }
-      validAudioIds = audioIds;
+      validAudioIds = parsedAudioIds;
     }
     const newAlbum = new Album({
       name: albumName,
@@ -250,12 +251,13 @@ router.post('/from-selection-with-edits', auth, permissionCheck(['albums_create'
     const cat = await Category.findById(categoryId);
     if (!cat) return res.status(400).json({ error: 'Invalid categoryId' });
     let validAudioIds = [];
-    if (audioIds && audioIds.length) {
-      const audios = await Audio.find({ _id: { $in: audioIds } });
-      if (audios.length !== audioIds.length) {
+    const parsedAudioIds = parseArrayField(audioIds);
+    if (parsedAudioIds && parsedAudioIds.length) {
+      const audios = await Audio.find({ _id: { $in: parsedAudioIds } });
+      if (audios.length !== parsedAudioIds.length) {
         return res.status(400).json({ error: 'One or more audioIds are invalid' });
       }
-      validAudioIds = audioIds;
+      validAudioIds = parsedAudioIds;
     }
     // Apply optional audio edits
     const updatedAudios = [];

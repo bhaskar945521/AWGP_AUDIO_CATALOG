@@ -74,8 +74,11 @@ router.post('/audio/:id/like', auth, async (req, res) => {
     if (existingLike) {
       // Already liked — toggle off
       await Like.findOneAndDelete({ userId, audioId });
-      const likeCount = await Like.countDocuments({ audioId });
-      return res.json({ liked: false, likeCount });
+      const [likeCount, dislikeCount] = await Promise.all([
+        Like.countDocuments({ audioId }),
+        Dislike.countDocuments({ audioId }),
+      ]);
+      return res.json({ liked: false, disliked: false, likeCount, dislikeCount });
     }
     // Remove any existing dislike first (mutual exclusion)
     await Dislike.findOneAndDelete({ userId, audioId });
@@ -99,8 +102,11 @@ router.post('/audio/:id/dislike', auth, async (req, res) => {
     if (existingDislike) {
       // Already disliked — toggle off
       await Dislike.findOneAndDelete({ userId, audioId });
-      const dislikeCount = await Dislike.countDocuments({ audioId });
-      return res.json({ disliked: false, dislikeCount });
+      const [likeCount, dislikeCount] = await Promise.all([
+        Like.countDocuments({ audioId }),
+        Dislike.countDocuments({ audioId }),
+      ]);
+      return res.json({ disliked: false, liked: false, likeCount, dislikeCount });
     }
     // Remove any existing like first (mutual exclusion)
     await Like.findOneAndDelete({ userId, audioId });

@@ -644,19 +644,10 @@ router.delete('/:id/permanent', auth, permissionCheck(['audios_delete']), async 
   }
 });
 
-// ─── PATCH /api/audios/:id/favorite ─────────────────────────────────────────
-// ─── PATCH /api/audios/:id/favorite ─────────────────────────────────────────
-// Requires auth — only authenticated users can toggle favorites
-router.patch('/:id/favorite', auth, async (req, res) => {
-  try {
-    const audio = await Audio.findById(req.params.id);
-    if (!audio) return res.status(404).json({ message: 'Audio not found' });
-    audio.isFavorite = !audio.isFavorite;
-    await audio.save();
-    res.json(audio);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
+// NOTE: The PATCH /:id/favorite endpoint has been intentionally removed.
+// Favorites are managed per-user via the Favorite collection in engagement.js:
+//   POST   /api/audio/:id/favorite  → add to favorites
+//   DELETE /api/audio/:id/favorite  → remove from favorites
+//   GET    /api/user/favorites       → get user's favorites
 
 module.exports = router;

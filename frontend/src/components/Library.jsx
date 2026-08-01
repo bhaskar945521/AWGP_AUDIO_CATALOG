@@ -2,14 +2,14 @@ import React, { useEffect, useState } from 'react';
 import api from '../api';
 import { useOutletContext, useSearchParams } from 'react-router-dom';
 import AudioCard from './AudioCard';
-import AddToAlbumModal from './AddToAlbumModal';
 import { useAudio } from '../context/AudioContext';
+import { resolveUrl } from '../api';
 
 const ITEMS_PER_PAGE = 12;
 
 export default function Library() {
   const { searchQuery, setSearchQuery } = useOutletContext();
-  const { setCurrentAudio, setQueue, toggleFavoriteTrack } = useAudio();
+  const { setCurrentAudio, setQueue, toggleFavoriteTrack, userFavorites } = useAudio();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [audios, setAudios] = useState([]);
@@ -239,9 +239,10 @@ export default function Library() {
               onClick={() => { setQueue(audios); setCurrentAudio(audio); }}
             >
                 <img
-                  src={audio.coverUrl || audio.artworkUrl || '/default-cover.png'}
+                  src={(audio.imageUrl || audio.image) ? resolveUrl(audio.imageUrl || audio.image) : '/placeholder.png'}
                   style={{ width: '60px', height: '60px', borderRadius: '8px', objectFit: 'cover' }}
                   alt={audio.title}
+                  onError={(e) => { e.currentTarget.src = '/placeholder.png'; }}
                 />
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: '600', marginBottom: '4px' }}>{audio.title}</div>
@@ -258,7 +259,7 @@ export default function Library() {
                     style={{
                       padding: '8px', borderRadius: '8px', border: 'none', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}
                     >
-                    <i className={`${audio.isFavorite ? 'fas fa-heart' : 'far fa-heart'}`} style={{ color: audio.isFavorite ? '#e74c3c' : 'inherit' }} />
+                    <i className={`${userFavorites.includes(audio._id) ? 'fas fa-heart' : 'far fa-heart'}`} style={{ color: userFavorites.includes(audio._id) ? '#e74c3c' : 'inherit' }} />
                   </button>
                   <button
                     onClick={(e) => {

@@ -68,10 +68,14 @@ export const AudioProvider = ({ children }) => {
     }
   }, [token]);
 
+  // Ref to debounce timer for ending sessions on pause
+  const pauseTimerRef = useRef(null);
+
   // ─── Listening Session Tracking (works everywhere) ───────────────
   useEffect(() => {
     if (!token || !currentAudio) {
-      // If no token or no audio, end any existing session
+      // If no token or no audio, end any existing session immediately
+      if (pauseTimerRef.current) clearTimeout(pauseTimerRef.current);
       if (sessionIdRef.current && sessionStartRef.current) {
         const durationListened = Math.round((Date.now() - sessionStartRef.current) / 1000);
         api.patch(`/listening/${sessionIdRef.current}/end`, { durationListened }).catch(() => {});
@@ -81,29 +85,44 @@ export const AudioProvider = ({ children }) => {
       return;
     }
 
-    if (isPlaying && !sessionIdRef.current) {
-      // Start new session
-      api.post('/listening/start', { audioId: currentAudio._id })
-        .then(res => {
-          sessionIdRef.current = res.data.sessionId;
-          sessionStartRef.current = Date.now();
-        })
-        .catch(() => {});
+    if (isPlaying) {
+      // Cancel any pending pause-end timer (track changed and resumed playing quickly)
+      if (pauseTimerRef.current) {
+        clearTimeout(pauseTimerRef.current);
+        pauseTimerRef.current = null;
+      }
+
+      if (!sessionIdRef.current) {
+        // Start new session
+        api.post('/listening/start', { audioId: currentAudio._id })
+          .then(res => {
+            sessionIdRef.current = res.data.sessionId;
+            sessionStartRef.current = Date.now();
+          })
+          .catch(() => {});
+      }
     } else if (!isPlaying && sessionIdRef.current) {
-      // End session when paused
-      const durationListened = sessionStartRef.current
-        ? Math.round((Date.now() - sessionStartRef.current) / 1000)
-        : 0;
-      api.patch(`/listening/${sessionIdRef.current}/end`, { durationListened })
-        .catch(() => {});
-      sessionIdRef.current = null;
-      sessionStartRef.current = null;
+      // Debounce ending the session — wait 1.5s before actually ending
+      // This prevents false-ending when switching tracks (isPlaying briefly = false)
+      pauseTimerRef.current = setTimeout(() => {
+        pauseTimerRef.current = null;
+        if (sessionIdRef.current) {
+          const durationListened = sessionStartRef.current
+            ? Math.round((Date.now() - sessionStartRef.current) / 1000)
+            : 0;
+          api.patch(`/listening/${sessionIdRef.current}/end`, { durationListened })
+            .catch(() => {});
+          sessionIdRef.current = null;
+          sessionStartRef.current = null;
+        }
+      }, 1500);
     }
   }, [isPlaying, currentAudio, token]);
 
   // ─── Cleanup: End session on unmount ────────────────────────────
   useEffect(() => {
     return () => {
+      if (pauseTimerRef.current) clearTimeout(pauseTimerRef.current);
       if (sessionIdRef.current && sessionStartRef.current) {
         const durationListened = Math.round((Date.now() - sessionStartRef.current) / 1000);
         api.patch(`/listening/${sessionIdRef.current}/end`, { durationListened }).catch(() => {});

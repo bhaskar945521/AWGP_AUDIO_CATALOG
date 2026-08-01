@@ -28,33 +28,53 @@ export default function CategoryCard({ title, count, icon, imageUrl, description
   const img = resolveUrlUrl(imageUrl);
   const shapeColorClass = (title && title.length % 2 === 0) ? 'card-brand-shape--yellow' : 'card-brand-shape--orange';
 
-  return (
-    <button
-      onClick={onClick}
-      className="category-card"
-      style={{ position: 'relative', overflow: 'hidden', background: '#ffffff', border: '1px solid rgba(0,0,0,0.05)' }}
-    >
-      {/* Decorative branded shape */}
-      <div className={`card-brand-shape ${shapeColorClass}`} style={{ top: '-30px', right: '-30px' }} />
-
-      {/* Category Name at Top */}
-      <div className="category-name" style={{ color: style.color, position: 'relative', zIndex: 2 }}>{title}</div>
-      {/* Description */}
-      {description && <div className="category-description" style={{ position: 'relative', zIndex: 2 }}>{description}</div>}
-      {/* Image */}
-      {img && (
+  if (img) {
+    return (
+      <button
+        onClick={onClick}
+        className="category-card category-card--image"
+        title={description || title}
+        style={{ cursor: 'pointer' }}
+      >
         <img
           src={img}
           alt={title}
           loading="lazy"
           decoding="async"
-          className="category-card-image"
-          style={{ position: 'relative', zIndex: 2 }}
-          onError={(e) => { e.currentTarget.style.display = 'none'; }}
+          className="category-card-bg"
+          onError={(e) => {
+            e.currentTarget.style.display = 'none';
+          }}
         />
-      )}
-      {/* Count */}
-      <div className="category-count" style={{ position: 'relative', zIndex: 2 }}>{count} Albums</div>
+        <div className="category-card-overlay" />
+        <div className="category-card-content">
+          <div className="category-card-icon-wrap" style={{ background: 'rgba(255,255,255,0.22)', backdropFilter: 'blur(8px)', width: 40, height: 40, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <i className={icon || 'fas fa-folder'} style={{ color: '#ffffff', fontSize: '1.1rem' }} />
+          </div>
+          <div className="category-card-name" style={{ color: '#ffffff', fontWeight: 700, fontSize: '1rem', textShadow: '0 2px 4px rgba(0,0,0,0.4)' }}>{title}</div>
+          <div className="category-card-count" style={{ color: '#ffffff', background: 'rgba(0,0,0,0.45)', padding: '3px 10px', borderRadius: '12px', fontSize: '0.75rem', backdropFilter: 'blur(4px)', fontWeight: 600 }}>
+            {count || 0} {count === 1 ? 'Album' : 'Albums'}
+          </div>
+        </div>
+      </button>
+    );
+  }
+
+  return (
+    <button
+      onClick={onClick}
+      className="category-card"
+      style={{ position: 'relative', overflow: 'hidden', background: '#ffffff', border: '1px solid rgba(0,0,0,0.06)' }}
+    >
+      {/* Decorative branded shape */}
+      <div className={`card-brand-shape ${shapeColorClass}`} style={{ top: '-30px', right: '-30px' }} />
+
+      <div className="category-icon-wrap" style={{ background: style.iconBg, color: style.color }}>
+        <i className={icon || 'fas fa-folder'} />
+      </div>
+      <div className="category-name" style={{ color: style.color, position: 'relative', zIndex: 2 }}>{title}</div>
+      {description && <div className="category-description" style={{ position: 'relative', zIndex: 2 }}>{description}</div>}
+      <div className="category-count" style={{ position: 'relative', zIndex: 2 }}>{count || 0} {count === 1 ? 'Album' : 'Albums'}</div>
     </button>
   );
 }
