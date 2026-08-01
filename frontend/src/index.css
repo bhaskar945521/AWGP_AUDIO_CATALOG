@@ -1,21 +1,11 @@
-/* Inter font is imported locally via @fontsource/inter in main.jsx — no CDN needed */
-
-
-/* Base Font */
-body {
-  font-family: 'Inter', sans-serif;
-  background-color: var(--bg-main);
-  color: var(--text-main);
-}
-
 /* ============================================================
-   DESIGN TOKENS
+   DESIGN TOKENS & BASE STYLES
    ============================================================ */
 :root {
-  --saffron: #ff9800;
+  --saffron: #f7a84d;
   --saffron-light: #ffb74d;
   --saffron-pale: #fff3e0;
-  --saffron-border: rgba(255, 152, 0, 0.22);
+  --saffron-border: rgba(247, 168, 77, 0.22);
 
   --golden: #ffd700;
   --golden-pale: #fffdf0;
@@ -24,8 +14,10 @@ body {
   --bg-main: #f8f9fb;
   --bg-sidebar: #fff9f0;
   --bg-card: #ffffff;
+  --card-bg: #ffffff;
 
   --text-main: #1a1a2e;
+  --text-primary: #1a1a2e;
   --text-muted: #6b7280;
   --text-light: #9ca3af;
 
@@ -48,15 +40,6 @@ body {
   --player-height: 88px;
 }
 
-/* ===================== UI Enhancements ===================== */
-:root {
-  --card-bg: #ffffff;
-  --border: rgba(0, 0, 0, 0.08);
-  --text-primary: #1a1a2e;
-  --text-muted: #6b7280;
-  --saffron: #f7a84d;
-}
-
 .profile-card {
   background: #ffffff;
   border: 1.5px solid #f0e8d8;
@@ -70,7 +53,7 @@ body {
   transition: transform 0.2s;
 }
 
-/* Profile popup — Sign Out button hover (controlled soft red, no flash) */
+/* Profile popup — Sign Out button hover */
 .profile-signout-btn:hover {
   background: #fff5f5 !important;
 }
@@ -96,7 +79,7 @@ html {
 }
 
 body {
-  font-family: 'Outfit', sans-serif;
+  font-family: 'Inter', 'Outfit', system-ui, -apple-system, sans-serif;
   background-color: var(--bg-main);
   color: var(--text-main);
   -webkit-font-smoothing: antialiased;
