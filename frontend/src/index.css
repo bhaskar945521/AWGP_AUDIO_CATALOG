@@ -1,4 +1,4 @@
-/* ============================================================
+﻿/* ============================================================
    DESIGN TOKENS & BASE STYLES
    ============================================================ */
 :root {
@@ -7172,7 +7172,7 @@ body {
   display: flex;
   align-items: center;
   gap: 0;
-  animation: marquee-scroll 60s linear infinite;
+  animation: marquee-scroll 22s linear infinite;
   white-space: nowrap;
   width: max-content;
 }
@@ -7626,4 +7626,184 @@ body {
     padding: 6px 8px !important;
     font-size: 0.95rem !important;
   }
-}
+}
+/* ═══════════════════════════════════════════════
+   CATEGORY MARQUEE
+   ═══════════════════════════════════════════════ */
+
+
+.cat-marquee-section {
+  padding: 28px 0 36px;
+  overflow: hidden;
+}
+
+.cat-marquee-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px 18px;
+}
+
+.cat-marquee-label {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-primary, #1a1a2e);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cat-marquee-label i {
+  color: var(--accent, #f7a84d);
+}
+
+.cat-marquee-count {
+  font-size: 0.82rem;
+  color: var(--text-muted, #888);
+  background: var(--surface-raised, rgba(0,0,0,0.05));
+  border-radius: 20px;
+  padding: 3px 12px;
+}
+
+.cat-marquee-track {
+  overflow: hidden;
+  position: relative;
+}
+
+/* gradient fade edges */
+.cat-marquee-track::before,
+.cat-marquee-track::after {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 80px;
+  z-index: 4;
+  pointer-events: none;
+}
+.cat-marquee-track::before {
+  left: 0;
+  background: linear-gradient(to right, var(--bg, #fff), transparent);
+}
+.cat-marquee-track::after {
+  right: 0;
+  background: linear-gradient(to left, var(--bg, #fff), transparent);
+}
+
+.cat-marquee-belt {
+  display: flex;
+  gap: 16px;
+  padding: 6px 14px;
+  width: max-content;
+  animation: marquee-scroll 22s linear infinite;
+  will-change: transform;
+}
+
+/* ── card base ── */
+.cat-marquee-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  width: 190px;
+  height: 220px;
+  border-radius: 18px;
+  overflow: hidden;
+  border: none;
+  cursor: pointer;
+  background: linear-gradient(135deg, #f7a84d22 0%, #f7a84d11 100%);
+  box-shadow: 0 4px 18px rgba(0,0,0,0.10);
+  transition: transform 0.28s cubic-bezier(.34,1.56,.64,1), box-shadow 0.28s ease;
+  flex-shrink: 0;
+}
+
+.cat-marquee-card:hover {
+  transform: translateY(-6px) scale(1.03);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.18);
+}
+
+/* ── with cover image ── */
+.cat-marquee-card--img .cat-marquee-card-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+.cat-marquee-card--img:hover .cat-marquee-card-bg {
+  transform: scale(1.07);
+}
+
+.cat-marquee-card-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.12) 60%, transparent 100%);
+  z-index: 1;
+}
+
+/* ── no image icon ── */
+.cat-marquee-card-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -60%);
+  width: 54px;
+  height: 54px;
+  border-radius: 14px;
+  background: rgba(247,168,77,0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  color: #f7a84d;
+}
+
+/* ── card info ── */
+.cat-marquee-card-info {
+  position: relative;
+  z-index: 2;
+  padding: 12px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.cat-marquee-card-name {
+  font-size: 0.97rem;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.45);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* no-image variant text */
+.cat-marquee-card:not(.cat-marquee-card--img) .cat-marquee-card-name {
+  color: #1a1a2e;
+  text-shadow: none;
+}
+
+.cat-marquee-card-meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.cat-marquee-card-meta span {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.85);
+  background: rgba(0,0,0,0.38);
+  border-radius: 10px;
+  padding: 2px 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  backdrop-filter: blur(4px);
+}
+
+.cat-marquee-card:not(.cat-marquee-card--img) .cat-marquee-card-meta span {
+  color: #555;
+  background: rgba(0,0,0,0.07);
+}

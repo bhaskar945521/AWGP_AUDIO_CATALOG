@@ -27,7 +27,7 @@ const upload = multer({
 });
 
 // GET all categories (requires categories_read)
-router.get('/', auth, permissionCheck(['categories_read', 'category_view']), async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const categories = await Category.aggregate([
       { $lookup: { from: 'albums', localField: '_id', foreignField: 'categoryId', as: 'albums' } },

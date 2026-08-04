@@ -7,6 +7,7 @@ import AudioCard from './AudioCard';
 import { useAudio } from '../context/AudioContext';
 import { useAuth } from '../context/AuthContext';
 import Footer from './Footer';
+import CategoryMarquee from './CategoryMarquee';
 
 const AUDIOS_PER_PAGE = 12;
 const RECENT_COUNT = 8;
@@ -366,27 +367,11 @@ export default function Dashboard() {
           )}
 
           {/* ── 2. CATEGORIES MARQUEE ── */}
-          {categories.length > 0 && (
-            <section className="section-block section-block--spacious">
-              <div className="section-header">
-                <div className="section-title">Browse Categories</div>
-                <span className="section-count">{categories.length} categories</span>
-              </div>
-              <div className="categories-marquee">
-                <div className="categories-marquee-content">
-                  {([...categories, ...categories] || []).map((cat, index) => (
-                    <CategoryCard key={`${cat._id}-${index}`} title={cat.name}
-                      count={getCategoryAlbumCount(cat._id)}
-                      icon={categoryIcons[cat.name?.toLowerCase()] || 'fas fa-folder'}
-                      imageUrl={cat.coverImageUrl}
-                      description={categoryDescriptions[cat.name?.toLowerCase()] || 'Explore spiritual content'}
-                      onClick={() => handleCategoryClick(cat)}
-                    />
-                  ))}
-                </div>
-              </div>
-            </section>
-          )}
+          <CategoryMarquee
+            categories={categories}
+            albums={albums}
+            onCategoryClick={handleCategoryClick}
+          />
 
           {/* Audio Library section removed for UI simplification */}
 

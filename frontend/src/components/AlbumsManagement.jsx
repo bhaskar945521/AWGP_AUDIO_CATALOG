@@ -72,13 +72,12 @@ export default function AlbumsManagement() {
       const isInAlbum = a.albumIds?.some(al => (al._id || al) === editAudioAlbumFilter);
       if (!isInAlbum) return false;
     }
-    if (!editAudioAlbumFilter) {
-      const cid = al.categoryId && typeof al.categoryId === 'object' ? al.categoryId._id : al.categoryId;
-      if (!cid) return false;
-    }
-    if (!editAudioAlbumFilter) {
-      const cid = a.categoryId && typeof a.categoryId === 'object' ? a.categoryId._id : a.categoryId;
-      if (!cid) return false;
+    if (editAudioCategoryFilter) {
+      const isInCategory = a.albumIds?.some(al => {
+        const catId = al.categoryId && typeof al.categoryId === 'object' ? al.categoryId._id : al.categoryId;
+        return catId === editAudioCategoryFilter;
+      });
+      if (!isInCategory) return false;
     }
     return true;
   });

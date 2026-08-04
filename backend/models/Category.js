@@ -5,6 +5,7 @@ const CategorySchema = new mongoose.Schema(
     name: { type: String, required: true, trim: true, unique: true },
     description: { type: String, default: '' },
     image: { type: String, default: '/placeholder.png' },
+    coverImageUrl: { type: String, default: '' },
     order: { type: Number, default: 0 },
     isPublished: { type: Boolean, default: true },
   },
